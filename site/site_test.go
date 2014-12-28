@@ -1,6 +1,7 @@
 package site
 
 import (
+	"github.com/martinp/lftpfetch/ftpdir"
 	"testing"
 	"text/template"
 	"time"
@@ -19,7 +20,7 @@ func TestGetCmd(t *testing.T) {
 		Dir:    "/misc",
 		MaxAge: time.Duration(24) * time.Hour,
 	}
-	d := Dir{
+	d := ftpdir.Dir{
 		Path:    "/misc/The.Wire.S02E01.720p.HDTV.x264-BATV",
 		Created: time.Now(),
 	}
@@ -46,7 +47,7 @@ func TestQueueCmd(t *testing.T) {
 		Dir:    "/misc",
 		MaxAge: time.Duration(24) * time.Hour,
 	}
-	dir := Dir{
+	dir := ftpdir.Dir{
 		Path:    "/misc/The.Wire.S02E01",
 		Created: time.Now(),
 	}

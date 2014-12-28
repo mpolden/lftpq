@@ -1,4 +1,4 @@
-package site
+package ftpdir
 
 import (
 	"regexp"
@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-func TestParseDir(t *testing.T) {
+func TestParse(t *testing.T) {
 	s := "2014-12-16 00:04:30 +0100 CET foo/"
-	dir, err := ParseDir(s)
+	dir, err := Parse(s)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/martinp/lftpfetch/cmd"
+	"github.com/martinp/lftpfetch/ftpdir"
 	"github.com/martinp/lftpfetch/tv"
 	"os"
 	"regexp"
@@ -39,7 +40,7 @@ func (s *Site) ListCmd() cmd.Lftp {
 	}
 }
 
-func (s *Site) GetDirs() ([]Dir, error) {
+func (s *Site) GetDirs() ([]ftpdir.Dir, error) {
 	listCmd := s.ListCmd()
 	cmd := listCmd.Cmd()
 	stdout, err := cmd.StdoutPipe()
@@ -49,14 +50,14 @@ func (s *Site) GetDirs() ([]Dir, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
-	dirs := []Dir{}
+	dirs := []ftpdir.Dir{}
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), " \t\r\n")
 		if len(line) == 0 {
 			continue
 		}
-		dir, err := ParseDir(line)
+		dir, err := ftpdir.Parse(line)
 		if err != nil {
 			return nil, err
 		}
@@ -66,12 +67,12 @@ func (s *Site) GetDirs() ([]Dir, error) {
 	return dirs, nil
 }
 
-func (s *Site) FilterDirs() ([]Dir, error) {
+func (s *Site) FilterDirs() ([]ftpdir.Dir, error) {
 	dirs, err := s.GetDirs()
 	if err != nil {
 		return nil, err
 	}
-	res := []Dir{}
+	res := []ftpdir.Dir{}
 	for _, dir := range dirs {
 		if dir.IsSymlink {
 			continue
@@ -87,7 +88,7 @@ func (s *Site) FilterDirs() ([]Dir, error) {
 	return res, nil
 }
 
-func (s *Site) LocalPath(dir Dir) (string, error) {
+func (s *Site) LocalPath(dir ftpdir.Dir) (string, error) {
 	series, err := tv.Parse(dir.Base())
 	if err != nil {
 		return "", err
@@ -103,7 +104,7 @@ func (s *Site) LocalPath(dir Dir) (string, error) {
 	return localPath, nil
 }
 
-func (s *Site) GetCmd(dir Dir) (cmd.Lftp, error) {
+func (s *Site) GetCmd(dir ftpdir.Dir) (cmd.Lftp, error) {
 	localPath, err := s.LocalPath(dir)
 	if err != nil {
 		return cmd.Lftp{}, err
@@ -115,7 +116,7 @@ func (s *Site) GetCmd(dir Dir) (cmd.Lftp, error) {
 	}, nil
 }
 
-func (s *Site) QueueCmd(dir Dir) (cmd.Lftp, error) {
+func (s *Site) QueueCmd(dir ftpdir.Dir) (cmd.Lftp, error) {
 	getCmd, err := s.GetCmd(dir)
 	if err != nil {
 		return cmd.Lftp{}, err
