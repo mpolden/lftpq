@@ -66,11 +66,12 @@ func TestQueueCmd(t *testing.T) {
 
 func TestFilterDirs(t *testing.T) {
 	s := Site{
-		Name:     "foo",
-		Dir:      "/misc",
-		MaxAge:   time.Duration(24) * time.Hour,
-		Patterns: []*regexp.Regexp{regexp.MustCompile("dir\\d")},
-		Filters:  []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
+		Name:         "foo",
+		Dir:          "/misc",
+		MaxAge:       time.Duration(24) * time.Hour,
+		Patterns:     []*regexp.Regexp{regexp.MustCompile("dir\\d")},
+		Filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
+		SkipSymlinks: true,
 	}
 	dirs := []ftpdir.Dir{
 		ftpdir.Dir{
