@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"text/template"
 	"time"
+	"github.com/martinp/lftptv/cmd"
 )
 
 type Client struct {
@@ -29,19 +29,18 @@ type Site struct {
 	Patterns  []*regexp.Regexp
 }
 
-func (s *Site) lftpCmd(cmd string) *exec.Cmd {
-	args := []string{"-e", cmd + " && exit"}
-	return exec.Command(s.LftpPath, args...)
-}
-
-func (s *Site) ListCmd() *exec.Cmd {
-	cmd := fmt.Sprintf("cls --date --time-style='%%F %%T %%z %%Z' %s",
+func (s *Site) ListCmd() cmd.Lftp {
+	args := fmt.Sprintf("cls --date --time-style='%%F %%T %%z %%Z' %s",
 		s.Dir)
-	return s.lftpCmd(cmd)
+	return cmd.Lftp{
+		Path: s.LftpPath,
+		Args: args,
+	}
 }
 
 func (s *Site) GetDirs() ([]Dir, error) {
-	cmd := s.ListCmd()
+	listCmd := s.ListCmd()
+	cmd := listCmd.Cmd()
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -97,38 +96,32 @@ func (s *Site) LocalPath(dir Dir) (string, error) {
 		return "", err
 	}
 	localPath := b.String()
-	fmt.Printf("localPath: %s", localPath)
 	if !strings.HasSuffix(localPath, string(os.PathSeparator)) {
 		localPath += string(os.PathSeparator)
 	}
 	return localPath, nil
 }
 
-func (s *Site) getCmd(dir Dir) (string, error) {
+func (s *Site) GetCmd(dir Dir) (cmd.Lftp, error) {
 	localPath, err := s.LocalPath(dir)
 	if err != nil {
-		return "", err
+		return cmd.Lftp{}, err
 	}
-	return fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localPath), nil
+	args := fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localPath)
+	return cmd.Lftp{
+		Path: s.LftpPath,
+		Args: args,
+	}, nil
 }
 
-func (s *Site) GetCmd(dir Dir) (*exec.Cmd, error) {
-	getCmd, err := s.getCmd(dir)
+func (s *Site) QueueCmd(dir Dir) (cmd.Lftp, error) {
+	getCmd, err := s.GetCmd(dir)
 	if err != nil {
-		return nil, err
+		return cmd.Lftp{}, err
 	}
-	return s.lftpCmd(getCmd), nil
-}
-
-func (s *Site) QueueCmd(dir Dir) (string, error) {
-	getCmd, err := s.getCmd(dir)
-	if err != nil {
-		return "", err
-	}
-	return "queue " + getCmd, nil
-}
-
-func (s *Site) QueueCmds(cmds []string) string {
-	cmds = append(cmds, "queue start", "wait")
-	return strings.Join(cmds, " && ")
+	args := "queue " + getCmd.Args
+	return cmd.Lftp{
+		Path: s.LftpPath,
+		Args: args,
+	}, nil
 }

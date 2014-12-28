@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
+	"github.com/martinp/lftptv/cmd"
 	"github.com/martinp/lftptv/site"
 	"log"
 	"os"
@@ -26,7 +27,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		cmds := []string{}
+		cmds := make([]cmd.Lftp, 0, len(dirs))
 		for _, d := range dirs {
 			cmd, err := s.QueueCmd(d)
 			if err != nil {
@@ -35,6 +36,6 @@ func main() {
 			}
 			cmds = append(cmds, cmd)
 		}
-		fmt.Println(s.QueueCmds(cmds))
+		fmt.Println(cmd.Join(cmds))
 	}
 }
