@@ -37,6 +37,7 @@ func (s *Site) ListCmd() cmd.Lftp {
 	return cmd.Lftp{
 		Path: s.LftpPath,
 		Args: args,
+		Site: s.Name,
 	}
 }
 
@@ -113,6 +114,7 @@ func (s *Site) GetCmd(dir ftpdir.Dir) (cmd.Lftp, error) {
 	return cmd.Lftp{
 		Path: s.LftpPath,
 		Args: args,
+		Site: s.Name,
 	}, nil
 }
 
@@ -125,5 +127,6 @@ func (s *Site) QueueCmd(dir ftpdir.Dir) (cmd.Lftp, error) {
 	return cmd.Lftp{
 		Path: s.LftpPath,
 		Args: args,
+		Site: s.Name,
 	}, nil
 }

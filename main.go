@@ -36,6 +36,10 @@ func main() {
 			}
 			cmds = append(cmds, cmd)
 		}
-		fmt.Println(cmd.Join(cmds))
+		allCmds, err := cmd.Join(cmds)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(allCmds.String())
 	}
 }
