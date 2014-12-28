@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -21,6 +22,18 @@ type Client struct {
 type Config struct {
 	Client Client
 	Sites  []Site
+}
+
+func CompilePatterns(patterns []string) ([]*regexp.Regexp, error) {
+	res := make([]*regexp.Regexp, 0, len(patterns))
+	for _, p := range patterns {
+		re, err := regexp.Compile(p)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, re)
+	}
+	return res, nil
 }
 
 func ReadConfig(name string) (Config, error) {
@@ -38,18 +51,25 @@ func ReadConfig(name string) (Config, error) {
 			return Config{}, err
 		}
 		cfg.Sites[i].MaxAge = maxAge
+		patterns, err := CompilePatterns(site.Patterns_)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.Sites[i].Patterns = patterns
 		cfg.Sites[i].Client = cfg.Client
+
 	}
 	return cfg, nil
 }
 
 type Site struct {
 	Client
-	Name    string
-	Dir     string
-	MaxAge  time.Duration
-	MaxAge_ string `json:"MaxAge"`
-	Shows   []string
+	Name      string
+	Dir       string
+	MaxAge    time.Duration
+	MaxAge_   string   `json:"MaxAge"`
+	Patterns_ []string `json:"Patterns"`
+	Patterns  []*regexp.Regexp
 }
 
 func (s *Site) lftpCmd(cmd string) *exec.Cmd {
@@ -99,7 +119,7 @@ func (s *Site) FilterDirs(dirs []Dir) []Dir {
 		if !dir.CreatedAfter(s.MaxAge) {
 			continue
 		}
-		if !dir.MatchAny(s.Shows) {
+		if !dir.MatchAny(s.Patterns) {
 			continue
 		}
 		res = append(res, dir)

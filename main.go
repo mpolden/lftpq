@@ -5,6 +5,7 @@ import (
 	"github.com/martinp/lftptv/site"
 	"log"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -15,13 +16,10 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-
 	cfg, err := site.ReadConfig(opts.Config)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Printf("%+v", cfg)
 	for _, s := range cfg.Sites {
 		dirs, err := s.GetDirs()
 		if err != nil {
@@ -29,12 +27,13 @@ func main() {
 		}
 		fdirs := s.FilterDirs(dirs)
 		for _, d := range fdirs {
-			_, err := s.GetCmd(d)
+			cmd, err := s.GetCmd(d)
 			if err != nil {
-				log.Printf("failed to get cmd: %s", err)
+				log.Printf("failed to get cmd for %s: %s",
+					d.Name, err)
 				continue
 			}
-
+			log.Print(strings.Join(cmd.Args, " "))
 		}
 	}
 }

@@ -2,6 +2,7 @@ package site
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -36,15 +37,15 @@ func (d *Dir) CreatedAfter(age time.Duration) bool {
 	return d.Created.After(time.Now().Add(-age))
 }
 
-func (d *Dir) MatchAny(ss []string) bool {
-	for _, s := range ss {
-		if d.Match(s) {
+func (d *Dir) MatchAny(patterns []*regexp.Regexp) bool {
+	for _, p := range patterns {
+		if d.Match(p) {
 			return true
 		}
 	}
 	return false
 }
 
-func (d *Dir) Match(s string) bool {
-	return strings.HasPrefix(d.Name, s)
+func (d *Dir) Match(pattern *regexp.Regexp) bool {
+	return pattern.MatchString(d.Name)
 }

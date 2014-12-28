@@ -1,6 +1,7 @@
 package site
 
 import (
+	"regexp"
 	"testing"
 	"time"
 )
@@ -43,10 +44,10 @@ func TestMatch(t *testing.T) {
 		Name:    "foo",
 		Created: time.Now(),
 	}
-	if !d.Match("f") {
+	if !d.Match(regexp.MustCompile("f")) {
 		t.Fatal("Expected true")
 	}
-	if d.Match("o") {
+	if d.Match(regexp.MustCompile("bar")) {
 		t.Fatal("Expected false")
 	}
 }
@@ -56,10 +57,18 @@ func TestMatchAny(t *testing.T) {
 		Name:    "foo",
 		Created: time.Now(),
 	}
-	if !d.MatchAny([]string{"b", "f"}) {
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile("fo"),
+		regexp.MustCompile("ba"),
+	}
+	if !d.MatchAny(patterns) {
 		t.Fatal("Expected true")
 	}
-	if d.MatchAny([]string{"x", "z"}) {
+	patterns = []*regexp.Regexp{
+		regexp.MustCompile("x"),
+		regexp.MustCompile("z"),
+	}
+	if d.MatchAny(patterns) {
 		t.Fatal("Expected false")
 	}
 }
