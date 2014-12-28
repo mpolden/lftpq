@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -36,4 +38,33 @@ func Join(cmds []Lftp) (Lftp, error) {
 		Args: args,
 		Site: cmds[0].Site,
 	}, nil
+}
+
+func (l *Lftp) Run() error {
+	cmd := l.Cmd()
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+	go func() {
+		if _, err := io.Copy(os.Stdout, stdout); err != nil {
+			panic(err)
+		}
+	}()
+	go func() {
+		if _, err := io.Copy(os.Stderr, stderr); err != nil {
+			panic(err)
+		}
+	}()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	if err := cmd.Wait(); err != nil {
+		return err
+	}
+	return nil
 }

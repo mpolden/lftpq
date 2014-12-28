@@ -43,11 +43,9 @@ func main() {
 		if opts.Dryrun {
 			fmt.Println(queueCmd.String())
 		} else {
-			out, err := queueCmd.Cmd().Output()
-			if err != nil {
+			if err := queueCmd.Run(); err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("%s", out)
 		}
 	}
 }
