@@ -6,7 +6,6 @@ import (
 	"github.com/martinp/lftptv/site"
 	"log"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -27,14 +26,15 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		cmd, err := s.QueueCmd(dirs)
-		if err != nil {
-			log.Fatal(err)
+		cmds := []string{}
+		for _, d := range dirs {
+			cmd, err := s.QueueCmd(d)
+			if err != nil {
+				log.Printf("Failed to create queue cmd for %s: %s", d.Path, err)
+				continue
+			}
+			cmds = append(cmds, cmd)
 		}
-		if opts.Dryrun {
-			fmt.Println(strings.Join(cmd.Args, " "))
-		} else {
-			fmt.Printf("running %s\n", strings.Join(cmd.Args, " "))
-		}
+		fmt.Println(s.QueueCmds(cmds))
 	}
 }

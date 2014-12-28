@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"regexp"
+	"text/template"
 	"time"
 )
 
@@ -22,6 +23,14 @@ func CompilePatterns(patterns []string) ([]*regexp.Regexp, error) {
 		res = append(res, re)
 	}
 	return res, nil
+}
+
+func ParseTemplate(tmpl string) (*template.Template, error) {
+	t, err := template.New("localPath").Parse(tmpl)
+	if err != nil {
+		return nil, err
+	}
+	return t, nil
 }
 
 func ReadConfig(name string) (Config, error) {
@@ -45,6 +54,11 @@ func ReadConfig(name string) (Config, error) {
 		}
 		cfg.Sites[i].Patterns = patterns
 		cfg.Sites[i].Client = cfg.Client
+		tmpl, err := ParseTemplate(cfg.Client.LocalPath_)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.Sites[i].Client.LocalPath = tmpl
 
 	}
 	return cfg, nil

@@ -2,19 +2,21 @@ package site
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 	"time"
 )
 
 type Client struct {
 	LftpGetCmd string
 	LftpPath   string
-	LocalPath  string
+	LocalPath  *template.Template
+	LocalPath_ string `json:"LocalPath"`
 }
 
 type Site struct {
@@ -90,8 +92,12 @@ func (s *Site) LocalPath(dir Dir) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	localPath := filepath.Join(s.Client.LocalPath, series.Name,
-		"S"+series.Season)
+	var b bytes.Buffer
+	if err := s.Client.LocalPath.Execute(&b, series); err != nil {
+		return "", err
+	}
+	localPath := b.String()
+	fmt.Printf("localPath: %s", localPath)
 	if !strings.HasSuffix(localPath, string(os.PathSeparator)) {
 		localPath += string(os.PathSeparator)
 	}
@@ -114,24 +120,15 @@ func (s *Site) GetCmd(dir Dir) (*exec.Cmd, error) {
 	return s.lftpCmd(getCmd), nil
 }
 
-func (s *Site) queueCmd(dirs []Dir) (string, error) {
-	queueCmds := []string{}
-	for _, d := range dirs {
-		getCmd, err := s.getCmd(d)
-		if err != nil {
-			return "", err
-		}
-		queueCmds = append(queueCmds, "queue "+getCmd)
+func (s *Site) QueueCmd(dir Dir) (string, error) {
+	getCmd, err := s.getCmd(dir)
+	if err != nil {
+		return "", err
 	}
-	queueCmds = append(queueCmds, "queue start")
-	queueCmds = append(queueCmds, "wait")
-	return strings.Join(queueCmds, " && "), nil
+	return "queue " + getCmd, nil
 }
 
-func (s *Site) QueueCmd(dirs []Dir) (*exec.Cmd, error) {
-	queueCmd, err := s.queueCmd(dirs)
-	if err != nil {
-		return nil, err
-	}
-	return s.lftpCmd(queueCmd), nil
+func (s *Site) QueueCmds(cmds []string) string {
+	cmds = append(cmds, "queue start", "wait")
+	return strings.Join(cmds, " && ")
 }
