@@ -9,9 +9,10 @@ import (
 var seriesExp = regexp.MustCompile("(.*)\\.(?:(S(\\d{2})E(\\d{2})|(\\d{1,2})x(\\d{2})))")
 
 type Series struct {
-	Name    string
-	Season  string
-	Episode string
+	ReleaseName string
+	Name        string
+	Season      string
+	Episode     string
 }
 
 func ParseSeries(s string) (Series, error) {
@@ -36,8 +37,9 @@ func ParseSeries(s string) (Series, error) {
 		return Series{}, fmt.Errorf("failed to parse season and episode")
 	}
 	return Series{
-		Name:    name,
-		Season:  season,
-		Episode: episode,
+		ReleaseName: s,
+		Name:        name,
+		Season:      season,
+		Episode:     episode,
 	}, nil
 }

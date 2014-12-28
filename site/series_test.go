@@ -12,9 +12,10 @@ func TestParseSeries(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := Series{
-		Name:    "Gotham",
-		Season:  "01",
-		Episode: "01",
+		ReleaseName: s,
+		Name:        "Gotham",
+		Season:      "01",
+		Episode:     "01",
 	}
 	if !reflect.DeepEqual(series, expected) {
 		t.Fatalf("Expected %+v, got %+v", expected, series)
@@ -28,9 +29,10 @@ func TestParseSeries2(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := Series{
-		Name:    "Top.Gear",
-		Season:  "21",
-		Episode: "02",
+		ReleaseName: s,
+		Name:        "Top.Gear",
+		Season:      "21",
+		Episode:     "02",
 	}
 	if !reflect.DeepEqual(series, expected) {
 		t.Fatalf("Expected %+v, got %+v", expected, series)
@@ -44,9 +46,10 @@ func TestParseSeries3(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := Series{
-		Name:    "Eastbound.and.Down",
-		Season:  "02",
-		Episode: "05",
+		ReleaseName: s,
+		Name:        "Eastbound.and.Down",
+		Season:      "02",
+		Episode:     "05",
 	}
 	if !reflect.DeepEqual(series, expected) {
 		t.Fatalf("Expected %+v, got %+v", expected, series)
