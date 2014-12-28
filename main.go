@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/jessevdk/go-flags"
 	"github.com/martinp/lftptv/site"
 	"log"
@@ -10,6 +11,7 @@ import (
 
 func main() {
 	var opts struct {
+		Dryrun bool   `short:"n" long:"dryrun" description:"Print generated command instead of running it"`
 		Config string `short:"f" long:"config" description:"Path to config" value-name:"FILE" required:"true"`
 	}
 	_, err := flags.ParseArgs(&opts, os.Args)
@@ -21,19 +23,18 @@ func main() {
 		log.Fatal(err)
 	}
 	for _, s := range cfg.Sites {
-		dirs, err := s.GetDirs()
+		dirs, err := s.FilterDirs()
 		if err != nil {
 			log.Fatal(err)
 		}
-		fdirs := s.FilterDirs(dirs)
-		for _, d := range fdirs {
-			cmd, err := s.GetCmd(d)
-			if err != nil {
-				log.Printf("failed to get cmd for %s: %s",
-					d.Name, err)
-				continue
-			}
-			log.Print(strings.Join(cmd.Args, " "))
+		cmd, err := s.QueueCmd(dirs)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if opts.Dryrun {
+			fmt.Println(strings.Join(cmd.Args, " "))
+		} else {
+			fmt.Printf("running %s\n", strings.Join(cmd.Args, " "))
 		}
 	}
 }

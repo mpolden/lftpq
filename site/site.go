@@ -110,7 +110,11 @@ func (s *Site) GetDirs() ([]Dir, error) {
 	return dirs, nil
 }
 
-func (s *Site) FilterDirs(dirs []Dir) []Dir {
+func (s *Site) FilterDirs() ([]Dir, error) {
+	dirs, err := s.GetDirs()
+	if err != nil {
+		return nil, err
+	}
 	res := []Dir{}
 	for _, dir := range dirs {
 		if dir.IsSymlink {
@@ -124,7 +128,7 @@ func (s *Site) FilterDirs(dirs []Dir) []Dir {
 		}
 		res = append(res, dir)
 	}
-	return res
+	return res, nil
 }
 
 func (s *Site) LocalPath(dir Dir) (string, error) {
