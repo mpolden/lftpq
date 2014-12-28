@@ -30,6 +30,8 @@ type Site struct {
 	MaxAge_   string   `json:"MaxAge"`
 	Patterns_ []string `json:"Patterns"`
 	Patterns  []*regexp.Regexp
+	Filters_  []string `json:"Filters"`
+	Filters   []*regexp.Regexp
 }
 
 func (s *Site) ListCmd() cmd.Lftp {
@@ -69,11 +71,7 @@ func (s *Site) GetDirs() ([]ftpdir.Dir, error) {
 	return dirs, nil
 }
 
-func (s *Site) FilterDirs() ([]ftpdir.Dir, error) {
-	dirs, err := s.GetDirs()
-	if err != nil {
-		return nil, err
-	}
+func (s *Site) FilterDirs(dirs []ftpdir.Dir) ([]ftpdir.Dir) {
 	res := []ftpdir.Dir{}
 	for _, dir := range dirs {
 		if dir.IsSymlink {
@@ -85,9 +83,12 @@ func (s *Site) FilterDirs() ([]ftpdir.Dir, error) {
 		if !dir.MatchAny(s.Patterns) {
 			continue
 		}
+		if dir.MatchAny(s.Filters) {
+			continue
+		}
 		res = append(res, dir)
 	}
-	return res, nil
+	return res
 }
 
 func (s *Site) LocalPath(dir ftpdir.Dir) (string, error) {

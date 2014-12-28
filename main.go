@@ -23,15 +23,17 @@ func main() {
 		log.Fatal(err)
 	}
 	for _, s := range cfg.Sites {
-		dirs, err := s.FilterDirs()
+		dirs, err := s.GetDirs()
 		if err != nil {
 			log.Fatal(err)
 		}
+		filtered := s.FilterDirs(dirs)
 		cmds := make([]cmd.Lftp, 0, len(dirs))
-		for _, d := range dirs {
+		for _, d := range filtered {
 			cmd, err := s.QueueCmd(d)
 			if err != nil {
-				log.Printf("Failed to create queue cmd for %s: %s", d.Path, err)
+				log.Printf("Skipping cmd for %s: %s", d.Path,
+					err)
 				continue
 			}
 			cmds = append(cmds, cmd)

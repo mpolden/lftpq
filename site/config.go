@@ -59,6 +59,11 @@ func ReadConfig(name string) (Config, error) {
 			return Config{}, err
 		}
 		cfg.Sites[i].Patterns = patterns
+		filters, err := CompilePatterns(site.Filters_)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.Sites[i].Filters = filters
 		cfg.Sites[i].Client = cfg.Client
 		tmpl, err := ParseTemplate(cfg.Client.LocalPath_)
 		if err != nil {

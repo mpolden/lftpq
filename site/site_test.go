@@ -2,6 +2,8 @@ package site
 
 import (
 	"github.com/martinp/lftpfetch/ftpdir"
+	"reflect"
+	"regexp"
 	"testing"
 	"text/template"
 	"time"
@@ -59,5 +61,47 @@ func TestQueueCmd(t *testing.T) {
 	}
 	if queueCmd.Args != expected {
 		t.Fatalf("Expected %s, got %s", expected, queueCmd.Args)
+	}
+}
+
+func TestFilterDirs(t *testing.T) {
+	s := Site{
+		Name:     "foo",
+		Dir:      "/misc",
+		MaxAge:   time.Duration(24) * time.Hour,
+		Patterns: []*regexp.Regexp{regexp.MustCompile("dir\\d")},
+		Filters:  []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
+	}
+	dirs := []ftpdir.Dir{
+		ftpdir.Dir{
+			Path:    "/tmp/dir1@",
+			Created: time.Now(),
+			// Filtered because of symlink
+			IsSymlink: true,
+		},
+		ftpdir.Dir{
+			Path: "/tmp/dir2",
+			// Filtered because of exceeded MaxAge
+			Created: time.Now().Add(-time.Duration(48) * time.Hour),
+		},
+		ftpdir.Dir{
+			Path: "/tmp/foo",
+			// Filtered because of not matching any Patterns
+			Created: time.Now(),
+		},
+		ftpdir.Dir{
+			Path: "/tmp/incomplete-dir3",
+			// Filtered because of matching any Filters
+			Created: time.Now(),
+		},
+		ftpdir.Dir{
+			Path:    "/tmp/dir4",
+			Created: time.Now(),
+		},
+	}
+	expected := []ftpdir.Dir{dirs[4]}
+	filtered := s.FilterDirs(dirs)
+	if !reflect.DeepEqual(expected, filtered) {
+		t.Fatalf("Expected %+v, got %+v", expected, filtered)
 	}
 }
