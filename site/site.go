@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/martinp/lftpfetch/cmd"
+	"github.com/martinp/lftpfetch/tv"
 	"os"
 	"regexp"
 	"strings"
@@ -87,7 +88,7 @@ func (s *Site) FilterDirs() ([]Dir, error) {
 }
 
 func (s *Site) LocalPath(dir Dir) (string, error) {
-	series, err := ParseSeries(dir.Base())
+	series, err := tv.Parse(dir.Base())
 	if err != nil {
 		return "", err
 	}
