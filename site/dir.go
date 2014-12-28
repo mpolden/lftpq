@@ -2,6 +2,7 @@ package site
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -13,7 +14,7 @@ type Dir struct {
 	IsSymlink bool
 }
 
-func ParseDir(s string) (Dir, error) {
+func ParseDir(prefix string, s string) (Dir, error) {
 	words := strings.SplitN(s, " ", 5)
 	if len(words) != 5 {
 		return Dir{}, fmt.Errorf("expected 5 words, found %d", len(words))
@@ -23,7 +24,7 @@ func ParseDir(s string) (Dir, error) {
 	if err != nil {
 		return Dir{}, err
 	}
-	name := words[4]
+	name := filepath.Join(prefix, words[4])
 	isSymlink := strings.HasSuffix(name, "@")
 	name = strings.TrimRight(name, "@/")
 	return Dir{

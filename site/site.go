@@ -100,7 +100,7 @@ func (s *Site) GetDirs() ([]Dir, error) {
 		if len(line) == 0 {
 			continue
 		}
-		dir, err := ParseDir(line)
+		dir, err := ParseDir(s.Dir, line)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +145,7 @@ func (s *Site) GetCmd(dir Dir) (*exec.Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
-	options := fmt.Sprintf("cd %s && %s %s %s && exit", s.Dir, s.LftpGetCmd,
+	options := fmt.Sprintf("%s %s %s && exit", s.LftpGetCmd,
 		dir.Name, localPath)
 	return s.lftpCmd(options), nil
 }
