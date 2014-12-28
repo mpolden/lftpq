@@ -8,12 +8,12 @@ import (
 
 func TestParseDir(t *testing.T) {
 	s := "2014-12-16 00:04:30 +0100 CET foo/"
-	dir, err := ParseDir("", s)
+	dir, err := ParseDir("/tmp", s)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if name := "foo"; dir.Name != name {
-		t.Fatalf("Expected %s, got %s", name, dir.Name)
+	if name := "foo"; dir.Base() != name {
+		t.Fatalf("Expected %s, got %s", name, dir.Base())
 	}
 	d := time.Date(2014, 12, 16, 0, 4, 30, 0, time.FixedZone("CET", 1))
 	if created := d; dir.Created.Equal(created) {
@@ -24,14 +24,14 @@ func TestParseDir(t *testing.T) {
 func TestCreatedAfter(t *testing.T) {
 	age := time.Duration(24) * time.Hour
 	d1 := Dir{
-		Name:    "foo",
+		Path:    "/tmp/foo",
 		Created: time.Now(),
 	}
 	if !d1.CreatedAfter(age) {
 		t.Fatal("Expected true")
 	}
 	d2 := Dir{
-		Name:    "bar",
+		Path:    "/tmp/bar",
 		Created: time.Now().Add(-time.Duration(48) * time.Hour),
 	}
 	if d2.CreatedAfter(age) {
@@ -41,7 +41,7 @@ func TestCreatedAfter(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	d := Dir{
-		Name:    "foo",
+		Path:    "/tmp/foo",
 		Created: time.Now(),
 	}
 	if !d.Match(regexp.MustCompile("f")) {
@@ -54,7 +54,7 @@ func TestMatch(t *testing.T) {
 
 func TestMatchAny(t *testing.T) {
 	d := Dir{
-		Name:    "foo",
+		Path:    "/tmp/foo",
 		Created: time.Now(),
 	}
 	patterns := []*regexp.Regexp{

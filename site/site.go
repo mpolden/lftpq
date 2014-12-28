@@ -128,7 +128,7 @@ func (s *Site) FilterDirs(dirs []Dir) []Dir {
 }
 
 func (s *Site) LocalPath(dir Dir) (string, error) {
-	series, err := ParseSeries(dir.Name)
+	series, err := ParseSeries(dir.Base())
 	if err != nil {
 		return "", err
 	}
@@ -155,4 +155,25 @@ func (s *Site) GetCmd(dir Dir) (*exec.Cmd, error) {
 	}
 	return s.lftpCmd(getCmd), nil
 }
+
+func (s *Site) queueCmd(dirs []Dir) (string, error) {
+	queueCmds := []string{}
+	for _, d := range dirs {
+		getCmd, err := s.getCmd(d)
+		if err != nil {
+			return "", err
+		}
+		queueCmds = append(queueCmds, "queue "+getCmd)
+	}
+	queueCmds = append(queueCmds, "queue start")
+	queueCmds = append(queueCmds, "wait")
+	return strings.Join(queueCmds, " && "), nil
+}
+
+func (s *Site) QueueCmd(dirs []Dir) (*exec.Cmd, error) {
+	queueCmd, err := s.queueCmd(dirs)
+	if err != nil {
+		return nil, err
+	}
+	return s.lftpCmd(queueCmd), nil
 }

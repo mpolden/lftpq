@@ -10,7 +10,6 @@ import (
 
 type Dir struct {
 	Created   time.Time
-	Name      string
 	Path      string
 	IsSymlink bool
 }
@@ -25,16 +24,18 @@ func ParseDir(prefix string, s string) (Dir, error) {
 	if err != nil {
 		return Dir{}, err
 	}
-	name := words[4]
-	path := filepath.Join(prefix, name)
-	isSymlink := strings.HasSuffix(name, "@")
-	name = strings.TrimRight(name, "@/")
+	path := filepath.Join(prefix, words[4])
+	isSymlink := strings.HasSuffix(path, "@")
+	path = strings.TrimRight(path, "@/")
 	return Dir{
-		Name:      name,
 		Path:      path,
 		Created:   created,
 		IsSymlink: isSymlink,
 	}, nil
+}
+
+func (d *Dir) Base() string {
+	return filepath.Base(d.Path)
 }
 
 func (d *Dir) CreatedAfter(age time.Duration) bool {
@@ -51,5 +52,5 @@ func (d *Dir) MatchAny(patterns []*regexp.Regexp) bool {
 }
 
 func (d *Dir) Match(pattern *regexp.Regexp) bool {
-	return pattern.MatchString(d.Name)
+	return pattern.MatchString(d.Base())
 }
