@@ -73,7 +73,7 @@ type Site struct {
 }
 
 func (s *Site) lftpCmd(cmd string) *exec.Cmd {
-	args := []string{"-e", cmd}
+	args := []string{"-e", cmd + " && exit"}
 	return exec.Command(s.LftpPath, args...)
 }
 
@@ -140,12 +140,19 @@ func (s *Site) LocalPath(dir Dir) (string, error) {
 	return localPath, nil
 }
 
-func (s *Site) GetCmd(dir Dir) (*exec.Cmd, error) {
+func (s *Site) getCmd(dir Dir) (string, error) {
 	localPath, err := s.LocalPath(dir)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localPath), nil
+}
+
+func (s *Site) GetCmd(dir Dir) (*exec.Cmd, error) {
+	getCmd, err := s.getCmd(dir)
 	if err != nil {
 		return nil, err
 	}
-	options := fmt.Sprintf("%s %s %s && exit", s.LftpGetCmd,
-		dir.Name, localPath)
-	return s.lftpCmd(options), nil
+	return s.lftpCmd(getCmd), nil
+}
 }

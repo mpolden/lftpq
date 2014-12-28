@@ -11,6 +11,7 @@ import (
 type Dir struct {
 	Created   time.Time
 	Name      string
+	Path      string
 	IsSymlink bool
 }
 
@@ -24,11 +25,13 @@ func ParseDir(prefix string, s string) (Dir, error) {
 	if err != nil {
 		return Dir{}, err
 	}
-	name := filepath.Join(prefix, words[4])
+	name := words[4]
+	path := filepath.Join(prefix, name)
 	isSymlink := strings.HasSuffix(name, "@")
 	name = strings.TrimRight(name, "@/")
 	return Dir{
 		Name:      name,
+		Path:      path,
 		Created:   created,
 		IsSymlink: isSymlink,
 	}, nil
