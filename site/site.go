@@ -8,6 +8,7 @@ import (
 	"github.com/martinp/lftpfetch/ftpdir"
 	"github.com/martinp/lftpfetch/tv"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
@@ -90,12 +91,12 @@ func (s *Site) FilterDirs() ([]ftpdir.Dir, error) {
 }
 
 func (s *Site) LocalPath(dir ftpdir.Dir) (string, error) {
-	series, err := tv.Parse(dir.Base())
+	show, err := tv.Parse(dir.Base())
 	if err != nil {
 		return "", err
 	}
 	var b bytes.Buffer
-	if err := s.Client.LocalPath.Execute(&b, series); err != nil {
+	if err := s.Client.LocalPath.Execute(&b, show); err != nil {
 		return "", err
 	}
 	localPath := b.String()
@@ -109,6 +110,10 @@ func (s *Site) GetCmd(dir ftpdir.Dir) (cmd.Lftp, error) {
 	localPath, err := s.LocalPath(dir)
 	if err != nil {
 		return cmd.Lftp{}, err
+	}
+	dstPath := filepath.Join(localPath, dir.Base())
+	if _, err := os.Stat(dstPath); err == nil {
+		return cmd.Lftp{}, fmt.Errorf("%s already exists", dstPath)
 	}
 	args := fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localPath)
 	return cmd.Lftp{
