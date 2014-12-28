@@ -3,6 +3,8 @@ package site
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"regexp"
 	"text/template"
 	"time"
@@ -34,6 +36,10 @@ func ParseTemplate(tmpl string) (*template.Template, error) {
 }
 
 func ReadConfig(name string) (Config, error) {
+	if name == "~/.lftpfetchrc" {
+		home := os.Getenv("HOME")
+		name = filepath.Join(home, ".lftpfetchrc")
+	}
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
 		return Config{}, err
