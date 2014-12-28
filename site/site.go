@@ -7,6 +7,7 @@ import (
 	"github.com/martinp/lftpfetch/cmd"
 	"github.com/martinp/lftpfetch/ftpdir"
 	"github.com/martinp/lftpfetch/tv"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -52,6 +53,15 @@ func (s *Site) GetDirs() ([]ftpdir.Dir, error) {
 	if err != nil {
 		return nil, err
 	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		if _, err := io.Copy(os.Stderr, stderr); err != nil {
+			panic(err)
+		}
+	}()
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
@@ -66,8 +76,13 @@ func (s *Site) GetDirs() ([]ftpdir.Dir, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		dirs = append(dirs, dir)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	if err := cmd.Wait(); err != nil {
+		return nil, err
 	}
 	return dirs, nil
 }
