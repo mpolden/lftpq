@@ -33,9 +33,8 @@ func (s *Site) lftpCmd(cmd string) *exec.Cmd {
 }
 
 func (s *Site) ListCmd() *exec.Cmd {
-	cmd := fmt.Sprintf(`cd %s &&
-cls --date --time-style='%%F %%T %%z %%Z' &&
-exit`, s.Dir)
+	cmd := fmt.Sprintf("cls --date --time-style='%%F %%T %%z %%Z' %s",
+		s.Dir)
 	return s.lftpCmd(cmd)
 }
 
@@ -55,7 +54,7 @@ func (s *Site) GetDirs() ([]Dir, error) {
 		if len(line) == 0 {
 			continue
 		}
-		dir, err := ParseDir(s.Dir, line)
+		dir, err := ParseDir(line)
 		if err != nil {
 			return nil, err
 		}

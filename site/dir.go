@@ -14,7 +14,7 @@ type Dir struct {
 	IsSymlink bool
 }
 
-func ParseDir(prefix string, s string) (Dir, error) {
+func ParseDir(s string) (Dir, error) {
 	words := strings.SplitN(s, " ", 5)
 	if len(words) != 5 {
 		return Dir{}, fmt.Errorf("expected 5 words, found %d", len(words))
@@ -24,7 +24,7 @@ func ParseDir(prefix string, s string) (Dir, error) {
 	if err != nil {
 		return Dir{}, err
 	}
-	path := filepath.Join(prefix, words[4])
+	path := words[4]
 	isSymlink := strings.HasSuffix(path, "@")
 	path = strings.TrimRight(path, "@/")
 	return Dir{
