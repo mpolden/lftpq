@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
-	"github.com/martinp/lftptv/cmd"
-	"github.com/martinp/lftptv/site"
+	"github.com/martinp/lftpfetch/cmd"
+	"github.com/martinp/lftpfetch/site"
 	"log"
 	"os"
 )

@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.box = "chef/ubuntu-14.04"
-  config.vm.synced_folder ".", "/go/src/github.com/martinp/lftptv"
+  config.vm.synced_folder ".", "/go/src/github.com/martinp/lftpfetch"
   config.vm.synced_folder "salt/roots/", "/srv/salt/"
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", "512"]

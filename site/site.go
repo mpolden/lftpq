@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/martinp/lftpfetch/cmd"
 	"os"
 	"regexp"
 	"strings"
 	"text/template"
 	"time"
-	"github.com/martinp/lftptv/cmd"
 )
 
 type Client struct {
