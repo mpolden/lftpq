@@ -1,7 +1,6 @@
 package site
 
 import (
-	"github.com/martinp/lftpfetch/ftpdir"
 	"reflect"
 	"regexp"
 	"testing"
@@ -22,7 +21,7 @@ func TestGetCmd(t *testing.T) {
 		Dir:    "/misc",
 		MaxAge: time.Duration(24) * time.Hour,
 	}
-	d := ftpdir.Dir{
+	d := Dir{
 		Path:    "/misc/The.Wire.S02E01.720p.HDTV.x264-BATV",
 		Created: time.Now(),
 	}
@@ -49,7 +48,7 @@ func TestQueueCmd(t *testing.T) {
 		Dir:    "/misc",
 		MaxAge: time.Duration(24) * time.Hour,
 	}
-	dir := ftpdir.Dir{
+	dir := Dir{
 		Path:    "/misc/The.Wire.S02E01",
 		Created: time.Now(),
 	}
@@ -73,34 +72,34 @@ func TestFilterDirs(t *testing.T) {
 		Filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
 		SkipSymlinks: true,
 	}
-	dirs := []ftpdir.Dir{
-		ftpdir.Dir{
+	dirs := []Dir{
+		Dir{
 			Path:    "/tmp/dir1@",
 			Created: time.Now(),
 			// Filtered because of symlink
 			IsSymlink: true,
 		},
-		ftpdir.Dir{
+		Dir{
 			Path: "/tmp/dir2",
 			// Filtered because of exceeded MaxAge
 			Created: time.Now().Add(-time.Duration(48) * time.Hour),
 		},
-		ftpdir.Dir{
+		Dir{
 			Path: "/tmp/foo",
 			// Filtered because of not matching any Patterns
 			Created: time.Now(),
 		},
-		ftpdir.Dir{
+		Dir{
 			Path: "/tmp/incomplete-dir3",
 			// Filtered because of matching any Filters
 			Created: time.Now(),
 		},
-		ftpdir.Dir{
+		Dir{
 			Path:    "/tmp/dir4",
 			Created: time.Now(),
 		},
 	}
-	expected := []ftpdir.Dir{dirs[4]}
+	expected := []Dir{dirs[4]}
 	filtered := s.FilterDirs(dirs)
 	if !reflect.DeepEqual(expected, filtered) {
 		t.Fatalf("Expected %+v, got %+v", expected, filtered)

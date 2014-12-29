@@ -1,4 +1,4 @@
-package ftpdir
+package site
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type Dir struct {
 	IsSymlink bool
 }
 
-func Parse(s string) (Dir, error) {
+func ParseDir(s string) (Dir, error) {
 	words := strings.SplitN(s, " ", 5)
 	if len(words) != 5 {
 		return Dir{}, fmt.Errorf("expected 5 words, found %d", len(words))
