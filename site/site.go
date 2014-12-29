@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/martinp/lftpfetch/cmd"
 	"github.com/martinp/lftpfetch/ftpdir"
-	"github.com/martinp/lftpfetch/tv"
 	"io"
 	"os"
 	"path/filepath"
@@ -108,7 +107,7 @@ func (s *Site) FilterDirs(dirs []ftpdir.Dir) []ftpdir.Dir {
 }
 
 func (s *Site) LocalPath(dir ftpdir.Dir) (string, error) {
-	show, err := tv.Parse(dir.Base())
+	show, err := dir.Show()
 	if err != nil {
 		return "", err
 	}

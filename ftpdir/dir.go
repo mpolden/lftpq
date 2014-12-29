@@ -2,6 +2,7 @@ package ftpdir
 
 import (
 	"fmt"
+	"github.com/martinp/lftpfetch/tv"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -53,4 +54,12 @@ func (d *Dir) MatchAny(patterns []*regexp.Regexp) bool {
 
 func (d *Dir) Match(pattern *regexp.Regexp) bool {
 	return pattern.MatchString(d.Base())
+}
+
+func (d *Dir) Show() (tv.Show, error) {
+	show, err := tv.Parse(d.Base())
+	if err != nil {
+		return tv.Show{}, err
+	}
+	return show, nil
 }

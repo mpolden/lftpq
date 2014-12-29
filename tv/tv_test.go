@@ -11,7 +11,7 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := TVShow{
+	expected := Show{
 		Release: s,
 		Name:    "Gotham",
 		Season:  "01",
@@ -28,7 +28,7 @@ func TestParse2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := TVShow{
+	expected := Show{
 		Release: s,
 		Name:    "Top.Gear",
 		Season:  "21",
@@ -45,7 +45,7 @@ func TestParse3(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := TVShow{
+	expected := Show{
 		Release: s,
 		Name:    "Eastbound.and.Down",
 		Season:  "02",
