@@ -145,10 +145,6 @@ func (s *Site) QueueCmd(dir ftpdir.Dir) (cmd.Lftp, error) {
 	if err != nil {
 		return cmd.Lftp{}, err
 	}
-	args := "queue " + getCmd.Args
-	return cmd.Lftp{
-		Path: s.LftpPath,
-		Args: args,
-		Site: s.Name,
-	}, nil
+	getCmd.Args = "queue " + getCmd.Args
+	return getCmd, nil
 }

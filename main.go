@@ -13,6 +13,13 @@ type CLI struct {
 	Config string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpfetchrc"`
 	Dryrun bool   `short:"n" long:"dryrun" description:"Print generated command instead of running it"`
 	Test   bool   `short:"t" long:"test" description:"Test config and exit"`
+	Quiet  bool   `short:"q" long:"quiet" description:"Do not print actions"`
+}
+
+func (c *CLI) Log(format string, v ...interface{}) {
+	if !c.Quiet {
+		log.Printf(format, v...)
+	}
 }
 
 func (c *CLI) Run(s site.Site) error {
@@ -25,11 +32,15 @@ func (c *CLI) Run(s site.Site) error {
 	for _, d := range filtered {
 		cmd, err := s.QueueCmd(d)
 		if err != nil {
-			log.Printf("Skipping cmd for %s: %s", d.Path,
-				err)
+			c.Log("Skipping %s: %s", d.Path, err)
 			continue
 		}
+		c.Log("Queuing %s", d.Path)
 		cmds = append(cmds, cmd)
+	}
+	if len(cmds) == 0 {
+		c.Log("Nothing to queue")
+		return nil
 	}
 	queueCmd, err := cmd.Join(cmds)
 	if err != nil {
