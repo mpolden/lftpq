@@ -30,6 +30,7 @@ type Site struct {
 	Filters_     []string `json:"Filters"`
 	Filters      []*regexp.Regexp
 	SkipSymlinks bool
+	ParseTVShow  bool
 	LocalDir     *template.Template
 	LocalDir_    string `json:"LocalDir"`
 }
@@ -106,19 +107,22 @@ func (s *Site) FilterDirs(dirs []Dir) []Dir {
 }
 
 func (s *Site) ParseLocalDir(dir Dir) (string, error) {
-	show, err := dir.Show()
-	if err != nil {
-		return "", err
+	localDir := s.LocalDir_
+	if s.ParseTVShow {
+		show, err := dir.Show()
+		if err != nil {
+			return "", err
+		}
+		var b bytes.Buffer
+		if err := s.LocalDir.Execute(&b, show); err != nil {
+			return "", err
+		}
+		localDir = b.String()
 	}
-	var b bytes.Buffer
-	if err := s.LocalDir.Execute(&b, show); err != nil {
-		return "", err
+	if !strings.HasSuffix(localDir, string(os.PathSeparator)) {
+		localDir += string(os.PathSeparator)
 	}
-	localPath := b.String()
-	if !strings.HasSuffix(localPath, string(os.PathSeparator)) {
-		localPath += string(os.PathSeparator)
-	}
-	return localPath, nil
+	return localDir, nil
 }
 
 func (s *Site) GetCmd(dir Dir) (cmd.Lftp, error) {

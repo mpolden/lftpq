@@ -16,10 +16,11 @@ func TestGetCmd(t *testing.T) {
 			LftpPath:   "lftp",
 			LftpGetCmd: "mirror",
 		},
-		Name:     "foo",
-		Dir:      "/misc",
-		MaxAge:   time.Duration(24) * time.Hour,
-		LocalDir: tmpl,
+		Name:        "foo",
+		Dir:         "/misc",
+		MaxAge:      time.Duration(24) * time.Hour,
+		LocalDir:    tmpl,
+		ParseTVShow: true,
 	}
 	d := Dir{
 		Path:    "/misc/The.Wire.S02E01.720p.HDTV.x264-BATV",
@@ -43,10 +44,11 @@ func TestQueueCmd(t *testing.T) {
 			LftpPath:   "lftp",
 			LftpGetCmd: "mirror",
 		},
-		Name:     "foo",
-		Dir:      "/misc",
-		MaxAge:   time.Duration(24) * time.Hour,
-		LocalDir: tmpl,
+		Name:        "foo",
+		Dir:         "/misc",
+		MaxAge:      time.Duration(24) * time.Hour,
+		LocalDir:    tmpl,
+		ParseTVShow: true,
 	}
 	dir := Dir{
 		Path:    "/misc/The.Wire.S02E01",
@@ -103,5 +105,40 @@ func TestFilterDirs(t *testing.T) {
 	filtered := s.FilterDirs(dirs)
 	if !reflect.DeepEqual(expected, filtered) {
 		t.Fatalf("Expected %+v, got %+v", expected, filtered)
+	}
+}
+
+func TestParseLocalDir(t *testing.T) {
+	tmpl := template.Must(template.New("").Parse(
+		"/tmp/{{ .Name }}/S{{ .Season }}"))
+	s := Site{
+		LocalDir:    tmpl,
+		ParseTVShow: true,
+	}
+	d := Dir{
+		Path: "/foo/The.Wire.S03E01",
+	}
+	path, err := s.ParseLocalDir(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expected := "/tmp/The.Wire/S03/"; path != expected {
+		t.Fatalf("Expected %s, got %s", expected, path)
+	}
+}
+
+func TestParseLocalDirNoTemplate(t *testing.T) {
+	s := Site{
+		LocalDir_: "/tmp",
+	}
+	d := Dir{
+		Path: "/foo/The.Wire.S03E01",
+	}
+	path, err := s.ParseLocalDir(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expected := "/tmp/"; path != expected {
+		t.Fatalf("Expected %s, got %s", expected, path)
 	}
 }
