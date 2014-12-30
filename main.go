@@ -12,7 +12,7 @@ import (
 type CLI struct {
 	Config string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpfetchrc"`
 	Dryrun bool   `short:"n" long:"dryrun" description:"Print generated command instead of running it"`
-	Test   bool   `short:"t" long:"test" description:"Test config and exit"`
+	Test   bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet  bool   `short:"q" long:"quiet" description:"Do not print actions"`
 }
 
@@ -65,7 +65,9 @@ func main() {
 		log.Fatal(err)
 	}
 	if cli.Test {
-		log.Print("Read config successfully")
+		if !cli.Quiet {
+			fmt.Printf("%+v\n", cfg)
+		}
 		return
 	}
 	for _, s := range cfg.Sites {
