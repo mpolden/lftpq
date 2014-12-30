@@ -49,27 +49,27 @@ func ReadConfig(name string) (Config, error) {
 		return Config{}, err
 	}
 	for i, site := range cfg.Sites {
-		maxAge, err := time.ParseDuration(site.MaxAge_)
+		maxAge, err := time.ParseDuration(site.MaxAge)
 		if err != nil {
 			return Config{}, err
 		}
-		cfg.Sites[i].MaxAge = maxAge
-		patterns, err := CompilePatterns(site.Patterns_)
+		cfg.Sites[i].maxAge = maxAge
+		patterns, err := CompilePatterns(site.Patterns)
 		if err != nil {
 			return Config{}, err
 		}
-		cfg.Sites[i].Patterns = patterns
-		filters, err := CompilePatterns(site.Filters_)
+		cfg.Sites[i].patterns = patterns
+		filters, err := CompilePatterns(site.Filters)
 		if err != nil {
 			return Config{}, err
 		}
-		cfg.Sites[i].Filters = filters
+		cfg.Sites[i].filters = filters
 		cfg.Sites[i].Client = cfg.Client
-		tmpl, err := ParseTemplate(site.LocalDir_)
+		tmpl, err := ParseTemplate(site.LocalDir)
 		if err != nil {
 			return Config{}, err
 		}
-		cfg.Sites[i].LocalDir = tmpl
+		cfg.Sites[i].localDir = tmpl
 
 	}
 	return cfg, nil

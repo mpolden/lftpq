@@ -18,8 +18,8 @@ func TestGetCmd(t *testing.T) {
 		},
 		Name:        "foo",
 		Dir:         "/misc",
-		MaxAge:      time.Duration(24) * time.Hour,
-		LocalDir:    tmpl,
+		maxAge:      time.Duration(24) * time.Hour,
+		localDir:    tmpl,
 		ParseTVShow: true,
 	}
 	d := Dir{
@@ -46,8 +46,8 @@ func TestQueueCmd(t *testing.T) {
 		},
 		Name:        "foo",
 		Dir:         "/misc",
-		MaxAge:      time.Duration(24) * time.Hour,
-		LocalDir:    tmpl,
+		maxAge:      time.Duration(24) * time.Hour,
+		localDir:    tmpl,
 		ParseTVShow: true,
 	}
 	dir := Dir{
@@ -69,9 +69,9 @@ func TestFilterDirs(t *testing.T) {
 	s := Site{
 		Name:         "foo",
 		Dir:          "/misc",
-		MaxAge:       time.Duration(24) * time.Hour,
-		Patterns:     []*regexp.Regexp{regexp.MustCompile("dir\\d")},
-		Filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
+		maxAge:       time.Duration(24) * time.Hour,
+		patterns:     []*regexp.Regexp{regexp.MustCompile("dir\\d")},
+		filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
 		SkipSymlinks: true,
 	}
 	dirs := []Dir{
@@ -112,7 +112,7 @@ func TestParseLocalDir(t *testing.T) {
 	tmpl := template.Must(template.New("").Parse(
 		"/tmp/{{ .Name }}/S{{ .Season }}"))
 	s := Site{
-		LocalDir:    tmpl,
+		localDir:    tmpl,
 		ParseTVShow: true,
 	}
 	d := Dir{
@@ -129,7 +129,7 @@ func TestParseLocalDir(t *testing.T) {
 
 func TestParseLocalDirNoTemplate(t *testing.T) {
 	s := Site{
-		LocalDir_: "/tmp",
+		LocalDir: "/tmp",
 	}
 	d := Dir{
 		Path: "/foo/The.Wire.S03E01",

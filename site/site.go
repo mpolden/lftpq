@@ -23,16 +23,16 @@ type Site struct {
 	Client
 	Name         string
 	Dir          string
-	MaxAge       time.Duration
-	MaxAge_      string   `json:"MaxAge"`
-	Patterns_    []string `json:"Patterns"`
-	Patterns     []*regexp.Regexp
-	Filters_     []string `json:"Filters"`
-	Filters      []*regexp.Regexp
+	MaxAge       string
+	maxAge       time.Duration
+	Patterns     []string
+	patterns     []*regexp.Regexp
+	Filters      []string
+	filters      []*regexp.Regexp
 	SkipSymlinks bool
 	ParseTVShow  bool
-	LocalDir     *template.Template
-	LocalDir_    string `json:"LocalDir"`
+	LocalDir     string
+	localDir     *template.Template
 }
 
 func (s *Site) ListCmd() cmd.Lftp {
@@ -92,13 +92,13 @@ func (s *Site) FilterDirs(dirs []Dir) []Dir {
 		if dir.IsSymlink && s.SkipSymlinks {
 			continue
 		}
-		if !dir.CreatedAfter(s.MaxAge) {
+		if !dir.CreatedAfter(s.maxAge) {
 			continue
 		}
-		if !dir.MatchAny(s.Patterns) {
+		if !dir.MatchAny(s.patterns) {
 			continue
 		}
-		if dir.MatchAny(s.Filters) {
+		if dir.MatchAny(s.filters) {
 			continue
 		}
 		res = append(res, dir)
@@ -107,14 +107,14 @@ func (s *Site) FilterDirs(dirs []Dir) []Dir {
 }
 
 func (s *Site) ParseLocalDir(dir Dir) (string, error) {
-	localDir := s.LocalDir_
+	localDir := s.LocalDir
 	if s.ParseTVShow {
 		show, err := dir.Show()
 		if err != nil {
 			return "", err
 		}
 		var b bytes.Buffer
-		if err := s.LocalDir.Execute(&b, show); err != nil {
+		if err := s.localDir.Execute(&b, show); err != nil {
 			return "", err
 		}
 		localDir = b.String()
