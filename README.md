@@ -20,3 +20,31 @@ Application Options:
 Help Options:
   -h, --help           Show this help message
 ```
+
+## Example config
+
+```json
+{
+  "Client": {
+    "LftpPath": "lftp",
+    "LftpGetCmd": "mirror"
+  },
+  "Sites": [
+    {
+      "Name": "foo",
+      "Dir": "/dir",
+      "LocalDir": "/tmp/{{ .Name }}/S{{ .Season }}/",
+      "SkipSymlinks": true,
+      "ParseTVShow": true,
+      "MaxAge": "24h",
+      "Patterns": [
+        "^Dir1",
+        "^Dir2"
+      ],
+      "Filters": [
+        "(?i)incomplete"
+      ]
+    }
+  ]
+}
+```
