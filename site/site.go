@@ -17,8 +17,6 @@ import (
 type Client struct {
 	LftpGetCmd string
 	LftpPath   string
-	LocalPath  *template.Template
-	LocalPath_ string `json:"LocalPath"`
 }
 
 type Site struct {
@@ -32,6 +30,8 @@ type Site struct {
 	Filters_     []string `json:"Filters"`
 	Filters      []*regexp.Regexp
 	SkipSymlinks bool
+	LocalDir     *template.Template
+	LocalDir_    string `json:"LocalDir"`
 }
 
 func (s *Site) ListCmd() cmd.Lftp {
@@ -105,13 +105,13 @@ func (s *Site) FilterDirs(dirs []Dir) []Dir {
 	return res
 }
 
-func (s *Site) LocalPath(dir Dir) (string, error) {
+func (s *Site) ParseLocalDir(dir Dir) (string, error) {
 	show, err := dir.Show()
 	if err != nil {
 		return "", err
 	}
 	var b bytes.Buffer
-	if err := s.Client.LocalPath.Execute(&b, show); err != nil {
+	if err := s.LocalDir.Execute(&b, show); err != nil {
 		return "", err
 	}
 	localPath := b.String()
@@ -122,15 +122,15 @@ func (s *Site) LocalPath(dir Dir) (string, error) {
 }
 
 func (s *Site) GetCmd(dir Dir) (cmd.Lftp, error) {
-	localPath, err := s.LocalPath(dir)
+	localDir, err := s.ParseLocalDir(dir)
 	if err != nil {
 		return cmd.Lftp{}, err
 	}
-	dstPath := filepath.Join(localPath, dir.Base())
+	dstPath := filepath.Join(localDir, dir.Base())
 	if _, err := os.Stat(dstPath); err == nil {
 		return cmd.Lftp{}, fmt.Errorf("%s already exists", dstPath)
 	}
-	args := fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localPath)
+	args := fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localDir)
 	return cmd.Lftp{
 		Path: s.LftpPath,
 		Args: args,

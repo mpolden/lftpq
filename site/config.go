@@ -28,7 +28,7 @@ func CompilePatterns(patterns []string) ([]*regexp.Regexp, error) {
 }
 
 func ParseTemplate(tmpl string) (*template.Template, error) {
-	t, err := template.New("localPath").Parse(tmpl)
+	t, err := template.New("").Parse(tmpl)
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +65,11 @@ func ReadConfig(name string) (Config, error) {
 		}
 		cfg.Sites[i].Filters = filters
 		cfg.Sites[i].Client = cfg.Client
-		tmpl, err := ParseTemplate(cfg.Client.LocalPath_)
+		tmpl, err := ParseTemplate(site.LocalDir_)
 		if err != nil {
 			return Config{}, err
 		}
-		cfg.Sites[i].Client.LocalPath = tmpl
+		cfg.Sites[i].LocalDir = tmpl
 
 	}
 	return cfg, nil

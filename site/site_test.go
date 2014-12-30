@@ -15,11 +15,11 @@ func TestGetCmd(t *testing.T) {
 		Client: Client{
 			LftpPath:   "lftp",
 			LftpGetCmd: "mirror",
-			LocalPath:  tmpl,
 		},
-		Name:   "foo",
-		Dir:    "/misc",
-		MaxAge: time.Duration(24) * time.Hour,
+		Name:     "foo",
+		Dir:      "/misc",
+		MaxAge:   time.Duration(24) * time.Hour,
+		LocalDir: tmpl,
 	}
 	d := Dir{
 		Path:    "/misc/The.Wire.S02E01.720p.HDTV.x264-BATV",
@@ -42,11 +42,11 @@ func TestQueueCmd(t *testing.T) {
 		Client: Client{
 			LftpPath:   "lftp",
 			LftpGetCmd: "mirror",
-			LocalPath:  tmpl,
 		},
-		Name:   "foo",
-		Dir:    "/misc",
-		MaxAge: time.Duration(24) * time.Hour,
+		Name:     "foo",
+		Dir:      "/misc",
+		MaxAge:   time.Duration(24) * time.Hour,
+		LocalDir: tmpl,
 	}
 	dir := Dir{
 		Path:    "/misc/The.Wire.S02E01",
