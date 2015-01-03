@@ -39,7 +39,6 @@ func (c *CLI) Run(s site.Site) error {
 		cmds = append(cmds, cmd)
 	}
 	if len(cmds) == 0 {
-		c.Log("Nothing to queue")
 		return nil
 	}
 	queueCmd, err := cmd.Join(cmds)
