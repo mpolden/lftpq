@@ -10,10 +10,11 @@ import (
 )
 
 type CLI struct {
-	Config string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpfetchrc"`
-	Dryrun bool   `short:"n" long:"dryrun" description:"Print generated command instead of running it"`
-	Test   bool   `short:"t" long:"test" description:"Test and print config"`
-	Quiet  bool   `short:"q" long:"quiet" description:"Do not print actions"`
+	Config     string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpfetchrc"`
+	Dryrun     bool   `short:"n" long:"dryrun" description:"Print generated command instead of running it"`
+	Test       bool   `short:"t" long:"test" description:"Test and print config"`
+	Quiet      bool   `short:"q" long:"quiet" description:"Do not print actions"`
+	KeepScript bool   `short:"k" long:"keep-script" description:"Do not remove generated script file"`
 }
 
 func (c *CLI) Log(format string, v ...interface{}) {
@@ -41,14 +42,19 @@ func (c *CLI) Run(s site.Site) error {
 	if len(cmds) == 0 {
 		return nil
 	}
-	queueCmd, err := cmd.Join(cmds)
+	cmd, err := cmd.Write(cmds)
 	if err != nil {
 		return err
 	}
 	if c.Dryrun {
-		fmt.Println(queueCmd.String())
-	} else if err := queueCmd.Run(); err != nil {
+		fmt.Println(cmd.String())
+	} else if err := cmd.Run(); err != nil {
 		return err
+	}
+	if !c.KeepScript {
+		if err := os.Remove(cmd.ScriptName); err != nil {
+			log.Fatal(err)
+		}
 	}
 	return nil
 }

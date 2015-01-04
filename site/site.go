@@ -36,12 +36,12 @@ type Site struct {
 }
 
 func (s *Site) ListCmd() cmd.Lftp {
-	args := fmt.Sprintf("cls --date --time-style='%%F %%T %%z %%Z' %s",
+	script := fmt.Sprintf("cls --date --time-style='%%F %%T %%z %%Z' %s",
 		s.Dir)
 	return cmd.Lftp{
-		Path: s.LftpPath,
-		Args: args,
-		Site: s.Name,
+		Path:   s.LftpPath,
+		Script: script,
+		Site:   s.Name,
 	}
 }
 
@@ -134,11 +134,11 @@ func (s *Site) GetCmd(dir Dir) (cmd.Lftp, error) {
 	if _, err := os.Stat(dstPath); err == nil {
 		return cmd.Lftp{}, fmt.Errorf("%s already exists", dstPath)
 	}
-	args := fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localDir)
+	script := fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localDir)
 	return cmd.Lftp{
-		Path: s.LftpPath,
-		Args: args,
-		Site: s.Name,
+		Path:   s.LftpPath,
+		Script: script,
+		Site:   s.Name,
 	}, nil
 }
 
@@ -147,6 +147,6 @@ func (s *Site) QueueCmd(dir Dir) (cmd.Lftp, error) {
 	if err != nil {
 		return cmd.Lftp{}, err
 	}
-	getCmd.Args = "queue " + getCmd.Args
+	getCmd.Script = "queue " + getCmd.Script
 	return getCmd, nil
 }

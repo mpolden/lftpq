@@ -31,8 +31,8 @@ func TestGetCmd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if getCmd.Args != expected {
-		t.Fatalf("Expected %s, got %s", expected, getCmd.Args)
+	if getCmd.Script != expected {
+		t.Fatalf("Expected %s, got %s", expected, getCmd.Script)
 	}
 }
 
@@ -60,8 +60,8 @@ func TestQueueCmd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if queueCmd.Args != expected {
-		t.Fatalf("Expected %s, got %s", expected, queueCmd.Args)
+	if queueCmd.Script != expected {
+		t.Fatalf("Expected %s, got %s", expected, queueCmd.Script)
 	}
 }
 

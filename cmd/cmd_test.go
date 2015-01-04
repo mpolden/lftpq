@@ -1,15 +1,17 @@
 package cmd
 
 import (
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 )
 
 func TestString(t *testing.T) {
 	cmd := Lftp{
-		Path: "lftp",
-		Args: "mirror /foo /tmp",
-		Site: "siteA",
+		Path:   "lftp",
+		Script: "mirror /foo /tmp",
+		Site:   "siteA",
 	}
 	expected := "lftp -e 'mirror /foo /tmp && exit' siteA"
 	if cmd.String() != expected {
@@ -17,11 +19,22 @@ func TestString(t *testing.T) {
 	}
 }
 
+func TestStringArgs(t *testing.T) {
+	cmd := Lftp{
+		Path: "lftp",
+		Args: []string{"-f", "/tmp/foo"},
+	}
+	expected := "lftp -f /tmp/foo"
+	if cmd.String() != expected {
+		t.Fatalf("Expected '%s', got '%s'", expected, cmd.String())
+	}
+}
+
 func TestCmd(t *testing.T) {
 	cmd := Lftp{
-		Path: "/bin/lftp",
-		Args: "mirror /foo /tmp",
-		Site: "siteA",
+		Path:   "/bin/lftp",
+		Script: "mirror /foo /tmp",
+		Site:   "siteA",
 	}
 	c := cmd.Cmd()
 	if c.Path != "/bin/lftp" {
@@ -33,31 +46,39 @@ func TestCmd(t *testing.T) {
 	}
 }
 
-func TestJoin(t *testing.T) {
+func TestWrite(t *testing.T) {
 	cmds := []Lftp{
 		Lftp{
-			Path: "/bin/lftp",
-			Args: "queue mirror /foo /tmp",
-			Site: "siteA",
+			Path:   "/bin/lftp",
+			Script: "queue mirror /foo /tmp",
+			Site:   "siteA",
 		},
 		Lftp{
-			Path: "/bin/lftp",
-			Args: "queue mirror /bar /tmp",
-			Site: "siteA",
+			Path:   "/bin/lftp",
+			Script: "queue mirror /bar /tmp",
+			Site:   "siteA",
 		},
 	}
-	c, err := Join(cmds)
+	c, err := Write(cmds)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := "queue mirror /foo /tmp &&" +
-		" queue mirror /bar /tmp &&" +
-		" queue start && wait"
-	if c.Args != expected {
-		t.Fatalf("Expected '%s', got '%s'", expected, c.Args)
+	defer func() {
+		os.Remove(c.ScriptName)
+	}()
+	expected := `open siteA
+queue mirror /foo /tmp
+queue mirror /bar /tmp
+queue start
+wait
+exit
+`
+	f, err := ioutil.ReadFile(c.ScriptName)
+	if err != nil {
+		t.Fatal(err)
 	}
-	expected = "/bin/lftp -e '" + expected + " && exit' siteA"
-	if c.String() != expected {
-		t.Fatalf("Expected '%s', got '%s'", expected, c.String())
+	content := string(f)
+	if content != expected {
+		t.Fatalf("Expected '%s', got '%s'", expected, content)
 	}
 }

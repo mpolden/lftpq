@@ -3,40 +3,57 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 )
 
 type Lftp struct {
-	Path string
-	Args string
-	Site string
+	Path       string
+	Script     string
+	Args       []string
+	Site       string
+	ScriptName string
 }
 
 func (l *Lftp) String() string {
-	return fmt.Sprintf("%s -e '%s && exit' %s", l.Path, l.Args, l.Site)
+	if l.Script != "" {
+		return fmt.Sprintf("%s -e '%s && exit' %s", l.Path, l.Script,
+			l.Site)
+	}
+	return l.Path + " " + strings.Join(l.Args, " ")
 }
 
 func (l *Lftp) Cmd() *exec.Cmd {
-	args := []string{"-e", l.Args + " && exit", l.Site}
+	var args []string
+	if l.Script != "" {
+		args = []string{"-e", l.Script + " && exit", l.Site}
+	} else {
+		args = l.Args
+	}
 	return exec.Command(l.Path, args...)
 }
 
-func Join(cmds []Lftp) (Lftp, error) {
+func Write(cmds []Lftp) (Lftp, error) {
 	if len(cmds) == 0 {
-		return Lftp{}, fmt.Errorf("cmds is empty")
+		return Lftp{}, fmt.Errorf("need atleast one cmd")
 	}
-	res := make([]string, 0, len(cmds))
+	f, err := ioutil.TempFile("", "lftpfetch")
+	if err != nil {
+		return Lftp{}, err
+	}
+	defer f.Close()
+	f.WriteString("open " + cmds[0].Site + "\n")
 	for _, cmd := range cmds {
-		res = append(res, cmd.Args)
+		f.WriteString(cmd.Script + "\n")
 	}
-	res = append(res, "queue start", "wait")
-	args := strings.Join(res, " && ")
+	f.WriteString("queue start\nwait\nexit\n")
+	args := []string{"-f", f.Name()}
 	return Lftp{
-		Path: cmds[0].Path,
-		Args: args,
-		Site: cmds[0].Site,
+		Path:       cmds[0].Path,
+		Args:       args,
+		ScriptName: f.Name(),
 	}, nil
 }
 
