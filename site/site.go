@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/martinp/lftpfetch/cmd"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -47,19 +46,11 @@ func (s *Site) ListCmd() cmd.Lftp {
 func (s *Site) GetDirs() ([]Dir, error) {
 	listCmd := s.ListCmd()
 	cmd := listCmd.Cmd()
+	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		if _, err := io.Copy(os.Stderr, stderr); err != nil {
-			panic(err)
-		}
-	}()
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}

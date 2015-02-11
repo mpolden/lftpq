@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -59,24 +58,8 @@ func Write(cmds []Lftp) (Lftp, error) {
 
 func (l *Lftp) Run() error {
 	cmd := l.Cmd()
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
-	go func() {
-		if _, err := io.Copy(os.Stdout, stdout); err != nil {
-			panic(err)
-		}
-	}()
-	go func() {
-		if _, err := io.Copy(os.Stderr, stderr); err != nil {
-			panic(err)
-		}
-	}()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
 		return err
 	}
