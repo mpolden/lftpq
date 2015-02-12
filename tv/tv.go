@@ -6,7 +6,11 @@ import (
 	"strings"
 )
 
-var releaseExp = regexp.MustCompile("(.*)\\.(?:(S(\\d{2})E(\\d{2})|(\\d{1,2})x(\\d{2})))")
+var episodeExp = regexp.MustCompile("(.*)\\.(?:(" +
+	"S(\\d{2})E(\\d{2})" + // S01E04
+	"|(\\d{1,2})x(\\d{2})" + // 1x04, 01x04
+	"|Part\\.(\\d{1,2})" + // Part.4, Part.11
+	"))")
 
 type Show struct {
 	Release string
@@ -16,7 +20,7 @@ type Show struct {
 }
 
 func Parse(s string) (Show, error) {
-	m := releaseExp.FindAllStringSubmatch(s, -1)
+	m := episodeExp.FindAllStringSubmatch(s, -1)
 	if len(m) == 0 {
 		return Show{}, fmt.Errorf("no matches found")
 	}
@@ -33,9 +37,14 @@ func Parse(s string) (Show, error) {
 	} else if m[0][5] != "" && m[0][6] != "" {
 		season = m[0][5]
 		episode = m[0][6]
+	} else if m[0][7] != "" {
+		season = "1"
+		episode = m[0][7]
 	} else {
 		return Show{}, fmt.Errorf("failed to parse season and episode")
 	}
+	season = fmt.Sprintf("%02s", season)
+	episode = fmt.Sprintf("%02s", episode)
 	return Show{
 		Release: s,
 		Name:    name,

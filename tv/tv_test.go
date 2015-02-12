@@ -62,3 +62,20 @@ func TestParse4(t *testing.T) {
 		t.Fatal("Expected error")
 	}
 }
+
+func TestParse5(t *testing.T) {
+	s := "Olive.Kitteridge.Part.4.720p.HDTV.x264-KILLERS"
+	series, err := Parse(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := Show{
+		Release: s,
+		Name:    "Olive.Kitteridge",
+		Season:  "01",
+		Episode: "04",
+	}
+	if !reflect.DeepEqual(series, expected) {
+		t.Fatalf("Expected %+v, got %+v", expected, series)
+	}
+}
