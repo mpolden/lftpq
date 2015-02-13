@@ -46,10 +46,13 @@ func (c *CLI) Run(s site.Site) error {
 	if err != nil {
 		return err
 	}
-	if c.Dryrun {
+	if !c.Quiet {
 		fmt.Println(cmd.String())
-	} else if err := cmd.Run(); err != nil {
-		return err
+	}
+	if !c.Dryrun {
+		if err := cmd.Run(); err != nil {
+			return err
+		}
 	}
 	if !c.KeepScript {
 		if err := os.Remove(cmd.ScriptName); err != nil {
