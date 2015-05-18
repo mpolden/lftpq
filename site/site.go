@@ -7,8 +7,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/martinp/lftpfetch/cmd"
 )
 
 type Client struct {
@@ -32,13 +30,10 @@ type Site struct {
 	localDir     *template.Template
 }
 
-func (s *Site) ListCmd() cmd.Lftp {
-	script := "cls --date --time-style='%F %T %z %Z' " + s.Dir
-	return cmd.Lftp{
-		Path:   s.LftpPath,
-		Script: script,
-		Site:   s.Name,
-	}
+func (s *Site) ListCmd() Lftp {
+	script := "cls --date --time-style='%F %T %z %Z' " + s.Dir + " && exit"
+	args := []string{"-e", script, s.Name}
+	return Lftp{Path: s.LftpPath, Args: args}
 }
 
 func (s *Site) DirList() ([]Dir, error) {

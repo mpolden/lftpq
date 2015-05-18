@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/martinp/lftpfetch/cmd"
 )
 
 type Item struct {
@@ -143,7 +141,7 @@ func (q *Queue) Start() error {
 		return err
 	}
 	defer os.Remove(name)
-	cmd := cmd.Lftp{
+	cmd := Lftp{
 		Path: q.LftpPath,
 		Args: []string{"-f", name},
 	}
