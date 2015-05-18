@@ -22,11 +22,11 @@ type Show struct {
 func Parse(s string) (Show, error) {
 	m := episodeExp.FindAllStringSubmatch(s, -1)
 	if len(m) == 0 {
-		return Show{}, fmt.Errorf("no matches found")
+		return Show{}, fmt.Errorf("no matches found for %s", s)
 	}
 	if len(m[0]) < 7 {
-		return Show{}, fmt.Errorf("only %d submatches found",
-			len(m[0]))
+		return Show{}, fmt.Errorf("only %d submatches found for %s",
+			len(m[0]), s)
 	}
 	name := strings.Replace(m[0][1], "_", ".", -1)
 	var season string
@@ -41,7 +41,7 @@ func Parse(s string) (Show, error) {
 		season = "1"
 		episode = m[0][7]
 	} else {
-		return Show{}, fmt.Errorf("failed to parse season and episode")
+		return Show{}, fmt.Errorf("failed to parse season and episode for %s", s)
 	}
 	season = fmt.Sprintf("%02s", season)
 	episode = fmt.Sprintf("%02s", episode)
