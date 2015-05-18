@@ -54,7 +54,7 @@ func main() {
 	var cli CLI
 	_, err := flags.ParseArgs(&cli, os.Args)
 	if err != nil {
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	cfg, err := site.ReadConfig(cli.Config)
 	if err != nil {
