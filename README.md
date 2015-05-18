@@ -13,9 +13,10 @@ Usage:
 
 Application Options:
   -f, --config=FILE    Path to config (~/.lftpfetchrc)
-  -n, --dryrun         Print generated command instead of running it
-  -t, --test           Test and print parsed config
-  -q, --quiet          Do not print actions
+  -n, --dryrun         Print generated queue and exit without executing lftp
+  -t, --test           Test and print config
+  -q, --quiet          Only print errors
+  -v, --verbose        Verbose output
 
 Help Options:
   -h, --help           Show this help message
