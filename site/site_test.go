@@ -12,7 +12,7 @@ func TestListCmd(t *testing.T) {
 		Dir:    "/foo",
 	}
 	expected := []string{"-e", "cls --date --time-style='%F %T %z %Z' /foo && exit", "bar"}
-	listCmd := s.ListCmd()
+	listCmd := s.listCmd()
 	if !reflect.DeepEqual(expected, listCmd.Args) {
 		t.Fatalf("Expected %q, got %q", expected, listCmd.Args)
 	}

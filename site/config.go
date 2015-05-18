@@ -15,7 +15,7 @@ type Config struct {
 	Sites  []Site
 }
 
-func CompilePatterns(patterns []string) ([]*regexp.Regexp, error) {
+func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {
 	res := make([]*regexp.Regexp, 0, len(patterns))
 	for _, p := range patterns {
 		re, err := regexp.Compile(p)
@@ -27,7 +27,7 @@ func CompilePatterns(patterns []string) ([]*regexp.Regexp, error) {
 	return res, nil
 }
 
-func ParseTemplate(tmpl string) (*template.Template, error) {
+func parseTemplate(tmpl string) (*template.Template, error) {
 	t, err := template.New("").Parse(tmpl)
 	if err != nil {
 		return nil, err
@@ -54,18 +54,18 @@ func ReadConfig(name string) (Config, error) {
 			return Config{}, err
 		}
 		cfg.Sites[i].maxAge = maxAge
-		patterns, err := CompilePatterns(site.Patterns)
+		patterns, err := compilePatterns(site.Patterns)
 		if err != nil {
 			return Config{}, err
 		}
 		cfg.Sites[i].patterns = patterns
-		filters, err := CompilePatterns(site.Filters)
+		filters, err := compilePatterns(site.Filters)
 		if err != nil {
 			return Config{}, err
 		}
 		cfg.Sites[i].filters = filters
 		cfg.Sites[i].Client = cfg.Client
-		tmpl, err := ParseTemplate(site.LocalDir)
+		tmpl, err := parseTemplate(site.LocalDir)
 		if err != nil {
 			return Config{}, err
 		}

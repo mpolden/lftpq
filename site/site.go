@@ -30,14 +30,14 @@ type Site struct {
 	localDir     *template.Template
 }
 
-func (s *Site) ListCmd() Lftp {
+func (s *Site) listCmd() Lftp {
 	script := "cls --date --time-style='%F %T %z %Z' " + s.Dir + " && exit"
 	args := []string{"-e", script, s.Name}
 	return Lftp{Path: s.LftpPath, Args: args}
 }
 
 func (s *Site) DirList() ([]Dir, error) {
-	listCmd := s.ListCmd()
+	listCmd := s.listCmd()
 	cmd := listCmd.Cmd()
 	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
