@@ -27,14 +27,14 @@ func TestCreatedAfter(t *testing.T) {
 		Path:    "/tmp/foo",
 		Created: time.Now(),
 	}
-	if !d1.CreatedAfter(age) {
+	if _, after := d1.CreatedAfter(age); !after {
 		t.Fatal("Expected true")
 	}
 	d2 := Dir{
 		Path:    "/tmp/bar",
 		Created: time.Now().Add(-time.Duration(48) * time.Hour),
 	}
-	if d2.CreatedAfter(age) {
+	if _, after := d2.CreatedAfter(age); after {
 		t.Fatal("Expected false")
 	}
 }
@@ -61,14 +61,14 @@ func TestMatchAny(t *testing.T) {
 		regexp.MustCompile("fo"),
 		regexp.MustCompile("ba"),
 	}
-	if !d.MatchAny(patterns) {
+	if _, match := d.MatchAny(patterns); !match {
 		t.Fatal("Expected true")
 	}
 	patterns = []*regexp.Regexp{
 		regexp.MustCompile("x"),
 		regexp.MustCompile("z"),
 	}
-	if d.MatchAny(patterns) {
+	if _, match := d.MatchAny(patterns); match {
 		t.Fatal("Expected false")
 	}
 }

@@ -2,15 +2,13 @@ package site
 
 import (
 	"bufio"
-	"bytes"
-	"fmt"
-	"github.com/martinp/lftpfetch/cmd"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/martinp/lftpfetch/cmd"
 )
 
 type Client struct {
@@ -43,7 +41,7 @@ func (s *Site) ListCmd() cmd.Lftp {
 	}
 }
 
-func (s *Site) GetDirs() ([]Dir, error) {
+func (s *Site) DirList() ([]Dir, error) {
 	listCmd := s.ListCmd()
 	cmd := listCmd.Cmd()
 	cmd.Stderr = os.Stderr
@@ -76,67 +74,10 @@ func (s *Site) GetDirs() ([]Dir, error) {
 	return dirs, nil
 }
 
-func (s *Site) FilterDirs(dirs []Dir) []Dir {
-	res := []Dir{}
-	for _, dir := range dirs {
-		if dir.IsSymlink && s.SkipSymlinks {
-			continue
-		}
-		if !dir.CreatedAfter(s.maxAge) {
-			continue
-		}
-		if !dir.MatchAny(s.patterns) {
-			continue
-		}
-		if dir.MatchAny(s.filters) {
-			continue
-		}
-		res = append(res, dir)
+func (s *Site) Queue(dirs []Dir) (*Queue, error) {
+	queue := Queue{Site: *s}
+	if err := queue.Process(dirs); err != nil {
+		return nil, err
 	}
-	return res
-}
-
-func (s *Site) ParseLocalDir(dir Dir) (string, error) {
-	localDir := s.LocalDir
-	if s.ParseTVShow {
-		show, err := dir.Show()
-		if err != nil {
-			return "", err
-		}
-		var b bytes.Buffer
-		if err := s.localDir.Execute(&b, show); err != nil {
-			return "", err
-		}
-		localDir = b.String()
-	}
-	if !strings.HasSuffix(localDir, string(os.PathSeparator)) {
-		localDir += string(os.PathSeparator)
-	}
-	return localDir, nil
-}
-
-func (s *Site) GetCmd(dir Dir) (cmd.Lftp, error) {
-	localDir, err := s.ParseLocalDir(dir)
-	if err != nil {
-		return cmd.Lftp{}, err
-	}
-	dstPath := filepath.Join(localDir, dir.Base())
-	if _, err := os.Stat(dstPath); err == nil {
-		return cmd.Lftp{}, fmt.Errorf("%s already exists", dstPath)
-	}
-	script := fmt.Sprintf("%s %s %s", s.LftpGetCmd, dir.Path, localDir)
-	return cmd.Lftp{
-		Path:   s.LftpPath,
-		Script: script,
-		Site:   s.Name,
-	}, nil
-}
-
-func (s *Site) QueueCmd(dir Dir) (cmd.Lftp, error) {
-	getCmd, err := s.GetCmd(dir)
-	if err != nil {
-		return cmd.Lftp{}, err
-	}
-	getCmd.Script = "queue " + getCmd.Script
-	return getCmd, nil
+	return &queue, nil
 }

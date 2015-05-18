@@ -2,11 +2,12 @@ package site
 
 import (
 	"fmt"
-	"github.com/martinp/lftpfetch/tv"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/martinp/lftpfetch/tv"
 )
 
 type Dir struct {
@@ -39,17 +40,19 @@ func (d *Dir) Base() string {
 	return filepath.Base(d.Path)
 }
 
-func (d *Dir) CreatedAfter(age time.Duration) bool {
-	return d.Created.After(time.Now().Add(-age))
+func (d *Dir) CreatedAfter(age time.Duration) (time.Duration, bool) {
+	now := time.Now()
+	dirAge := now.Sub(d.Created)
+	return dirAge, d.Created.After(now.Add(-age))
 }
 
-func (d *Dir) MatchAny(patterns []*regexp.Regexp) bool {
+func (d *Dir) MatchAny(patterns []*regexp.Regexp) (string, bool) {
 	for _, p := range patterns {
 		if d.Match(p) {
-			return true
+			return p.String(), true
 		}
 	}
-	return false
+	return "", false
 }
 
 func (d *Dir) Match(pattern *regexp.Regexp) bool {

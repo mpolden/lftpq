@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
-	"github.com/jessevdk/go-flags"
-	"github.com/martinp/lftpfetch/cmd"
-	"github.com/martinp/lftpfetch/site"
 	"log"
 	"os"
+
+	flags "github.com/jessevdk/go-flags"
+
+	"github.com/martinp/lftpfetch/site"
 )
 
 type CLI struct {
-	Config     string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpfetchrc"`
-	Dryrun     bool   `short:"n" long:"dryrun" description:"Print generated command instead of running it"`
-	Test       bool   `short:"t" long:"test" description:"Test and print config"`
-	Quiet      bool   `short:"q" long:"quiet" description:"Do not print actions"`
-	KeepScript bool   `short:"k" long:"keep-script" description:"Do not remove generated script file"`
+	Config  string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpfetchrc"`
+	Dryrun  bool   `short:"n" long:"dryrun" description:"Print generated queue and exit without executing lftp"`
+	Test    bool   `short:"t" long:"test" description:"Test and print config"`
+	Quiet   bool   `short:"q" long:"quiet" description:"Only print errors"`
+	Verbose bool   `short:"v" long:"verbose" description:"Verbose output"`
 }
 
 func (c *CLI) Log(format string, v ...interface{}) {
@@ -24,40 +25,27 @@ func (c *CLI) Log(format string, v ...interface{}) {
 }
 
 func (c *CLI) Run(s site.Site) error {
-	dirs, err := s.GetDirs()
+	dirs, err := s.DirList()
 	if err != nil {
 		return err
 	}
-	filtered := s.FilterDirs(dirs)
-	cmds := make([]cmd.Lftp, 0, len(dirs))
-	for _, d := range filtered {
-		cmd, err := s.QueueCmd(d)
-		if err != nil {
-			c.Log("Skipping %s: %s", d.Path, err)
-			continue
-		}
-		c.Log("Queuing %s", d.Path)
-		cmds = append(cmds, cmd)
+	queue, err := s.Queue(dirs)
+	if err != nil {
+		return err
 	}
-	if len(cmds) == 0 {
+	for _, item := range queue.Items {
+		if c.Verbose || !item.Skip {
+			c.Log(item.String())
+		}
+	}
+	if len(queue.TransferItems()) == 0 {
+		c.Log("nothing to queue")
 		return nil
 	}
-	cmd, err := cmd.Write(cmds)
-	if err != nil {
+	if c.Dryrun {
+		fmt.Print(queue.String())
+	} else if err := queue.Start(); err != nil {
 		return err
-	}
-	if !c.Quiet {
-		fmt.Println(cmd.String())
-	}
-	if !c.Dryrun {
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-	}
-	if !c.KeepScript {
-		if err := os.Remove(cmd.ScriptName); err != nil {
-			log.Fatal(err)
-		}
 	}
 	return nil
 }
