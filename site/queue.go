@@ -12,12 +12,12 @@ import (
 type Item struct {
 	Dir
 	LocalDir string
-	Skip     bool
+	Transfer bool
 	Reason   string
 }
 
 func (i *Item) String() string {
-	return fmt.Sprintf("Path=%s LocalDir=%q Skip=%t Reason=%q", i.Path, i.LocalDir, i.Skip, i.Reason)
+	return fmt.Sprintf("Path=%q LocalDir=%q Transfer=%t Reason=%q", i.Path, i.LocalDir, i.Transfer, i.Reason)
 }
 
 type Queue struct {
@@ -28,7 +28,7 @@ type Queue struct {
 func (q *Queue) filterDirs(dirs []Dir) []Item {
 	items := make([]Item, 0, len(dirs))
 	for _, dir := range dirs {
-		item := Item{Dir: dir, Skip: true}
+		item := Item{Dir: dir}
 		if dir.IsSymlink && q.SkipSymlinks {
 			item.Reason = fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks)
 		} else if age, after := dir.CreatedAfter(q.maxAge); !after {
@@ -36,10 +36,10 @@ func (q *Queue) filterDirs(dirs []Dir) []Item {
 		} else if p, match := dir.MatchAny(q.filters); match {
 			item.Reason = fmt.Sprintf("Filter=%s", p)
 		} else if p, match := dir.MatchAny(q.patterns); match {
-			item.Skip = false
+			item.Transfer = true
 			item.Reason = fmt.Sprintf("Match=%s", p)
 		} else {
-			item.Reason = fmt.Sprintf("Match=<none>")
+			item.Reason = "no match"
 		}
 		items = append(items, item)
 	}
@@ -71,12 +71,12 @@ func (q *Queue) getLocalDir(dir Dir) (string, error) {
 
 func (q *Queue) findLocalDir(items []Item) ([]Item, error) {
 	for i, item := range items {
-		if item.Skip {
+		if !item.Transfer {
 			continue
 		}
 		localDir, err := q.getLocalDir(item.Dir)
 		if err != nil {
-			items[i].Skip = true
+			items[i].Transfer = false
 			items[i].Reason = err.Error()
 			continue
 		}
@@ -98,7 +98,7 @@ func (q *Queue) Process(dirs []Dir) error {
 func (q *Queue) TransferItems() []Item {
 	items := []Item{}
 	for _, item := range q.Items {
-		if item.Skip {
+		if !item.Transfer {
 			continue
 		}
 		items = append(items, item)

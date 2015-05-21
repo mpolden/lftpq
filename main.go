@@ -34,7 +34,7 @@ func (c *CLI) Run(s site.Site) error {
 		return err
 	}
 	for _, item := range queue.Items {
-		if c.Verbose || !item.Skip {
+		if c.Verbose || item.Transfer {
 			c.Log(item.String())
 		}
 	}

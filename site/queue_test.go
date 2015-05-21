@@ -51,7 +51,7 @@ func TestFilterDirs(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, item := range q.Items {
-		if !item.Skip && !reflect.DeepEqual(item.Dir, dirs[4]) {
+		if item.Transfer && !reflect.DeepEqual(item.Dir, dirs[4]) {
 			t.Fatalf("Expected %q, got %q", dirs[4], item.Dir)
 		}
 	}
@@ -99,8 +99,8 @@ func TestWrite(t *testing.T) {
 		Name: "siteA",
 	}
 	items := []Item{
-		Item{Dir: Dir{Path: "/foo"}, LocalDir: "/tmp"},
-		Item{Dir: Dir{Path: "/bar"}, LocalDir: "/tmp"},
+		Item{Dir: Dir{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
+		Item{Dir: Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
 	}
 	q := Queue{Site: site, Items: items}
 	name, err := q.Write()
