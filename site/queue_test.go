@@ -140,3 +140,18 @@ exit
 		t.Fatalf("Expected %q, got %q", expected, content)
 	}
 }
+
+func TestTransferItems(t *testing.T) {
+	q := Queue{
+		Items: []Item{
+			Item{Dir: Dir{Path: "/tmp/d1"}, Transfer: true},
+			Item{Dir: Dir{Path: "/tmp/d2"}, Transfer: false},
+			Item{Dir: Dir{Path: "/tmp/d3"}, Transfer: true},
+		},
+	}
+	actual := q.TransferItems()
+	expected := []Item{q.Items[0], q.Items[2]}
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("Expected %+v, got %+v", expected, actual)
+	}
+}
