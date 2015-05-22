@@ -11,6 +11,7 @@ import (
 )
 
 func TestFilterDirs(t *testing.T) {
+	now := time.Now().Round(time.Second)
 	s := Site{
 		Name:         "foo",
 		Dir:          "/misc",
@@ -22,37 +23,52 @@ func TestFilterDirs(t *testing.T) {
 	dirs := []Dir{
 		Dir{
 			Path:    "/tmp/dir1@",
-			Created: time.Now(),
+			Created: now,
 			// Filtered because of symlink
 			IsSymlink: true,
 		},
 		Dir{
 			Path: "/tmp/dir2",
 			// Filtered because of exceeded MaxAge
-			Created: time.Now().Add(-time.Duration(48) * time.Hour),
+			Created: now.Add(-time.Duration(48) * time.Hour),
+		},
+		Dir{
+			Path: "/tmp/dir3",
+			// Included because of equal MaxAge
+			Created: now.Add(-time.Duration(24) * time.Hour),
 		},
 		Dir{
 			Path: "/tmp/foo",
 			// Filtered because of not matching any Patterns
-			Created: time.Now(),
+			Created: now,
 		},
 		Dir{
 			Path: "/tmp/incomplete-dir3",
 			// Filtered because of matching any Filters
-			Created: time.Now(),
+			Created: now,
 		},
 		Dir{
-			Path:    "/tmp/dir4",
-			Created: time.Now(),
+			Path: "/tmp/dir4",
+			// Included because less than MaxAge
+			Created: now,
 		},
 	}
-	q, err := s.Queue(dirs)
-	if err != nil {
-		t.Fatal(err)
+	expected := []Item{
+		Item{Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
+		Item{Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge="},
+		Item{Dir: dirs[2], Transfer: true, Reason: "Match=dir\\d"},
+		Item{Dir: dirs[3], Transfer: false, Reason: "no match"},
+		Item{Dir: dirs[4], Transfer: false, Reason: "Filter=^incomplete-"},
+		Item{Dir: dirs[5], Transfer: true, Reason: "Match=dir\\d"},
 	}
-	for _, item := range q.Items {
-		if item.Transfer && !reflect.DeepEqual(item.Dir, dirs[4]) {
-			t.Fatalf("Expected %q, got %q", dirs[4], item.Dir)
+	q := Queue{Site: s}
+	actual := q.filterDirs(dirs)
+	if len(expected) != len(actual) {
+		t.Fatal("Expected equal length")
+	}
+	for i, _ := range expected {
+		if !reflect.DeepEqual(expected[i], actual[i]) {
+			t.Fatalf("Expected %+v, got %+v", expected[i], actual[i])
 		}
 	}
 }

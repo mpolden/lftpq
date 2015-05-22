@@ -69,10 +69,10 @@ func (s *Site) DirList() ([]Dir, error) {
 	return dirs, nil
 }
 
-func (s *Site) Queue(dirs []Dir) (*Queue, error) {
+func (s *Site) Queue(dirs []Dir) (Queue, error) {
 	queue := Queue{Site: *s}
 	if err := queue.Process(dirs); err != nil {
-		return nil, err
+		return Queue{}, err
 	}
-	return &queue, nil
+	return queue, nil
 }

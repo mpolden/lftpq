@@ -40,10 +40,8 @@ func (d *Dir) Base() string {
 	return filepath.Base(d.Path)
 }
 
-func (d *Dir) CreatedAfter(age time.Duration) (time.Duration, bool) {
-	now := time.Now()
-	dirAge := now.Sub(d.Created)
-	return dirAge, d.Created.After(now.Add(-age))
+func (d *Dir) Age() time.Duration {
+	return time.Now().Round(time.Second).Sub(d.Created)
 }
 
 func (d *Dir) MatchAny(patterns []*regexp.Regexp) (string, bool) {

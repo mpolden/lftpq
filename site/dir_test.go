@@ -21,21 +21,24 @@ func TestParseDir(t *testing.T) {
 	}
 }
 
-func TestCreatedAfter(t *testing.T) {
-	age := time.Duration(24) * time.Hour
+func TestAge(t *testing.T) {
+	now := time.Now().Round(time.Second)
 	d1 := Dir{
 		Path:    "/tmp/foo",
-		Created: time.Now(),
+		Created: now,
 	}
-	if _, after := d1.CreatedAfter(age); !after {
-		t.Fatal("Expected true")
+	age := d1.Age()
+	if expected := time.Duration(0); age != expected {
+		t.Errorf("Expected %q, got %q", expected, age)
 	}
+
 	d2 := Dir{
 		Path:    "/tmp/bar",
-		Created: time.Now().Add(-time.Duration(48) * time.Hour),
+		Created: now.Add(-time.Duration(48) * time.Hour),
 	}
-	if _, after := d2.CreatedAfter(age); after {
-		t.Fatal("Expected false")
+	age = d2.Age()
+	if expected := time.Duration(48) * time.Hour; age != expected {
+		t.Errorf("Expected %q, got %q", expected, age)
 	}
 }
 

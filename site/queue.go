@@ -31,7 +31,7 @@ func (q *Queue) filterDirs(dirs []Dir) []Item {
 		item := Item{Dir: dir}
 		if dir.IsSymlink && q.SkipSymlinks {
 			item.Reason = fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks)
-		} else if age, after := dir.CreatedAfter(q.maxAge); !after {
+		} else if age := dir.Age(); age > q.maxAge {
 			item.Reason = fmt.Sprintf("Age=%s MaxAge=%s", age, q.MaxAge)
 		} else if p, match := dir.MatchAny(q.filters); match {
 			item.Reason = fmt.Sprintf("Filter=%s", p)
