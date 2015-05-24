@@ -24,6 +24,12 @@ func (c *CLI) Log(format string, v ...interface{}) {
 	}
 }
 
+func (c *CLI) LogVerbose(format string, v ...interface{}) {
+	if c.Verbose {
+		log.Printf(format, v...)
+	}
+}
+
 func (c *CLI) Run(s site.Site) error {
 	dirs, err := s.DirList()
 	if err != nil {
@@ -34,12 +40,13 @@ func (c *CLI) Run(s site.Site) error {
 		return err
 	}
 	for _, item := range queue.Items {
-		if c.Verbose || item.Transfer {
+		c.LogVerbose(item.String())
+		if item.Transfer {
 			c.Log(item.String())
 		}
 	}
 	if len(queue.TransferItems()) == 0 {
-		c.Log("nothing to queue")
+		c.LogVerbose("Nothing to transfer")
 		return nil
 	}
 	if c.Dryrun {
@@ -61,9 +68,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if cli.Test {
-		if !cli.Quiet {
-			fmt.Printf("%+v\n", cfg)
-		}
+		fmt.Printf("%+v\n", cfg)
 		return
 	}
 	for _, s := range cfg.Sites {
