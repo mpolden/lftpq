@@ -14,10 +14,65 @@ type Item struct {
 	LocalDir string
 	Transfer bool
 	Reason   string
+	Queue    *Queue
 }
 
 func (i *Item) String() string {
 	return fmt.Sprintf("Path=%q LocalDir=%q Transfer=%t Reason=%q", i.Path, i.LocalDir, i.Transfer, i.Reason)
+}
+
+func (i *Item) IsDstDirEmpty() bool {
+	dstDir := i.LocalDir
+	// When LocalDir has a trailing slash, the actual dstDir will be a directory inside LocalDir
+	// (same behaviour as rsync)
+	if strings.HasSuffix(dstDir, string(os.PathSeparator)) {
+		dstDir = filepath.Join(dstDir, i.Dir.Base())
+	}
+	dirs, _ := ioutil.ReadDir(dstDir)
+	return len(dirs) == 0
+}
+
+func (i *Item) parseLocalDir() (string, error) {
+	var data interface{}
+	switch i.Queue.Parser {
+	case "show":
+		show, err := i.Dir.Show()
+		if err != nil {
+			return "", err
+		}
+		data = show
+	case "movie":
+		movie, err := i.Dir.Movie()
+		if err != nil {
+			return "", err
+		}
+		data = movie
+	}
+	var b bytes.Buffer
+	if err := i.Queue.localDir.Execute(&b, data); err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+func (i *Item) setLocalDir() {
+	localDir := i.Queue.LocalDir
+	if i.Queue.Parser != "" {
+		d, err := i.parseLocalDir()
+		if err != nil {
+			i.Transfer = false
+			i.Reason = err.Error()
+			return
+		}
+		localDir = d
+	}
+	i.LocalDir = localDir
+}
+
+func newItem(q *Queue, d Dir) Item {
+	item := Item{Queue: q, Dir: d}
+	item.setLocalDir()
+	return item
 }
 
 type Queue struct {
@@ -25,93 +80,29 @@ type Queue struct {
 	Items []Item
 }
 
-func (q *Queue) filterDirs(dirs []Dir) []Item {
+func NewQueue(site Site, dirs []Dir) Queue {
 	items := make([]Item, 0, len(dirs))
+	q := Queue{Site: site}
 	for _, dir := range dirs {
-		item := Item{Dir: dir}
+		item := newItem(&q, dir)
 		if dir.IsSymlink && q.SkipSymlinks {
 			item.Reason = fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks)
 		} else if age := dir.Age(); age > q.maxAge {
 			item.Reason = fmt.Sprintf("Age=%s MaxAge=%s", age, q.MaxAge)
 		} else if p, match := dir.MatchAny(q.filters); match {
 			item.Reason = fmt.Sprintf("Filter=%s", p)
+		} else if empty := item.IsDstDirEmpty(); !empty {
+			item.Reason = fmt.Sprintf("IsDstDirEmpty=%t", empty)
 		} else if p, match := dir.MatchAny(q.patterns); match {
 			item.Transfer = true
 			item.Reason = fmt.Sprintf("Match=%s", p)
-		} else {
+		} else if item.Reason == "" {
 			item.Reason = "no match"
 		}
 		items = append(items, item)
 	}
-	return items
-}
-
-func (q *Queue) parseLocalDir(dir Dir, localDir string) (string, error) {
-	var data interface{}
-	switch q.Parser {
-	case "show":
-		show, err := dir.Show()
-		if err != nil {
-			return "", err
-		}
-		data = show
-	case "movie":
-		movie, err := dir.Movie()
-		if err != nil {
-			return "", err
-		}
-		data = movie
-	}
-	var b bytes.Buffer
-	if err := q.localDir.Execute(&b, data); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
-func (q *Queue) buildLocalDir(dir Dir) (string, error) {
-	localDir := q.LocalDir
-	if q.Parser != "" {
-		d, err := q.parseLocalDir(dir, q.LocalDir)
-		if err != nil {
-			return "", err
-		}
-		localDir = d
-	}
-	if !strings.HasSuffix(localDir, string(os.PathSeparator)) {
-		localDir += string(os.PathSeparator)
-	}
-	dstDir := filepath.Join(localDir, dir.Base())
-	if dirs, err := ioutil.ReadDir(dstDir); err == nil && len(dirs) > 0 {
-		return "", fmt.Errorf("%s already exists and is not empty", dstDir)
-	}
-	return localDir, nil
-}
-
-func (q *Queue) findLocalDir(items []Item) ([]Item, error) {
-	for i, item := range items {
-		if !item.Transfer {
-			continue
-		}
-		localDir, err := q.buildLocalDir(item.Dir)
-		if err != nil {
-			items[i].Transfer = false
-			items[i].Reason = err.Error()
-			continue
-		}
-		items[i].LocalDir = localDir
-	}
-	return items, nil
-}
-
-func (q *Queue) Process(dirs []Dir) error {
-	items := q.filterDirs(dirs)
-	items, err := q.findLocalDir(items)
-	if err != nil {
-		return err
-	}
 	q.Items = items
-	return nil
+	return q
 }
 
 func (q *Queue) TransferItems() []Item {
