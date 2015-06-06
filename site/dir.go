@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/martinp/lftpfetch/tv"
+	"github.com/martinp/lftpq/tv"
 )
 
 type Dir struct {

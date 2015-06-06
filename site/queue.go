@@ -126,7 +126,7 @@ func (q *Queue) Write() (string, error) {
 	if len(q.Items) == 0 {
 		return "", fmt.Errorf("queue is empty")
 	}
-	f, err := ioutil.TempFile("", "lftpfetch")
+	f, err := ioutil.TempFile("", "lftpq")
 	if err != nil {
 		return "", err
 	}

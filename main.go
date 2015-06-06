@@ -7,11 +7,11 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 
-	"github.com/martinp/lftpfetch/site"
+	"github.com/martinp/lftpq/site"
 )
 
 type CLI struct {
-	Config  string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpfetchrc"`
+	Config  string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpqrc"`
 	Dryrun  bool   `short:"n" long:"dryrun" description:"Print generated queue and exit without executing lftp"`
 	Test    bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet   bool   `short:"q" long:"quiet" description:"Only print errors"`

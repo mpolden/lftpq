@@ -1,4 +1,4 @@
-NAME=lftpfetch
+NAME=lftpq
 
 all: deps test build
 

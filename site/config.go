@@ -36,9 +36,9 @@ func parseTemplate(tmpl string) (*template.Template, error) {
 }
 
 func ReadConfig(name string) (Config, error) {
-	if name == "~/.lftpfetchrc" {
+	if name == "~/.lftpqrc" {
 		home := os.Getenv("HOME")
-		name = filepath.Join(home, ".lftpfetchrc")
+		name = filepath.Join(home, ".lftpqrc")
 	}
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
