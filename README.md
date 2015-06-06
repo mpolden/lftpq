@@ -36,7 +36,7 @@ Help Options:
       "Dir": "/dir",
       "LocalDir": "/tmp/{{ .Name }}/S{{ .Season }}/",
       "SkipSymlinks": true,
-      "ParseTVShow": true,
+      "Parser": "show",
       "MaxAge": "24h",
       "Patterns": [
         "^Dir1",
