@@ -19,7 +19,7 @@ type Dir struct {
 func ParseDir(s string) (Dir, error) {
 	words := strings.SplitN(s, " ", 5)
 	if len(words) != 5 {
-		return Dir{}, fmt.Errorf("expected 5 words, found %d", len(words))
+		return Dir{}, fmt.Errorf("failed to parse dir: %s", s)
 	}
 	t := strings.Join(words[:4], " ")
 	created, err := time.Parse("2006-01-02 15:04:05 -0700 MST", t)
