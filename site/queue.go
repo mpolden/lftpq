@@ -63,8 +63,8 @@ func (q *Queue) getLocalDir(dir Dir) (string, error) {
 		localDir += string(os.PathSeparator)
 	}
 	dstDir := filepath.Join(localDir, dir.Base())
-	if _, err := os.Stat(dstDir); err == nil {
-		return "", fmt.Errorf("%s already exists", dstDir)
+	if dirs, err := ioutil.ReadDir(dstDir); err == nil && len(dirs) > 0 {
+		return "", fmt.Errorf("%s already exists and is not empty", dstDir)
 	}
 	return localDir, nil
 }
