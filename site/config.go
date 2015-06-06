@@ -2,6 +2,7 @@ package site
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -70,7 +71,14 @@ func ReadConfig(name string) (Config, error) {
 			return Config{}, err
 		}
 		cfg.Sites[i].localDir = tmpl
-
+		switch site.Parser {
+		case "show":
+		case "movie":
+		case "":
+		default:
+			return Config{}, fmt.Errorf("invalid parser: %q (must be %q or %q)",
+				site.Parser, "show", "movie")
+		}
 	}
 	return cfg, nil
 }

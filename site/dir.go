@@ -64,3 +64,11 @@ func (d *Dir) Show() (parser.Show, error) {
 	}
 	return show, nil
 }
+
+func (d *Dir) Movie() (parser.Movie, error) {
+	movie, err := parser.ParseMovie(d.Base())
+	if err != nil {
+		return parser.Movie{}, err
+	}
+	return movie, nil
+}

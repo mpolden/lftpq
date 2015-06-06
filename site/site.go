@@ -25,7 +25,7 @@ type Site struct {
 	Filters      []string
 	filters      []*regexp.Regexp
 	SkipSymlinks bool
-	ParseTVShow  bool
+	Parser       string
 	LocalDir     string
 	localDir     *template.Template
 }

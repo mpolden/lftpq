@@ -46,18 +46,37 @@ func (q *Queue) filterDirs(dirs []Dir) []Item {
 	return items
 }
 
-func (q *Queue) getLocalDir(dir Dir) (string, error) {
-	localDir := q.LocalDir
-	if q.ParseTVShow {
+func (q *Queue) parseLocalDir(dir Dir, localDir string) (string, error) {
+	var data interface{}
+	switch q.Parser {
+	case "show":
 		show, err := dir.Show()
 		if err != nil {
 			return "", err
 		}
-		var b bytes.Buffer
-		if err := q.localDir.Execute(&b, show); err != nil {
+		data = show
+	case "movie":
+		movie, err := dir.Movie()
+		if err != nil {
 			return "", err
 		}
-		localDir = b.String()
+		data = movie
+	}
+	var b bytes.Buffer
+	if err := q.localDir.Execute(&b, data); err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+func (q *Queue) buildLocalDir(dir Dir) (string, error) {
+	localDir := q.LocalDir
+	if q.Parser != "" {
+		d, err := q.parseLocalDir(dir, q.LocalDir)
+		if err != nil {
+			return "", err
+		}
+		localDir = d
 	}
 	if !strings.HasSuffix(localDir, string(os.PathSeparator)) {
 		localDir += string(os.PathSeparator)
@@ -74,7 +93,7 @@ func (q *Queue) findLocalDir(items []Item) ([]Item, error) {
 		if !item.Transfer {
 			continue
 		}
-		localDir, err := q.getLocalDir(item.Dir)
+		localDir, err := q.buildLocalDir(item.Dir)
 		if err != nil {
 			items[i].Transfer = false
 			items[i].Reason = err.Error()

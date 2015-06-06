@@ -73,16 +73,16 @@ func TestFilterDirs(t *testing.T) {
 	}
 }
 
-func TestParseLocalDir(t *testing.T) {
+func TestBuildLocalDirShow(t *testing.T) {
 	tmpl := template.Must(template.New("").Parse(
 		"/tmp/{{ .Name }}/S{{ .Season }}"))
 	s := Site{
-		localDir:    tmpl,
-		ParseTVShow: true,
+		localDir: tmpl,
+		Parser:   "show",
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
-	path, err := q.getLocalDir(d)
+	path, err := q.buildLocalDir(d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,13 +91,31 @@ func TestParseLocalDir(t *testing.T) {
 	}
 }
 
-func TestParseLocalDirNoTemplate(t *testing.T) {
+func TestBuildLocalDirMovie(t *testing.T) {
+	tmpl := template.Must(template.New("").Parse(
+		"/tmp/{{ .Year }}/{{ .Name }}"))
+	s := Site{
+		localDir: tmpl,
+		Parser:   "movie",
+	}
+	d := Dir{Path: "/foo/Apocalypse.Now.1979"}
+	q := Queue{Site: s}
+	path, err := q.buildLocalDir(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expected := "/tmp/1979/Apocalypse.Now/"; path != expected {
+		t.Fatalf("Expected %s, got %s", expected, path)
+	}
+}
+
+func TestBuildLocalDirNoTemplate(t *testing.T) {
 	s := Site{
 		LocalDir: "/tmp",
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
-	path, err := q.getLocalDir(d)
+	path, err := q.buildLocalDir(d)
 	if err != nil {
 		t.Fatal(err)
 	}
