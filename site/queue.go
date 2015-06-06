@@ -116,7 +116,7 @@ func (q *Queue) TransferItems() []Item {
 	return items
 }
 
-func (q *Queue) String() string {
+func (q *Queue) Script() string {
 	var buf bytes.Buffer
 	buf.WriteString("open " + q.Site.Name + "\n")
 	for _, item := range q.TransferItems() {
@@ -141,7 +141,7 @@ func (q *Queue) Write() (string, error) {
 		return "", err
 	}
 	defer f.Close()
-	f.WriteString(q.String())
+	f.WriteString(q.Script())
 	return f.Name(), nil
 }
 

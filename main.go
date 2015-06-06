@@ -47,7 +47,7 @@ func (c *CLI) Run(s site.Site) error {
 		return nil
 	}
 	if c.Dryrun {
-		fmt.Print(queue.String())
+		fmt.Print(queue.Script())
 	} else if err := queue.Start(); err != nil {
 		return err
 	}
