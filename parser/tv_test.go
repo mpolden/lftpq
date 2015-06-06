@@ -1,13 +1,13 @@
-package tv
+package parser
 
 import (
 	"reflect"
 	"testing"
 )
 
-func TestParse(t *testing.T) {
+func TestParseShow(t *testing.T) {
 	s := "Gotham.S01E01.720p.HDTV.X264-DIMENSION"
-	series, err := Parse(s)
+	series, err := ParseShow(s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,9 +22,9 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestParse2(t *testing.T) {
+func TestParseShow2(t *testing.T) {
 	s := "Top_Gear.21x02.720p_HDTV_x264-FoV"
-	series, err := Parse(s)
+	series, err := ParseShow(s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,9 +39,9 @@ func TestParse2(t *testing.T) {
 	}
 }
 
-func TestParse3(t *testing.T) {
+func TestParseShow3(t *testing.T) {
 	s := "Eastbound.and.Down.S02E05.720p.BluRay.X264-REWARD"
-	series, err := Parse(s)
+	series, err := ParseShow(s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,16 +56,16 @@ func TestParse3(t *testing.T) {
 	}
 }
 
-func TestParse4(t *testing.T) {
-	_, err := Parse("foo")
+func TestParseShow4(t *testing.T) {
+	_, err := ParseShow("foo")
 	if err == nil {
 		t.Fatal("Expected error")
 	}
 }
 
-func TestParse5(t *testing.T) {
+func TestParseShow5(t *testing.T) {
 	s := "Olive.Kitteridge.Part.4.720p.HDTV.x264-KILLERS"
-	series, err := Parse(s)
+	series, err := ParseShow(s)
 	if err != nil {
 		t.Fatal(err)
 	}

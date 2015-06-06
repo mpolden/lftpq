@@ -1,4 +1,4 @@
-package tv
+package parser
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type Show struct {
 	Episode string
 }
 
-func Parse(s string) (Show, error) {
+func ParseShow(s string) (Show, error) {
 	m := episodeExp.FindAllStringSubmatch(s, -1)
 	if len(m) == 0 {
 		return Show{}, fmt.Errorf("no matches found for %s", s)

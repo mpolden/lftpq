@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/martinp/lftpq/tv"
+	"github.com/martinp/lftpq/parser"
 )
 
 type Dir struct {
@@ -57,10 +57,10 @@ func (d *Dir) Match(pattern *regexp.Regexp) bool {
 	return pattern.MatchString(d.Base())
 }
 
-func (d *Dir) Show() (tv.Show, error) {
-	show, err := tv.Parse(d.Base())
+func (d *Dir) Show() (parser.Show, error) {
+	show, err := parser.ParseShow(d.Base())
 	if err != nil {
-		return tv.Show{}, err
+		return parser.Show{}, err
 	}
 	return show, nil
 }
