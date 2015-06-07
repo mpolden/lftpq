@@ -2,6 +2,7 @@ package site
 
 import (
 	"bufio"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -36,19 +37,9 @@ func (s *Site) listCmd() Lftp {
 	return Lftp{Path: s.LftpPath, Args: args}
 }
 
-func (s *Site) DirList() ([]Dir, error) {
-	listCmd := s.listCmd()
-	cmd := listCmd.Cmd()
-	cmd.Stderr = os.Stderr
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
+func (s *Site) parseDirList(r io.Reader) ([]Dir, error) {
 	dirs := []Dir{}
-	scanner := bufio.NewScanner(stdout)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), " \t\r\n")
 		if len(line) == 0 {
@@ -61,6 +52,24 @@ func (s *Site) DirList() ([]Dir, error) {
 		dirs = append(dirs, dir)
 	}
 	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return dirs, nil
+}
+
+func (s *Site) DirList() ([]Dir, error) {
+	listCmd := s.listCmd()
+	cmd := listCmd.Cmd()
+	cmd.Stderr = os.Stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	dirs, err := s.parseDirList(stdout)
+	if err != nil {
 		return nil, err
 	}
 	if err := cmd.Wait(); err != nil {
