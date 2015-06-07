@@ -73,7 +73,7 @@ func TestNewQueue(t *testing.T) {
 	}
 }
 
-func TestBuildLocalDirShow(t *testing.T) {
+func TestNewItemShow(t *testing.T) {
 	tmpl := template.Must(template.New("").Parse(
 		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{
@@ -88,7 +88,7 @@ func TestBuildLocalDirShow(t *testing.T) {
 	}
 }
 
-func TestBuildLocalDirMovie(t *testing.T) {
+func TestNewItemMovie(t *testing.T) {
 	tmpl := template.Must(template.New("").Parse(
 		"/tmp/{{ .Year }}/{{ .Name }}/"))
 	s := Site{
@@ -103,7 +103,7 @@ func TestBuildLocalDirMovie(t *testing.T) {
 	}
 }
 
-func TestBuildLocalDirNoTemplate(t *testing.T) {
+func TestNewItemNoTemplate(t *testing.T) {
 	s := Site{
 		LocalDir: "/tmp/",
 	}
