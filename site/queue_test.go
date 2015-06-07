@@ -53,7 +53,7 @@ func TestNewQueue(t *testing.T) {
 			Created: now,
 		},
 	}
-	q := NewQueue(s, dirs)
+	q := NewQueue(&s, dirs)
 	expected := []Item{
 		Item{Queue: &q, Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
 		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge="},
@@ -81,7 +81,7 @@ func TestNewItemShow(t *testing.T) {
 		Parser:   "show",
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
-	q := Queue{Site: s}
+	q := Queue{Site: &s}
 	item := newItem(&q, d)
 	if expected := "/tmp/The.Wire/S03/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
@@ -96,7 +96,7 @@ func TestNewItemMovie(t *testing.T) {
 		Parser:   "movie",
 	}
 	d := Dir{Path: "/foo/Apocalypse.Now.1979"}
-	q := Queue{Site: s}
+	q := Queue{Site: &s}
 	item := newItem(&q, d)
 	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
@@ -108,7 +108,7 @@ func TestNewItemNoTemplate(t *testing.T) {
 		LocalDir: "/tmp/",
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
-	q := Queue{Site: s}
+	q := Queue{Site: &s}
 	item := newItem(&q, d)
 	if expected := "/tmp/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
@@ -116,7 +116,7 @@ func TestNewItemNoTemplate(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	site := Site{
+	s := Site{
 		Client: Client{
 			LftpPath:   "/bin/lftp",
 			LftpGetCmd: "mirror",
@@ -127,7 +127,7 @@ func TestWrite(t *testing.T) {
 		Item{Dir: Dir{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
 		Item{Dir: Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
 	}
-	q := Queue{Site: site, Items: items}
+	q := Queue{Site: &s, Items: items}
 	name, err := q.Write()
 	if err != nil {
 		t.Fatal(err)

@@ -14,7 +14,7 @@ type Item struct {
 	LocalDir string
 	Transfer bool
 	Reason   string
-	Queue    *Queue
+	*Queue
 }
 
 func (i *Item) String() string {
@@ -76,11 +76,11 @@ func newItem(q *Queue, d Dir) Item {
 }
 
 type Queue struct {
-	Site
+	*Site
 	Items []Item
 }
 
-func NewQueue(site Site, dirs []Dir) Queue {
+func NewQueue(site *Site, dirs []Dir) Queue {
 	items := make([]Item, 0, len(dirs))
 	q := Queue{Site: site}
 	for _, dir := range dirs {

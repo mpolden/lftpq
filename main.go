@@ -35,7 +35,7 @@ func (c *CLI) Run(s site.Site) error {
 	if err != nil {
 		return err
 	}
-	queue := site.NewQueue(s, dirs)
+	queue := site.NewQueue(&s, dirs)
 	for _, item := range queue.Items {
 		c.LogVerbose(item.String())
 		if !c.Verbose && item.Transfer {
