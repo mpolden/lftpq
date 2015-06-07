@@ -70,7 +70,7 @@ func main() {
 	}
 	for _, s := range cfg.Sites {
 		if err := cli.Run(s); err != nil {
-			log.Fatal(err)
+			log.Print(err)
 		}
 	}
 }
