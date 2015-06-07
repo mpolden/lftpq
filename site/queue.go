@@ -70,7 +70,7 @@ func (i *Item) setLocalDir() {
 }
 
 func newItem(q *Queue, d Dir) Item {
-	item := Item{Queue: q, Dir: d}
+	item := Item{Queue: q, Dir: d, Reason: "no match"}
 	item.setLocalDir()
 	return item
 }
@@ -96,8 +96,6 @@ func NewQueue(site *Site, dirs []Dir) Queue {
 		} else if p, match := dir.MatchAny(q.patterns); match {
 			item.Transfer = true
 			item.Reason = fmt.Sprintf("Match=%s", p)
-		} else if item.Reason == "" {
-			item.Reason = "no match"
 		}
 		items = append(items, item)
 	}
@@ -118,7 +116,9 @@ func (q *Queue) TransferItems() []Item {
 
 func (q *Queue) Script() string {
 	var buf bytes.Buffer
-	buf.WriteString("open " + q.Site.Name + "\n")
+	buf.WriteString("open ")
+	buf.WriteString(q.Site.Name)
+	buf.WriteString("\n")
 	for _, item := range q.TransferItems() {
 		buf.WriteString("queue ")
 		buf.WriteString(q.LftpGetCmd)
@@ -141,7 +141,9 @@ func (q *Queue) Write() (string, error) {
 		return "", err
 	}
 	defer f.Close()
-	f.WriteString(q.Script())
+	if _, err := f.WriteString(q.Script()); err != nil {
+		return "", err
+	}
 	return f.Name(), nil
 }
 
