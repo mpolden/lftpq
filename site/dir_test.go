@@ -15,9 +15,9 @@ func TestParseDir(t *testing.T) {
 	if name := "foo"; dir.Base() != name {
 		t.Fatalf("Expected %s, got %s", name, dir.Base())
 	}
-	d := time.Date(2014, 12, 16, 0, 4, 30, 0, time.FixedZone("CET", 1))
-	if created := d; dir.Created.Equal(created) {
-		t.Fatalf("Expected %s, got %s", created, dir.Created)
+	d := time.Date(2014, 12, 16, 0, 4, 30, 0, time.FixedZone("CET", 3600))
+	if !d.Equal(dir.Created) {
+		t.Fatalf("Expected %s, got %s", d, dir.Created)
 	}
 }
 
