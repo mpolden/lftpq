@@ -19,7 +19,7 @@ type CLI struct {
 }
 
 func (c *CLI) Log(format string, v ...interface{}) {
-	if !c.Quiet {
+	if !c.Quiet && !c.Dryrun && !c.Verbose {
 		log.Printf(format, v...)
 	}
 }
@@ -38,7 +38,7 @@ func (c *CLI) Run(s site.Site) error {
 	queue := site.NewQueue(&s, dirs)
 	for _, item := range queue.Items {
 		c.LogVerbose(item.String())
-		if !c.Verbose && item.Transfer {
+		if item.Transfer {
 			c.Log(item.String())
 		}
 	}
