@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/martinp/lftpq/parser"
+
 	"strings"
 )
 
@@ -14,6 +17,7 @@ type Item struct {
 	LocalDir string
 	Transfer bool
 	Reason   string
+	Media    interface{}
 	*Queue
 }
 
@@ -32,52 +36,120 @@ func (i *Item) IsDstDirEmpty() bool {
 	return len(dirs) == 0
 }
 
-func (i *Item) parseLocalDir() (string, error) {
-	var data interface{}
+func (i *Item) ShowEqual(o Item) bool {
+	a, ok := i.Media.(parser.Show)
+	if !ok {
+		return false
+	}
+	b, ok := o.Media.(parser.Show)
+	if !ok {
+		return false
+	}
+	return a.Equal(b)
+}
+
+func (i *Item) MovieEqual(o Item) bool {
+	a, ok := i.Media.(parser.Movie)
+	if !ok {
+		return false
+	}
+	b, ok := o.Media.(parser.Movie)
+	if !ok {
+		return false
+	}
+	return a.Equal(b)
+}
+
+func (i *Item) MediaEqual(o Item) bool {
+	return i.ShowEqual(o) || i.MovieEqual(o)
+}
+
+func (i *Item) Weight() int {
+	for _i, p := range i.Queue.priorities {
+		if i.Dir.Match(p) {
+			return len(i.Queue.priorities) - _i
+		}
+	}
+	return 0
+}
+
+func (i *Item) parseMedia() (interface{}, error) {
 	switch i.Queue.Parser {
 	case "show":
 		show, err := i.Dir.Show()
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		data = show
+		return show, nil
 	case "movie":
 		movie, err := i.Dir.Movie()
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		data = movie
+		return movie, nil
 	}
+	return nil, nil
+}
+
+func (i *Item) parseLocalDir() (string, error) {
 	var b bytes.Buffer
-	if err := i.Queue.localDir.Execute(&b, data); err != nil {
+	if err := i.Queue.localDir.Execute(&b, i.Media); err != nil {
 		return "", err
 	}
 	return b.String(), nil
 }
 
-func (i *Item) setLocalDir() {
-	localDir := i.Queue.LocalDir
-	if i.Queue.Parser != "" {
-		d, err := i.parseLocalDir()
-		if err != nil {
-			i.Transfer = false
-			i.Reason = err.Error()
-			return
-		}
-		localDir = d
+func (i *Item) setMetadata() {
+	i.LocalDir = i.Queue.LocalDir
+	if i.Queue.Parser == "" {
+		return
 	}
-	i.LocalDir = localDir
+
+	m, err := i.parseMedia()
+	if err != nil {
+		i.Transfer = false
+		i.Reason = err.Error()
+		return
+	}
+	i.Media = m
+
+	d, err := i.parseLocalDir()
+	if err != nil {
+		i.Transfer = false
+		i.Reason = err.Error()
+		return
+	}
+	i.LocalDir = d
 }
 
 func newItem(q *Queue, d Dir) Item {
 	item := Item{Queue: q, Dir: d, Reason: "no match"}
-	item.setLocalDir()
+	item.setMetadata()
 	return item
 }
 
 type Queue struct {
 	*Site
 	Items []Item
+}
+
+func (q *Queue) deduplicate() {
+	keep := make([]*Item, 0)
+	for i, _ := range q.Items {
+		a := &q.Items[i]
+		for _, b := range keep {
+			if a.MediaEqual(*b) {
+				if a.Weight() <= b.Weight() {
+					a.Transfer = false
+					a.Reason = fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Dir.Path, a.Weight())
+				} else {
+					b.Transfer = false
+					b.Reason = fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Dir.Path, b.Weight())
+				}
+			}
+		}
+		keep = append(keep, a)
+	}
 }
 
 func NewQueue(site *Site, dirs []Dir) Queue {
@@ -100,6 +172,9 @@ func NewQueue(site *Site, dirs []Dir) Queue {
 		items = append(items, item)
 	}
 	q.Items = items
+	if q.Deduplicate {
+		q.deduplicate()
+	}
 	return q
 }
 

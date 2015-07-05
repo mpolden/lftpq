@@ -8,6 +8,8 @@ import (
 	"testing"
 	"text/template"
 	"time"
+
+	"github.com/martinp/lftpq/parser"
 )
 
 func TestNewQueue(t *testing.T) {
@@ -162,5 +164,62 @@ func TestTransferItems(t *testing.T) {
 	expected := []Item{q.Items[0], q.Items[2]}
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("Expected %+v, got %+v", expected, actual)
+	}
+}
+
+func TestWeight(t *testing.T) {
+	s := Site{
+		priorities: []*regexp.Regexp{regexp.MustCompile("\\.PROPER\\."), regexp.MustCompile("\\.REPACK\\.")},
+	}
+	q := Queue{Site: &s}
+	var tests = []struct {
+		in  Item
+		out int
+	}{
+		{Item{Queue: &q, Dir: Dir{Path: "/tmp/The.Wire.S01E01.foo"}}, 0},
+		{Item{Queue: &q, Dir: Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}}, 2},
+		{Item{Queue: &q, Dir: Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}}, 1},
+	}
+	for _, tt := range tests {
+		if in := tt.in.Weight(); in != tt.out {
+			t.Errorf("Expected %q, got %q", tt.out, in)
+		}
+	}
+}
+
+func TestDeduplicate(t *testing.T) {
+	s := Site{
+		priorities: []*regexp.Regexp{
+			regexp.MustCompile("\\.PROPER\\.REPACK\\."),
+			regexp.MustCompile("\\.PROPER\\."),
+			regexp.MustCompile("\\.REPACK\\."),
+		},
+	}
+	dirs := []Dir{
+		Dir{Path: "/tmp/The.Wire.S01E01.foo"},
+		Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"},
+		Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"},
+		Dir{Path: "/tmp/The.Wire.S01E02.bar"},
+		Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"},
+	}
+	q := Queue{Site: &s}
+	q.Items = []Item{
+		Item{Queue: &q, Dir: dirs[0], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
+		Item{Queue: &q, Dir: dirs[1], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
+		Item{Queue: &q, Dir: dirs[2], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
+		Item{Queue: &q, Dir: dirs[3], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "02"}},
+		Item{Queue: &q, Dir: dirs[4], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "02"}},
+	}
+	q.deduplicate()
+
+	expected := []Item{q.Items[1], q.Items[4]}
+	actual := q.TransferItems()
+	if len(expected) != len(actual) {
+		t.Fatal("Expected equal length")
+	}
+	for i, _ := range q.TransferItems() {
+		if !reflect.DeepEqual(actual[i], expected[i]) {
+			t.Errorf("Expected %+v, got %+v", expected[i], actual[i])
+		}
 	}
 }

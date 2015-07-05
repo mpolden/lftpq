@@ -31,6 +31,7 @@ type Site struct {
 	localDir     *template.Template
 	Priorities   []string
 	priorities   []*regexp.Regexp
+	Deduplicate  bool
 }
 
 func (s *Site) listCmd() Lftp {
