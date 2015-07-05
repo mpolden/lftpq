@@ -20,3 +20,27 @@ func TestParseMovie(t *testing.T) {
 		t.Fatalf("Expected %+v, got %+v", expected, movie)
 	}
 }
+
+func TestMovieEqual(t *testing.T) {
+	a := Movie{
+		Release: "a",
+		Name:    "Apocalypse.Now",
+		Year:    1979,
+	}
+	b := Movie{
+		Release: "b",
+		Name:    "Apocalypse.Now",
+		Year:    1979,
+	}
+	if !a.Equal(b) {
+		t.Error("Expected true")
+	}
+	b = Movie{
+		Release: "c",
+		Name:    "The.Shawshank.Redemption",
+		Year:    1994,
+	}
+	if a.Equal(b) {
+		t.Error("Expected false")
+	}
+}

@@ -79,3 +79,30 @@ func TestParseShow5(t *testing.T) {
 		t.Fatalf("Expected %+v, got %+v", expected, series)
 	}
 }
+
+func TestShowEqual(t *testing.T) {
+	a := Show{
+		Release: "a",
+		Name:    "MacGyver",
+		Season:  "01",
+		Episode: "04",
+	}
+	b := Show{
+		Release: "b",
+		Name:    "MacGyver",
+		Season:  "01",
+		Episode: "04",
+	}
+	if !a.Equal(b) {
+		t.Error("Expected true")
+	}
+	b = Show{
+		Release: "b",
+		Name:    "MacGyver",
+		Season:  "01",
+		Episode: "05",
+	}
+	if a.Equal(b) {
+		t.Error("Expected false")
+	}
+}

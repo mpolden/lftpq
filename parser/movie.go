@@ -14,6 +14,10 @@ type Movie struct {
 	Year    int
 }
 
+func (a *Movie) Equal(b Movie) bool {
+	return a.Name == b.Name && a.Year == b.Year
+}
+
 func ParseMovie(s string) (Movie, error) {
 	m := movieExp.FindAllStringSubmatch(s, -1)
 	if len(m) == 0 {

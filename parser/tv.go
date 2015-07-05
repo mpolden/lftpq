@@ -19,6 +19,10 @@ type Show struct {
 	Episode string
 }
 
+func (a *Show) Equal(b Show) bool {
+	return a.Name == b.Name && a.Season == b.Season && a.Episode == b.Episode
+}
+
 func ParseShow(s string) (Show, error) {
 	m := episodeExp.FindAllStringSubmatch(s, -1)
 	if len(m) == 0 {
