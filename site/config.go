@@ -65,6 +65,11 @@ func ReadConfig(name string) (Config, error) {
 			return Config{}, err
 		}
 		cfg.Sites[i].filters = filters
+		priorities, err := compilePatterns(site.Priorities)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.Sites[i].priorities = priorities
 		cfg.Sites[i].Client = cfg.Client
 		tmpl, err := parseTemplate(site.LocalDir)
 		if err != nil {

@@ -29,6 +29,8 @@ type Site struct {
 	Parser       string
 	LocalDir     string
 	localDir     *template.Template
+	Priorities   []string
+	priorities   []*regexp.Regexp
 }
 
 func (s *Site) listCmd() Lftp {
