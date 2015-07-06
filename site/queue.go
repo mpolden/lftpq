@@ -17,7 +17,7 @@ func (q *Queue) deduplicate() {
 	for i, _ := range q.Items {
 		a := &q.Items[i]
 		for _, b := range keep {
-			if a.MediaEqual(*b) {
+			if a.Transfer && b.Transfer && a.MediaEqual(*b) {
 				if a.Weight() <= b.Weight() {
 					a.Transfer = false
 					a.Reason = fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Dir.Path, a.Weight())

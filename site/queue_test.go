@@ -138,6 +138,8 @@ func TestDeduplicate(t *testing.T) {
 		Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"},
 		Dir{Path: "/tmp/The.Wire.S01E02.bar"},
 		Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"},
+		Dir{Path: "/tmp/The.Wire.S01E03.bar"},
+		Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"},
 	}
 	q := Queue{Site: &s}
 	q.Items = []Item{
@@ -146,10 +148,12 @@ func TestDeduplicate(t *testing.T) {
 		Item{Queue: &q, Dir: dirs[2], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
 		Item{Queue: &q, Dir: dirs[3], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "02"}},
 		Item{Queue: &q, Dir: dirs[4], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "02"}},
+		Item{Queue: &q, Dir: dirs[5], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "03"}},
+		Item{Queue: &q, Dir: dirs[6], Transfer: false, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "03"}},
 	}
 	q.deduplicate()
 
-	expected := []Item{q.Items[1], q.Items[4]}
+	expected := []Item{q.Items[1], q.Items[4], q.Items[5]}
 	actual := q.TransferItems()
 	if len(expected) != len(actual) {
 		t.Fatal("Expected equal length")
