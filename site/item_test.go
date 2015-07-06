@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"testing"
 	"text/template"
+
+	"github.com/martinp/lftpq/parser"
 )
 
 func TestNewItemShow(t *testing.T) {
@@ -63,6 +65,40 @@ func TestWeight(t *testing.T) {
 	}
 	for _, tt := range tests {
 		if in := tt.in.Weight(); in != tt.out {
+			t.Errorf("Expected %q, got %q", tt.out, in)
+		}
+	}
+}
+
+func TestMediaEqual(t *testing.T) {
+	var tests = []struct {
+		a   Item
+		b   Item
+		out bool
+	}{
+		{
+			Item{Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
+			Item{Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
+			true,
+		},
+		{
+			Item{Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
+			Item{Media: parser.Show{Name: "The.Wire", Season: "02", Episode: "01"}},
+			false,
+		},
+		{
+			Item{Media: parser.Movie{Name: "Apocalypse.Now", Year: 1979, Release: "foo"}},
+			Item{Media: parser.Movie{Name: "Apocalypse.Now", Year: 1979, Release: "bar"}},
+			true,
+		},
+		{
+			Item{Media: parser.Movie{Name: "Apocalypse.Now", Year: 1979}},
+			Item{Media: parser.Movie{Name: "The.Shawshank.Redemption", Year: 1994}},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		if in := tt.a.MediaEqual(tt.b); in != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, in)
 		}
 	}

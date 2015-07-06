@@ -35,7 +35,7 @@ func (i *Item) IsDstDirEmpty() bool {
 	return len(dirs) == 0
 }
 
-func (i *Item) ShowEqual(o Item) bool {
+func (i *Item) showEqual(o Item) bool {
 	a, ok := i.Media.(parser.Show)
 	if !ok {
 		return false
@@ -47,7 +47,7 @@ func (i *Item) ShowEqual(o Item) bool {
 	return a.Equal(b)
 }
 
-func (i *Item) MovieEqual(o Item) bool {
+func (i *Item) movieEqual(o Item) bool {
 	a, ok := i.Media.(parser.Movie)
 	if !ok {
 		return false
@@ -60,7 +60,7 @@ func (i *Item) MovieEqual(o Item) bool {
 }
 
 func (i *Item) MediaEqual(o Item) bool {
-	return i.ShowEqual(o) || i.MovieEqual(o)
+	return i.showEqual(o) || i.movieEqual(o)
 }
 
 func (i *Item) Weight() int {
