@@ -100,7 +100,7 @@ func TestMediaEqual(t *testing.T) {
 	}
 	for _, tt := range tests {
 		if in := tt.a.MediaEqual(tt.b); in != tt.out {
-			t.Errorf("Expected %q, got %q", tt.out, in)
+			t.Errorf("Expected %t, got %t", tt.out, in)
 		}
 	}
 }

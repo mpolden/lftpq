@@ -38,7 +38,7 @@ func TestParseDirList(t *testing.T) {
 	for i, e := range expected {
 		a := actual[i]
 		if !e.Created.Equal(a.Created) || e.Path != a.Path || e.IsSymlink != a.IsSymlink {
-			t.Fatalf("Expected %q, got %q", e, a)
+			t.Fatalf("Expected %+v, got %+v", e, a)
 		}
 	}
 }
