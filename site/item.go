@@ -86,6 +86,16 @@ func (i *Item) Weight() int {
 	return 0
 }
 
+func (i *Item) Accept(reason string) {
+	i.Transfer = true
+	i.Reason = reason
+}
+
+func (i *Item) Reject(reason string) {
+	i.Transfer = false
+	i.Reason = reason
+}
+
 func (i *Item) parseMedia() (interface{}, error) {
 	switch i.Queue.Parser {
 	case "show":
@@ -120,16 +130,14 @@ func (i *Item) setMetadata() {
 
 	m, err := i.parseMedia()
 	if err != nil {
-		i.Transfer = false
-		i.Reason = err.Error()
+		i.Reject(err.Error())
 		return
 	}
 	i.Media = m
 
 	d, err := i.parseLocalDir()
 	if err != nil {
-		i.Transfer = false
-		i.Reason = err.Error()
+		i.Reject(err.Error())
 		return
 	}
 	i.LocalDir = d

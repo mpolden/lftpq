@@ -141,3 +141,25 @@ func TestItemsSort(t *testing.T) {
 		}
 	}
 }
+
+func TestAccept(t *testing.T) {
+	item := Item{}
+	item.Accept("foo")
+	if !item.Transfer {
+		t.Error("Expected true")
+	}
+	if expected := "foo"; item.Reason != expected {
+		t.Errorf("Expected %q, got %q", item.Reason)
+	}
+}
+
+func TestReject(t *testing.T) {
+	item := Item{}
+	item.Reject("bar")
+	if item.Transfer {
+		t.Error("Expected false")
+	}
+	if expected := "bar"; item.Reason != expected {
+		t.Errorf("Expected %q, got %q", item.Reason)
+	}
+}

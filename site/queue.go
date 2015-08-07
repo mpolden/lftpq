@@ -23,11 +23,9 @@ func (q *Queue) deduplicate() {
 			b := &q.Items[j]
 			if a.Transfer && b.Transfer && a.MediaEqual(*b) {
 				if a.Weight() <= b.Weight() {
-					a.Transfer = false
-					a.Reason = fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Dir.Path, a.Weight())
+					a.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Dir.Path, a.Weight()))
 				} else {
-					b.Transfer = false
-					b.Reason = fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Dir.Path, b.Weight())
+					b.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Dir.Path, b.Weight()))
 				}
 			}
 		}
@@ -37,8 +35,7 @@ func (q *Queue) deduplicate() {
 func (q *Queue) skipNonEmptyDstDir() {
 	for _, item := range q.Transferable() {
 		if empty := item.IsDstDirEmpty(); !empty {
-			item.Transfer = false
-			item.Reason = fmt.Sprintf("IsDstDirEmpty=%t", empty)
+			item.Reject(fmt.Sprintf("IsDstDirEmpty=%t", empty))
 		}
 	}
 }
@@ -55,8 +52,7 @@ func NewQueue(site *Site, dirs []Dir) Queue {
 		} else if p, match := dir.MatchAny(q.filters); match {
 			item.Reason = fmt.Sprintf("Filter=%s", p)
 		} else if p, match := dir.MatchAny(q.patterns); match {
-			item.Transfer = true
-			item.Reason = fmt.Sprintf("Match=%s", p)
+			item.Accept(fmt.Sprintf("Match=%s", p))
 		}
 		items = append(items, item)
 	}
