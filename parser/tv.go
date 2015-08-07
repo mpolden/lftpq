@@ -25,12 +25,8 @@ func (a *Show) Equal(b Show) bool {
 
 func ParseShow(s string) (Show, error) {
 	m := episodeExp.FindAllStringSubmatch(s, -1)
-	if len(m) == 0 {
-		return Show{}, fmt.Errorf("no matches found for %s", s)
-	}
-	if len(m[0]) < 7 {
-		return Show{}, fmt.Errorf("only %d submatches found for %s",
-			len(m[0]), s)
+	if len(m) == 0 || len(m[0]) < 7 {
+		return Show{}, fmt.Errorf("failed to parse: %s", s)
 	}
 	name := strings.Replace(m[0][1], "_", ".", -1)
 	var season string

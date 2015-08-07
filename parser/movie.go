@@ -20,12 +20,8 @@ func (a *Movie) Equal(b Movie) bool {
 
 func ParseMovie(s string) (Movie, error) {
 	m := movieExp.FindAllStringSubmatch(s, -1)
-	if len(m) == 0 {
-		return Movie{}, fmt.Errorf("no matches found for %s", s)
-	}
-	if len(m[0]) < 3 {
-		return Movie{}, fmt.Errorf("only %d submatches found for %s",
-			len(m[0]), s)
+	if len(m) == 0 || len(m[0]) < 3 {
+		return Movie{}, fmt.Errorf("failed to parse: %s", s)
 	}
 	name := m[0][1]
 	year, err := strconv.Atoi(m[0][2])
