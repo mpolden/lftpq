@@ -14,10 +14,13 @@ type Queue struct {
 }
 
 func (q *Queue) deduplicate() {
-	keep := make([]*Item, 0)
 	for i, _ := range q.Items {
-		a := &q.Items[i]
-		for _, b := range keep {
+		for j, _ := range q.Items {
+			if i == j {
+				continue
+			}
+			a := &q.Items[i]
+			b := &q.Items[j]
 			if a.Transfer && b.Transfer && a.MediaEqual(*b) {
 				if a.Weight() <= b.Weight() {
 					a.Transfer = false
@@ -28,7 +31,6 @@ func (q *Queue) deduplicate() {
 				}
 			}
 		}
-		keep = append(keep, a)
 	}
 }
 
