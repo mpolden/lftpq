@@ -17,7 +17,7 @@ func TestNewItemShow(t *testing.T) {
 		Parser:   "show",
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
-	q := Queue{Site: &s}
+	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/The.Wire/S03/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
@@ -32,7 +32,7 @@ func TestNewItemMovie(t *testing.T) {
 		Parser:   "movie",
 	}
 	d := Dir{Path: "/foo/Apocalypse.Now.1979"}
-	q := Queue{Site: &s}
+	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
@@ -44,7 +44,7 @@ func TestNewItemWithoutParser(t *testing.T) {
 		LocalDir: "/tmp/",
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
-	q := Queue{Site: &s}
+	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
@@ -59,7 +59,7 @@ func TestNewItemUnparsable(t *testing.T) {
 		Parser:   "show",
 	}
 	d := Dir{Path: "/foo/bar"}
-	q := Queue{Site: &s}
+	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if item.LocalDir != "" {
 		t.Fatal("Expected empty string")
@@ -70,7 +70,7 @@ func TestWeight(t *testing.T) {
 	s := Site{
 		priorities: []*regexp.Regexp{regexp.MustCompile("\\.PROPER\\."), regexp.MustCompile("\\.REPACK\\.")},
 	}
-	q := Queue{Site: &s}
+	q := Queue{Site: s}
 	var tests = []struct {
 		in  Item
 		out int

@@ -9,7 +9,7 @@ import (
 )
 
 type Queue struct {
-	*Site
+	Site
 	Items
 }
 
@@ -40,7 +40,7 @@ func (q *Queue) skipNonEmptyDstDir() {
 	}
 }
 
-func NewQueue(site *Site, dirs []Dir) Queue {
+func NewQueue(site Site, dirs []Dir) Queue {
 	items := make(Items, 0, len(dirs))
 	q := Queue{Site: site}
 	for _, dir := range dirs {

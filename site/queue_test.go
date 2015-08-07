@@ -54,7 +54,7 @@ func TestNewQueue(t *testing.T) {
 			Created: now,
 		},
 	}
-	q := NewQueue(&s, dirs)
+	q := NewQueue(s, dirs)
 	expected := []Item{
 		Item{Queue: &q, Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
 		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge="},
@@ -86,7 +86,7 @@ func TestWrite(t *testing.T) {
 		Item{Dir: Dir{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
 		Item{Dir: Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
 	}
-	q := Queue{Site: &s, Items: items}
+	q := Queue{Site: s, Items: items}
 	name, err := q.Write()
 	if err != nil {
 		t.Fatal(err)
@@ -143,7 +143,7 @@ func TestDeduplicate(t *testing.T) {
 		Dir{Path: "/tmp/The.Wire.S01E03.bar"},
 		Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"},
 	}
-	q := Queue{Site: &s}
+	q := Queue{Site: s}
 	q.Items = []Item{
 		Item{Queue: &q, Dir: dirs[0], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
 		Item{Queue: &q, Dir: dirs[1], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
