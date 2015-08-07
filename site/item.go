@@ -113,8 +113,8 @@ func (i *Item) parseLocalDir() (string, error) {
 }
 
 func (i *Item) setMetadata() {
-	i.LocalDir = i.Queue.LocalDir
 	if i.Queue.Parser == "" {
+		i.LocalDir = i.Queue.LocalDir
 		return
 	}
 

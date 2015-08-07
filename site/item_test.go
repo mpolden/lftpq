@@ -39,7 +39,7 @@ func TestNewItemMovie(t *testing.T) {
 	}
 }
 
-func TestNewItemNoTemplate(t *testing.T) {
+func TestNewItemWithoutParser(t *testing.T) {
 	s := Site{
 		LocalDir: "/tmp/",
 	}
@@ -48,6 +48,21 @@ func TestNewItemNoTemplate(t *testing.T) {
 	item := newItem(&q, d)
 	if expected := "/tmp/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
+	}
+}
+
+func TestNewItemUnparsable(t *testing.T) {
+	tmpl := template.Must(template.New("").Parse(
+		"/tmp/{{ .Name }}/S{{ .Season }}/"))
+	s := Site{
+		localDir: tmpl,
+		Parser:   "show",
+	}
+	d := Dir{Path: "/foo/bar"}
+	q := Queue{Site: &s}
+	item := newItem(&q, d)
+	if item.LocalDir != "" {
+		t.Fatal("Expected empty string")
 	}
 }
 
