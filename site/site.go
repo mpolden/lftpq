@@ -35,7 +35,7 @@ type Site struct {
 }
 
 func (s *Site) listCmd() Lftp {
-	script := "cls -1 --date --time-style='%F %T %z %Z' " + s.Dir + " && exit"
+	script := "cls -1 --classify --date --time-style='%F %T %z %Z' " + s.Dir + " && exit"
 	args := []string{"-e", script, s.Name}
 	return Lftp{Path: s.LftpPath, Args: args}
 }
