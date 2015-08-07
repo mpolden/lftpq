@@ -42,7 +42,7 @@ func (c *CLI) Run(s site.Site) error {
 			c.Log(item.String())
 		}
 	}
-	if len(queue.TransferItems()) == 0 {
+	if len(queue.Transferable()) == 0 {
 		c.LogVerbose("Nothing to transfer")
 		return nil
 	}

@@ -109,18 +109,20 @@ exit
 	}
 }
 
-func TestTransferItems(t *testing.T) {
+func TestTransferable(t *testing.T) {
 	q := Queue{
 		Items: []Item{
 			Item{Dir: Dir{Path: "/tmp/d1"}, Transfer: true},
 			Item{Dir: Dir{Path: "/tmp/d2"}, Transfer: false},
-			Item{Dir: Dir{Path: "/tmp/d3"}, Transfer: true},
 		},
 	}
-	actual := q.TransferItems()
-	expected := []Item{q.Items[0], q.Items[2]}
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("Expected %+v, got %+v", expected, actual)
+	actual := q.Transferable()
+	expected := "/tmp/d1"
+	if len(actual) != 1 {
+		t.Fatal("Expected length to be 1")
+	}
+	if got := actual[0].Path; got != expected {
+		t.Fatalf("Expected %s, got %s", expected, got)
 	}
 }
 
@@ -154,13 +156,13 @@ func TestDeduplicate(t *testing.T) {
 	q.deduplicate()
 
 	expected := []Item{q.Items[1], q.Items[4], q.Items[5]}
-	actual := q.TransferItems()
+	actual := q.Transferable()
 	if len(expected) != len(actual) {
 		t.Fatal("Expected equal length")
 	}
-	for i, _ := range q.TransferItems() {
-		if !reflect.DeepEqual(actual[i], expected[i]) {
-			t.Errorf("Expected %+v, got %+v", expected[i], actual[i])
+	for i, _ := range actual {
+		if actual[i].Path != expected[i].Path {
+			t.Errorf("Expected %s, got %s", expected[i].Path, actual[i].Path)
 		}
 	}
 }

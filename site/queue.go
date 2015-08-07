@@ -34,6 +34,15 @@ func (q *Queue) deduplicate() {
 	}
 }
 
+func (q *Queue) skipNonEmptyDstDir() {
+	for _, item := range q.Transferable() {
+		if empty := item.IsDstDirEmpty(); !empty {
+			item.Transfer = false
+			item.Reason = fmt.Sprintf("IsDstDirEmpty=%t", empty)
+		}
+	}
+}
+
 func NewQueue(site *Site, dirs []Dir) Queue {
 	items := make(Items, 0, len(dirs))
 	q := Queue{Site: site}
@@ -45,8 +54,6 @@ func NewQueue(site *Site, dirs []Dir) Queue {
 			item.Reason = fmt.Sprintf("Age=%s MaxAge=%s", age, q.MaxAge)
 		} else if p, match := dir.MatchAny(q.filters); match {
 			item.Reason = fmt.Sprintf("Filter=%s", p)
-		} else if empty := item.IsDstDirEmpty(); !empty {
-			item.Reason = fmt.Sprintf("IsDstDirEmpty=%t", empty)
 		} else if p, match := dir.MatchAny(q.patterns); match {
 			item.Transfer = true
 			item.Reason = fmt.Sprintf("Match=%s", p)
@@ -58,12 +65,16 @@ func NewQueue(site *Site, dirs []Dir) Queue {
 	if q.Deduplicate {
 		q.deduplicate()
 	}
+	// Skipping of existing directories must be done after deduplication. This is because items with a higher weight
+	// might have been transferred in a previous run, but should still be respected during deduplication.
+	q.skipNonEmptyDstDir()
 	return q
 }
 
-func (q *Queue) TransferItems() []Item {
-	items := []Item{}
-	for _, item := range q.Items {
+func (q *Queue) Transferable() []*Item {
+	items := []*Item{}
+	for i, _ := range q.Items {
+		item := &q.Items[i]
 		if !item.Transfer {
 			continue
 		}
@@ -77,7 +88,7 @@ func (q *Queue) Script() string {
 	buf.WriteString("open ")
 	buf.WriteString(q.Site.Name)
 	buf.WriteString("\n")
-	for _, item := range q.TransferItems() {
+	for _, item := range q.Transferable() {
 		buf.WriteString("queue ")
 		buf.WriteString(q.LftpGetCmd)
 		buf.WriteString(" ")
