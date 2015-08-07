@@ -11,6 +11,20 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
+type Items []Item
+
+func (s Items) Len() int {
+	return len(s)
+}
+
+func (s Items) Less(i, j int) bool {
+	return s[i].Dir.Base() < s[j].Dir.Base()
+}
+
+func (s Items) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
 type Item struct {
 	Dir
 	LocalDir string

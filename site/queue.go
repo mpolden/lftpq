@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 )
 
 type Queue struct {
 	*Site
-	Items []Item
+	Items
 }
 
 func (q *Queue) deduplicate() {
@@ -32,7 +33,7 @@ func (q *Queue) deduplicate() {
 }
 
 func NewQueue(site *Site, dirs []Dir) Queue {
-	items := make([]Item, 0, len(dirs))
+	items := make(Items, 0, len(dirs))
 	q := Queue{Site: site}
 	for _, dir := range dirs {
 		item := newItem(&q, dir)
@@ -50,6 +51,7 @@ func NewQueue(site *Site, dirs []Dir) Queue {
 		}
 		items = append(items, item)
 	}
+	sort.Sort(items)
 	q.Items = items
 	if q.Deduplicate {
 		q.deduplicate()

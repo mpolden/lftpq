@@ -2,6 +2,7 @@ package site
 
 import (
 	"regexp"
+	"sort"
 	"testing"
 	"text/template"
 
@@ -100,6 +101,28 @@ func TestMediaEqual(t *testing.T) {
 	for _, tt := range tests {
 		if in := tt.a.MediaEqual(tt.b); in != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, in)
+		}
+	}
+}
+
+func TestItemsSort(t *testing.T) {
+	items := Items{
+		Item{Dir: Dir{Path: "/x/c"}},
+		Item{Dir: Dir{Path: "/x/b"}},
+		Item{Dir: Dir{Path: "/x/a"}},
+	}
+	sort.Sort(items)
+	var tests = []struct {
+		in  int
+		out string
+	}{
+		{0, "/x/a"},
+		{1, "/x/b"},
+		{2, "/x/c"},
+	}
+	for _, tt := range tests {
+		if got := items[tt.in].Dir.Path; got != tt.out {
+			t.Errorf("Expected index %d to be %q, got %q", tt.in, tt.out, got)
 		}
 	}
 }

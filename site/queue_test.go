@@ -39,6 +39,11 @@ func TestNewQueue(t *testing.T) {
 			Created: now.Add(-time.Duration(24) * time.Hour),
 		},
 		Dir{
+			Path: "/tmp/dir4",
+			// Included because less than MaxAge
+			Created: now,
+		},
+		Dir{
 			Path: "/tmp/foo",
 			// Filtered because of not matching any Patterns
 			Created: now,
@@ -48,20 +53,15 @@ func TestNewQueue(t *testing.T) {
 			// Filtered because of matching any Filters
 			Created: now,
 		},
-		Dir{
-			Path: "/tmp/dir4",
-			// Included because less than MaxAge
-			Created: now,
-		},
 	}
 	q := NewQueue(&s, dirs)
 	expected := []Item{
 		Item{Queue: &q, Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
 		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge="},
 		Item{Queue: &q, Dir: dirs[2], Transfer: true, Reason: "Match=dir\\d"},
-		Item{Queue: &q, Dir: dirs[3], Transfer: false, Reason: "no match"},
-		Item{Queue: &q, Dir: dirs[4], Transfer: false, Reason: "Filter=^incomplete-"},
-		Item{Queue: &q, Dir: dirs[5], Transfer: true, Reason: "Match=dir\\d"},
+		Item{Queue: &q, Dir: dirs[3], Transfer: true, Reason: "Match=dir\\d"},
+		Item{Queue: &q, Dir: dirs[4], Transfer: false, Reason: "no match"},
+		Item{Queue: &q, Dir: dirs[5], Transfer: false, Reason: "Filter=^incomplete-"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {
