@@ -44,7 +44,7 @@ func (s *Site) parseDirList(r io.Reader) ([]Dir, error) {
 	dirs := []Dir{}
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		line := strings.Trim(scanner.Text(), " \t\r\n")
+		line := strings.TrimSpace(scanner.Text())
 		if len(line) == 0 {
 			continue
 		}
