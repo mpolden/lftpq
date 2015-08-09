@@ -163,3 +163,18 @@ func TestReject(t *testing.T) {
 		t.Errorf("Expected %q, got %q", item.Reason)
 	}
 }
+
+func TestDstDir(t *testing.T) {
+	var tests = []struct {
+		in  Item
+		out string
+	}{
+		{Item{Dir: Dir{Path: "/foo/bar"}, LocalDir: "/tmp/"}, "/tmp/bar"},
+		{Item{Dir: Dir{Path: "/foo/bar"}, LocalDir: "/tmp/foo/bar"}, "/tmp/foo/bar"},
+	}
+	for _, tt := range tests {
+		if got := tt.in.DstDir(); got != tt.out {
+			t.Errorf("Expected %q, got %q", tt.out, got)
+		}
+	}
+}

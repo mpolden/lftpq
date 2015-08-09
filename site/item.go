@@ -38,14 +38,17 @@ func (i *Item) String() string {
 	return fmt.Sprintf("Path=%q LocalDir=%q Transfer=%t Reason=%q", i.Path, i.LocalDir, i.Transfer, i.Reason)
 }
 
-func (i *Item) IsDstDirEmpty() bool {
-	dstDir := i.LocalDir
-	// When LocalDir has a trailing slash, the actual dstDir will be a directory inside LocalDir
-	// (same behaviour as rsync)
-	if strings.HasSuffix(dstDir, string(os.PathSeparator)) {
-		dstDir = filepath.Join(dstDir, i.Dir.Base())
+func (i *Item) DstDir() string {
+	// When LocalDir has a trailing slash, the actual destination dir will be a directory inside LocalDir (same
+	// behaviour as rsync)
+	if strings.HasSuffix(i.LocalDir, string(os.PathSeparator)) {
+		return filepath.Join(i.LocalDir, i.Dir.Base())
 	}
-	dirs, _ := ioutil.ReadDir(dstDir)
+	return i.LocalDir
+}
+
+func (i *Item) IsDstDirEmpty() bool {
+	dirs, _ := ioutil.ReadDir(i.DstDir())
 	return len(dirs) == 0
 }
 
