@@ -63,7 +63,9 @@ func NewQueue(site Site, dirs []Dir) Queue {
 	}
 	// Skipping of existing directories must be done after deduplication. This is because items with a higher weight
 	// might have been transferred in a previous run, but should still be respected during deduplication.
-	q.skipNonEmptyDstDir()
+	if q.SkipExisting {
+		q.skipNonEmptyDstDir()
+	}
 	return q
 }
 
