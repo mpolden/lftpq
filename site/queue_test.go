@@ -1,8 +1,6 @@
 package site
 
 import (
-	"io/ioutil"
-	"os"
 	"reflect"
 	"regexp"
 	"testing"
@@ -72,7 +70,7 @@ func TestNewQueue(t *testing.T) {
 	}
 }
 
-func TestWrite(t *testing.T) {
+func TestScript(t *testing.T) {
 	s := Site{
 		Client: Client{
 			LftpPath:   "/bin/lftp",
@@ -85,11 +83,7 @@ func TestWrite(t *testing.T) {
 		Item{Dir: Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
 	}
 	q := Queue{Site: s, Items: items}
-	name, err := q.Write()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(name)
+	script := q.Script()
 	expected := `open siteA
 queue mirror /foo /tmp
 queue mirror /bar /tmp
@@ -97,13 +91,8 @@ queue start
 wait
 exit
 `
-	f, err := ioutil.ReadFile(name)
-	if err != nil {
-		t.Fatal(err)
-	}
-	content := string(f)
-	if content != expected {
-		t.Fatalf("Expected %q, got %q", expected, content)
+	if script != expected {
+		t.Fatalf("Expected %q, got %q", expected, script)
 	}
 }
 
