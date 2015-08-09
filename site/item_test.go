@@ -149,7 +149,7 @@ func TestAccept(t *testing.T) {
 		t.Error("Expected true")
 	}
 	if expected := "foo"; item.Reason != expected {
-		t.Errorf("Expected %q, got %q", item.Reason)
+		t.Errorf("Expected %q, got %q", expected, item.Reason)
 	}
 }
 
@@ -160,7 +160,7 @@ func TestReject(t *testing.T) {
 		t.Error("Expected false")
 	}
 	if expected := "bar"; item.Reason != expected {
-		t.Errorf("Expected %q, got %q", item.Reason)
+		t.Errorf("Expected %q, got %q", expected, item.Reason)
 	}
 }
 

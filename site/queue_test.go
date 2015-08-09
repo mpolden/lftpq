@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"testing"
 	"time"
-
-	"github.com/martinp/lftpq/parser"
 )
 
 func TestNewQueue(t *testing.T) {
@@ -128,37 +126,33 @@ func TestTransferable(t *testing.T) {
 
 func TestDeduplicate(t *testing.T) {
 	s := Site{
+		Parser: "show",
 		priorities: []*regexp.Regexp{
 			regexp.MustCompile("\\.PROPER\\.REPACK\\."),
 			regexp.MustCompile("\\.PROPER\\."),
 			regexp.MustCompile("\\.REPACK\\."),
 		},
 	}
-	dirs := []Dir{
-		Dir{Path: "/tmp/The.Wire.S01E01.foo"},
-		Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"},
-		Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"},
-		Dir{Path: "/tmp/The.Wire.S01E02.bar"},
-		Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"},
-		Dir{Path: "/tmp/The.Wire.S01E03.bar"},
-		Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"},
-	}
 	q := Queue{Site: s}
 	q.Items = []Item{
-		Item{Queue: &q, Dir: dirs[0], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
-		Item{Queue: &q, Dir: dirs[1], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
-		Item{Queue: &q, Dir: dirs[2], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
-		Item{Queue: &q, Dir: dirs[3], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "02"}},
-		Item{Queue: &q, Dir: dirs[4], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "02"}},
-		Item{Queue: &q, Dir: dirs[5], Transfer: true, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "03"}},
-		Item{Queue: &q, Dir: dirs[6], Transfer: false, Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "03"}},
+		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E01.foo"}),
+		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}), /* keep */
+		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}),
+		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E02.bar"}),
+		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}), /* keep */
+		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E03.bar"}),           /* keep */
+		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"}),
+	}
+	// Accept all but the last item
+	for i, _ := range q.Items[:len(q.Items)-1] {
+		q.Items[i].Accept("")
 	}
 	q.deduplicate()
 
 	expected := []Item{q.Items[1], q.Items[4], q.Items[5]}
 	actual := q.Transferable()
 	if len(expected) != len(actual) {
-		t.Fatal("Expected equal length")
+		t.Fatalf("Expected length %d, got %d", len(expected), len(actual))
 	}
 	for i, _ := range actual {
 		if actual[i].Path != expected[i].Path {

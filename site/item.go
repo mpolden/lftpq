@@ -118,6 +118,9 @@ func (i *Item) parseMedia() (interface{}, error) {
 }
 
 func (i *Item) parseLocalDir() (string, error) {
+	if i.Queue.localDir == nil {
+		return "", fmt.Errorf("template is not set")
+	}
 	var b bytes.Buffer
 	if err := i.Queue.localDir.Execute(&b, i.Media); err != nil {
 		return "", err
