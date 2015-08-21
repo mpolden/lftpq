@@ -1,10 +1,12 @@
 package site
 
 import (
-	"reflect"
 	"regexp"
 	"testing"
+	"text/template"
 	"time"
+
+	"github.com/martinp/lftpq/parser"
 )
 
 func TestNewQueue(t *testing.T) {
@@ -16,6 +18,8 @@ func TestNewQueue(t *testing.T) {
 		patterns:     []*regexp.Regexp{regexp.MustCompile("dir\\d")},
 		filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
 		SkipSymlinks: true,
+		localDir:     template.Must(template.New("").Parse("/tmp/")),
+		parser:       parser.Default,
 	}
 	dirs := []Dir{
 		Dir{
@@ -64,8 +68,15 @@ func TestNewQueue(t *testing.T) {
 		t.Fatal("Expected equal length")
 	}
 	for i, _ := range expected {
-		if !reflect.DeepEqual(expected[i], actual[i]) {
-			t.Fatalf("Expected %+v, got %+v", expected[i], actual[i])
+		e := expected[i]
+		a := actual[i]
+		if a.Transfer != e.Transfer {
+			t.Errorf("Expected Dir=%s to have Transfer=%t, got Transfer=%t",
+				e.Dir.Path, e.Transfer, a.Transfer)
+		}
+		if a.Reason != e.Reason {
+			t.Errorf("Expected Dir=%s to have Reason=%s, got Reason=%s", e.Dir.Path,
+				e.Reason, a.Reason)
 		}
 	}
 }
@@ -115,7 +126,7 @@ func TestTransferable(t *testing.T) {
 
 func TestDeduplicate(t *testing.T) {
 	s := Site{
-		Parser: "show",
+		parser: parser.Show,
 		priorities: []*regexp.Regexp{
 			regexp.MustCompile("\\.PROPER\\.REPACK\\."),
 			regexp.MustCompile("\\.PROPER\\."),

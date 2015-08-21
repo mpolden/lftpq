@@ -14,13 +14,13 @@ func TestNewItemShow(t *testing.T) {
 		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{
 		localDir: tmpl,
-		Parser:   "show",
+		parser:   parser.Show,
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/The.Wire/S03/"; item.LocalDir != expected {
-		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
+		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
 }
 
@@ -29,19 +29,20 @@ func TestNewItemMovie(t *testing.T) {
 		"/tmp/{{ .Year }}/{{ .Name }}/"))
 	s := Site{
 		localDir: tmpl,
-		Parser:   "movie",
+		parser:   parser.Movie,
 	}
 	d := Dir{Path: "/foo/Apocalypse.Now.1979"}
 	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
-		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
+		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
 }
 
-func TestNewItemWithoutParser(t *testing.T) {
+func TestNewItemDefaultParser(t *testing.T) {
 	s := Site{
-		LocalDir: "/tmp/",
+		localDir: template.Must(template.New("").Parse("/tmp/")),
+		parser:   parser.Default,
 	}
 	d := Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
@@ -56,7 +57,7 @@ func TestNewItemUnparsable(t *testing.T) {
 		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{
 		localDir: tmpl,
-		Parser:   "show",
+		parser:   parser.Show,
 	}
 	d := Dir{Path: "/foo/bar"}
 	q := Queue{Site: s}
@@ -82,40 +83,6 @@ func TestWeight(t *testing.T) {
 	for _, tt := range tests {
 		if in := tt.in.Weight(); in != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, in)
-		}
-	}
-}
-
-func TestMediaEqual(t *testing.T) {
-	var tests = []struct {
-		a   Item
-		b   Item
-		out bool
-	}{
-		{
-			Item{Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
-			Item{Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
-			true,
-		},
-		{
-			Item{Media: parser.Show{Name: "The.Wire", Season: "01", Episode: "01"}},
-			Item{Media: parser.Show{Name: "The.Wire", Season: "02", Episode: "01"}},
-			false,
-		},
-		{
-			Item{Media: parser.Movie{Name: "Apocalypse.Now", Year: 1979, Release: "foo"}},
-			Item{Media: parser.Movie{Name: "Apocalypse.Now", Year: 1979, Release: "bar"}},
-			true,
-		},
-		{
-			Item{Media: parser.Movie{Name: "Apocalypse.Now", Year: 1979}},
-			Item{Media: parser.Movie{Name: "The.Shawshank.Redemption", Year: 1994}},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		if in := tt.a.MediaEqual(tt.b); in != tt.out {
-			t.Errorf("Expected %t, got %t", tt.out, in)
 		}
 	}
 }

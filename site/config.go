@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"text/template"
 	"time"
+
+	"github.com/martinp/lftpq/parser"
 )
 
 type Config struct {
@@ -78,11 +80,14 @@ func ReadConfig(name string) (Config, error) {
 		cfg.Sites[i].localDir = tmpl
 		switch site.Parser {
 		case "show":
+			site.parser = parser.Show
 		case "movie":
+			site.parser = parser.Movie
 		case "":
+			site.parser = parser.Default
 		default:
-			return Config{}, fmt.Errorf("invalid parser: %q (must be %q or %q)",
-				site.Parser, "show", "movie")
+			return Config{}, fmt.Errorf("invalid parser: %q (must be %q, %q or %q)",
+				site.Parser, "show", "movie", "")
 		}
 	}
 	return cfg, nil

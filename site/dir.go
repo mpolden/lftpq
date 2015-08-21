@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/martinp/lftpq/parser"
 )
 
 type Dir struct {
@@ -55,20 +53,4 @@ func (d *Dir) MatchAny(patterns []*regexp.Regexp) (string, bool) {
 
 func (d *Dir) Match(pattern *regexp.Regexp) bool {
 	return pattern.MatchString(d.Base())
-}
-
-func (d *Dir) Show() (parser.Show, error) {
-	show, err := parser.ParseShow(d.Base())
-	if err != nil {
-		return parser.Show{}, err
-	}
-	return show, nil
-}
-
-func (d *Dir) Movie() (parser.Movie, error) {
-	movie, err := parser.ParseMovie(d.Base())
-	if err != nil {
-		return parser.Movie{}, err
-	}
-	return movie, nil
 }

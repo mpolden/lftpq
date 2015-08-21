@@ -21,7 +21,7 @@ func (q *Queue) deduplicate() {
 			}
 			a := &q.Items[i]
 			b := &q.Items[j]
-			if a.Transfer && b.Transfer && a.MediaEqual(*b) {
+			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
 				if a.Weight() <= b.Weight() {
 					a.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Dir.Path, a.Weight()))
 				} else {

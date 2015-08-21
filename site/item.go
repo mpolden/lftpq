@@ -30,7 +30,7 @@ type Item struct {
 	LocalDir string
 	Transfer bool
 	Reason   string
-	Media    interface{}
+	Media    parser.Media
 	*Queue
 }
 
@@ -52,34 +52,6 @@ func (i *Item) IsDstDirEmpty() bool {
 	return len(dirs) == 0
 }
 
-func (i *Item) showEqual(o Item) bool {
-	a, ok := i.Media.(parser.Show)
-	if !ok {
-		return false
-	}
-	b, ok := o.Media.(parser.Show)
-	if !ok {
-		return false
-	}
-	return a.Equal(b)
-}
-
-func (i *Item) movieEqual(o Item) bool {
-	a, ok := i.Media.(parser.Movie)
-	if !ok {
-		return false
-	}
-	b, ok := o.Media.(parser.Movie)
-	if !ok {
-		return false
-	}
-	return a.Equal(b)
-}
-
-func (i *Item) MediaEqual(o Item) bool {
-	return i.showEqual(o) || i.movieEqual(o)
-}
-
 func (i *Item) Weight() int {
 	for _i, p := range i.Queue.priorities {
 		if i.Dir.Match(p) {
@@ -99,24 +71,6 @@ func (i *Item) Reject(reason string) {
 	i.Reason = reason
 }
 
-func (i *Item) parseMedia() (interface{}, error) {
-	switch i.Queue.Parser {
-	case "show":
-		show, err := i.Dir.Show()
-		if err != nil {
-			return nil, err
-		}
-		return show, nil
-	case "movie":
-		movie, err := i.Dir.Movie()
-		if err != nil {
-			return nil, err
-		}
-		return movie, nil
-	}
-	return nil, nil
-}
-
 func (i *Item) parseLocalDir() (string, error) {
 	if i.Queue.localDir == nil {
 		return "", fmt.Errorf("template is not set")
@@ -129,12 +83,7 @@ func (i *Item) parseLocalDir() (string, error) {
 }
 
 func (i *Item) setMetadata() {
-	if i.Queue.Parser == "" {
-		i.LocalDir = i.Queue.LocalDir
-		return
-	}
-
-	m, err := i.parseMedia()
+	m, err := i.Queue.parser(i.Dir.Base())
 	if err != nil {
 		i.Reject(err.Error())
 		return

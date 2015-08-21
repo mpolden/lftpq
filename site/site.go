@@ -8,6 +8,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/martinp/lftpq/parser"
 )
 
 type Client struct {
@@ -28,6 +30,7 @@ type Site struct {
 	SkipSymlinks bool
 	SkipExisting bool
 	Parser       string
+	parser       parser.Parser
 	LocalDir     string
 	localDir     *template.Template
 	Priorities   []string

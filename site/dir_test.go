@@ -75,13 +75,3 @@ func TestMatchAny(t *testing.T) {
 		t.Fatal("Expected false")
 	}
 }
-
-func TestShow(t *testing.T) {
-	d := Dir{
-		Path:    "/tmp/True.Detective.S01E01.1080p.BluRay.x264-ROVERS",
-		Created: time.Now(),
-	}
-	if _, err := d.Show(); err != nil {
-		t.Fatal(err)
-	}
-}
