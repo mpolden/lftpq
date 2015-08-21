@@ -80,11 +80,11 @@ func ReadConfig(name string) (Config, error) {
 		cfg.Sites[i].localDir = tmpl
 		switch site.Parser {
 		case "show":
-			site.parser = parser.Show
+			cfg.Sites[i].parser = parser.Show
 		case "movie":
-			site.parser = parser.Movie
+			cfg.Sites[i].parser = parser.Movie
 		case "":
-			site.parser = parser.Default
+			cfg.Sites[i].parser = parser.Default
 		default:
 			return Config{}, fmt.Errorf("invalid parser: %q (must be %q, %q or %q)",
 				site.Parser, "show", "movie", "")
