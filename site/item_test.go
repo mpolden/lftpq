@@ -92,6 +92,7 @@ func TestItemsSort(t *testing.T) {
 		Item{Dir: Dir{Path: "/x/c"}},
 		Item{Dir: Dir{Path: "/x/b"}},
 		Item{Dir: Dir{Path: "/x/a"}},
+		Item{Dir: Dir{Path: "/y/a"}},
 	}
 	sort.Sort(items)
 	var tests = []struct {
@@ -101,6 +102,7 @@ func TestItemsSort(t *testing.T) {
 		{0, "/x/a"},
 		{1, "/x/b"},
 		{2, "/x/c"},
+		{3, "/y/a"},
 	}
 	for _, tt := range tests {
 		if got := items[tt.in].Dir.Path; got != tt.out {

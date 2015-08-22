@@ -18,7 +18,7 @@ func (s Items) Len() int {
 }
 
 func (s Items) Less(i, j int) bool {
-	return s[i].Dir.Base() < s[j].Dir.Base()
+	return s[i].Dir.Path < s[j].Dir.Path
 }
 
 func (s Items) Swap(i, j int) {
