@@ -12,7 +12,7 @@ var (
 	episodeExp = regexp.MustCompile("(.*)\\.(?:(" +
 		"S(\\d{2})E(\\d{2})" + // S01E04
 		"|(\\d{1,2})x(\\d{2})" + // 1x04, 01x04
-		"|Part\\.(\\d{1,2})" + // Part.4, Part.11
+		"|Part\\.?(\\d{1,2})" + // Part4, Part11, Part.4, Part.11
 		"))")
 )
 

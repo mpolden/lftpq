@@ -111,6 +111,13 @@ func TestShow(t *testing.T) {
 				Season:  "01",
 				Episode: "04",
 			}},
+		{"Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015.Part1.720p.HDTV.x264-W4F",
+			Media{
+				Release: "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015.Part1.720p.HDTV.x264-W4F",
+				Name:    "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015",
+				Season:  "01",
+				Episode: "01",
+			}},
 	}
 	for _, tt := range tests {
 		got, err := Show(tt.in)
