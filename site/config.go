@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"text/template"
 	"time"
 
@@ -60,6 +62,17 @@ func parseTemplate(tmpl string) (*template.Template, error) {
 	return t, nil
 }
 
+func isExecutable(s string) error {
+	if s == "" {
+		return nil
+	}
+	args := strings.Split(s, " ")
+	if _, err := exec.LookPath(args[0]); err != nil {
+		return err
+	}
+	return nil
+}
+
 func ReadConfig(name string) (Config, error) {
 	if name == "~/.lftpqrc" {
 		home := os.Getenv("HOME")
@@ -71,6 +84,9 @@ func ReadConfig(name string) (Config, error) {
 	}
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
+		return Config{}, err
+	}
+	if err := isExecutable(cfg.Client.Path); err != nil {
 		return Config{}, err
 	}
 	for i, site := range cfg.Sites {
