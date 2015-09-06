@@ -79,8 +79,9 @@ func Show(s string) (Media, error) {
 	} else if m[0][7] != "" {
 		season = "1"
 		episode = m[0][7]
-	} else {
-		return Media{}, fmt.Errorf("failed to parse season and episode for %s", s)
+	}
+	if season == "" || episode == "" {
+		return Media{}, fmt.Errorf("failed to parse: %s season=%q episode=%q", s, season, episode)
 	}
 	season = fmt.Sprintf("%02s", season)
 	episode = fmt.Sprintf("%02s", episode)
