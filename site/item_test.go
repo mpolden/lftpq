@@ -65,6 +65,12 @@ func TestNewItemUnparsable(t *testing.T) {
 	if item.LocalDir != "" {
 		t.Fatal("Expected empty string")
 	}
+	if item.Transfer {
+		t.Fatal("Expected item to be rejected")
+	}
+	if item.Reason == "" {
+		t.Fatal("Expected non-empty reason")
+	}
 }
 
 func TestWeight(t *testing.T) {
