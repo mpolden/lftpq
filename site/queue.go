@@ -46,11 +46,11 @@ func NewQueue(site Site, dirs []Dir) Queue {
 	for _, dir := range dirs {
 		item := newItem(&q, dir)
 		if dir.IsSymlink && q.SkipSymlinks {
-			item.Reason = fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks)
+			item.Reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks))
 		} else if age := dir.Age(); age > q.maxAge {
-			item.Reason = fmt.Sprintf("Age=%s MaxAge=%s", age, q.MaxAge)
+			item.Reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.MaxAge))
 		} else if p, match := dir.MatchAny(q.filters); match {
-			item.Reason = fmt.Sprintf("Filter=%s", p)
+			item.Reject(fmt.Sprintf("Filter=%s", p))
 		} else if p, match := dir.MatchAny(q.patterns); match {
 			item.Accept(fmt.Sprintf("Match=%s", p))
 		}
