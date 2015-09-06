@@ -118,6 +118,13 @@ func TestShow(t *testing.T) {
 				Season:  "01",
 				Episode: "01",
 			}},
+		{"The.Jinx-The.Life.and.Deaths.of.Robert.Durst.E04.1080p.BluRay.x264-ROVERS",
+			Media{
+				Release: "The.Jinx-The.Life.and.Deaths.of.Robert.Durst.E04.1080p.BluRay.x264-ROVERS",
+				Name:    "The.Jinx-The.Life.and.Deaths.of.Robert.Durst",
+				Season:  "01",
+				Episode: "04",
+			}},
 	}
 	for _, tt := range tests {
 		got, err := Show(tt.in)

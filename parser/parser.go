@@ -10,7 +10,7 @@ import (
 var (
 	movieExp   = regexp.MustCompile("(.*?)\\.(\\d{4})")
 	episodeExp = regexp.MustCompile("(.*)\\.(?:(" +
-		"S(\\d{2})E(\\d{2})" + // S01E04
+		"(?:S(\\d{2}))?E(\\d{2})" + // S01E04, E04
 		"|(\\d{1,2})x(\\d{2})" + // 1x04, 01x04
 		"|Part\\.?(\\d{1,2})" + // Part4, Part11, Part.4, Part.11
 		"))")
@@ -60,14 +60,18 @@ func Movie(s string) (Media, error) {
 
 func Show(s string) (Media, error) {
 	m := episodeExp.FindAllStringSubmatch(s, -1)
-	if len(m) == 0 || len(m[0]) < 7 {
+	if len(m) == 0 || len(m[0]) < 8 {
 		return Media{}, fmt.Errorf("failed to parse: %s", s)
 	}
 	name := strings.Replace(m[0][1], "_", ".", -1)
 	var season string
 	var episode string
-	if m[0][3] != "" && m[0][4] != "" {
-		season = m[0][3]
+	if m[0][4] != "" {
+		if m[0][3] != "" {
+			season = m[0][3]
+		} else {
+			season = "1"
+		}
 		episode = m[0][4]
 	} else if m[0][5] != "" && m[0][6] != "" {
 		season = m[0][5]
