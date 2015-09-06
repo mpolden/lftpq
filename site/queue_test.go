@@ -6,6 +6,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/martinp/lftpq/lftp"
 	"github.com/martinp/lftpq/parser"
 )
 
@@ -21,34 +22,34 @@ func TestNewQueue(t *testing.T) {
 		localDir:     template.Must(template.New("").Parse("/tmp/")),
 		parser:       parser.Default,
 	}
-	dirs := []Dir{
-		Dir{
+	dirs := []lftp.Dir{
+		lftp.Dir{
 			Path:    "/tmp/dir1@",
 			Created: now,
 			// Filtered because of symlink
 			IsSymlink: true,
 		},
-		Dir{
+		lftp.Dir{
 			Path: "/tmp/dir2",
 			// Filtered because of exceeded MaxAge
 			Created: now.Add(-time.Duration(48) * time.Hour),
 		},
-		Dir{
+		lftp.Dir{
 			Path: "/tmp/dir3",
 			// Included because of equal MaxAge
 			Created: now.Add(-time.Duration(24) * time.Hour),
 		},
-		Dir{
+		lftp.Dir{
 			Path: "/tmp/dir4",
 			// Included because less than MaxAge
 			Created: now,
 		},
-		Dir{
+		lftp.Dir{
 			Path: "/tmp/foo",
 			// Filtered because of not matching any Patterns
 			Created: now,
 		},
-		Dir{
+		lftp.Dir{
 			Path: "/tmp/incomplete-dir3",
 			// Filtered because of matching any Filters
 			Created: now,
@@ -83,15 +84,15 @@ func TestNewQueue(t *testing.T) {
 
 func TestScript(t *testing.T) {
 	s := Site{
-		Client: Client{
-			LftpPath:   "/bin/lftp",
-			LftpGetCmd: "mirror",
+		Client: lftp.Client{
+			Path:   "/bin/lftp",
+			GetCmd: "mirror",
 		},
 		Name: "siteA",
 	}
 	items := []Item{
-		Item{Dir: Dir{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
-		Item{Dir: Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
+		Item{Dir: lftp.Dir{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
+		Item{Dir: lftp.Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
 	}
 	q := Queue{Site: s, Items: items}
 	script := q.Script()
@@ -110,8 +111,8 @@ exit
 func TestTransferable(t *testing.T) {
 	q := Queue{
 		Items: []Item{
-			Item{Dir: Dir{Path: "/tmp/d1"}, Transfer: true},
-			Item{Dir: Dir{Path: "/tmp/d2"}, Transfer: false},
+			Item{Dir: lftp.Dir{Path: "/tmp/d1"}, Transfer: true},
+			Item{Dir: lftp.Dir{Path: "/tmp/d2"}, Transfer: false},
 		},
 	}
 	actual := q.Transferable()
@@ -135,13 +136,13 @@ func TestDeduplicate(t *testing.T) {
 	}
 	q := Queue{Site: s}
 	q.Items = []Item{
-		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E01.foo"}),
-		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}), /* keep */
-		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}),
-		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E02.bar"}),
-		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}), /* keep */
-		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E03.bar"}),           /* keep */
-		newItem(&q, Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"}),
+		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.foo"}),
+		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}), /* keep */
+		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}),
+		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.bar"}),
+		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}), /* keep */
+		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.bar"}),           /* keep */
+		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"}),
 	}
 	// Accept all but the last item
 	for i, _ := range q.Items[:len(q.Items)-1] {

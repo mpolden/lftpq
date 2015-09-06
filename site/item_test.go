@@ -6,6 +6,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/martinp/lftpq/lftp"
 	"github.com/martinp/lftpq/parser"
 )
 
@@ -16,7 +17,7 @@ func TestNewItemShow(t *testing.T) {
 		localDir: tmpl,
 		parser:   parser.Show,
 	}
-	d := Dir{Path: "/foo/The.Wire.S03E01"}
+	d := lftp.Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/The.Wire/S03/"; item.LocalDir != expected {
@@ -31,7 +32,7 @@ func TestNewItemMovie(t *testing.T) {
 		localDir: tmpl,
 		parser:   parser.Movie,
 	}
-	d := Dir{Path: "/foo/Apocalypse.Now.1979"}
+	d := lftp.Dir{Path: "/foo/Apocalypse.Now.1979"}
 	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
@@ -44,7 +45,7 @@ func TestNewItemDefaultParser(t *testing.T) {
 		localDir: template.Must(template.New("").Parse("/tmp/")),
 		parser:   parser.Default,
 	}
-	d := Dir{Path: "/foo/The.Wire.S03E01"}
+	d := lftp.Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if expected := "/tmp/"; item.LocalDir != expected {
@@ -59,7 +60,7 @@ func TestNewItemUnparsable(t *testing.T) {
 		localDir: tmpl,
 		parser:   parser.Show,
 	}
-	d := Dir{Path: "/foo/bar"}
+	d := lftp.Dir{Path: "/foo/bar"}
 	q := Queue{Site: s}
 	item := newItem(&q, d)
 	if item.LocalDir != "" {
@@ -82,9 +83,9 @@ func TestWeight(t *testing.T) {
 		in  Item
 		out int
 	}{
-		{Item{Queue: &q, Dir: Dir{Path: "/tmp/The.Wire.S01E01.foo"}}, 0},
-		{Item{Queue: &q, Dir: Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}}, 2},
-		{Item{Queue: &q, Dir: Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}}, 1},
+		{Item{Queue: &q, Dir: lftp.Dir{Path: "/tmp/The.Wire.S01E01.foo"}}, 0},
+		{Item{Queue: &q, Dir: lftp.Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}}, 2},
+		{Item{Queue: &q, Dir: lftp.Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}}, 1},
 	}
 	for _, tt := range tests {
 		if in := tt.in.Weight(); in != tt.out {
@@ -95,10 +96,10 @@ func TestWeight(t *testing.T) {
 
 func TestItemsSort(t *testing.T) {
 	items := Items{
-		Item{Dir: Dir{Path: "/x/c"}},
-		Item{Dir: Dir{Path: "/x/b"}},
-		Item{Dir: Dir{Path: "/x/a"}},
-		Item{Dir: Dir{Path: "/y/a"}},
+		Item{Dir: lftp.Dir{Path: "/x/c"}},
+		Item{Dir: lftp.Dir{Path: "/x/b"}},
+		Item{Dir: lftp.Dir{Path: "/x/a"}},
+		Item{Dir: lftp.Dir{Path: "/y/a"}},
 	}
 	sort.Sort(items)
 	var tests = []struct {
@@ -144,8 +145,8 @@ func TestDstDir(t *testing.T) {
 		in  Item
 		out string
 	}{
-		{Item{Dir: Dir{Path: "/foo/bar"}, LocalDir: "/tmp/"}, "/tmp/bar"},
-		{Item{Dir: Dir{Path: "/foo/bar"}, LocalDir: "/tmp/foo/bar"}, "/tmp/foo/bar"},
+		{Item{Dir: lftp.Dir{Path: "/foo/bar"}, LocalDir: "/tmp/"}, "/tmp/bar"},
+		{Item{Dir: lftp.Dir{Path: "/foo/bar"}, LocalDir: "/tmp/foo/bar"}, "/tmp/foo/bar"},
 	}
 	for _, tt := range tests {
 		if got := tt.in.DstDir(); got != tt.out {

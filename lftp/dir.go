@@ -1,4 +1,4 @@
-package site
+package lftp
 
 import (
 	"fmt"
@@ -15,16 +15,16 @@ type Dir struct {
 }
 
 func ParseDir(s string) (Dir, error) {
-	words := strings.SplitN(s, " ", 5)
-	if len(words) != 5 {
+	parts := strings.SplitN(s, " ", 5)
+	if len(parts) != 5 {
 		return Dir{}, fmt.Errorf("failed to parse dir: %s", s)
 	}
-	t := strings.Join(words[:4], " ")
+	t := strings.Join(parts[:4], " ")
 	created, err := time.Parse("2006-01-02 15:04:05 -0700 MST", t)
 	if err != nil {
 		return Dir{}, err
 	}
-	path := words[4]
+	path := parts[4]
 	isSymlink := strings.HasSuffix(path, "@")
 	path = strings.TrimRight(path, "@/")
 	return Dir{

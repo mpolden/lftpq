@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+
+	"github.com/martinp/lftpq/lftp"
 )
 
 type Queue struct {
@@ -40,7 +42,7 @@ func (q *Queue) skipNonEmptyDstDir() {
 	}
 }
 
-func NewQueue(site Site, dirs []Dir) Queue {
+func NewQueue(site Site, dirs []lftp.Dir) Queue {
 	items := make(Items, 0, len(dirs))
 	q := Queue{Site: site}
 	for _, dir := range dirs {
@@ -88,7 +90,7 @@ func (q *Queue) Script() string {
 	buf.WriteString("\n")
 	for _, item := range q.Transferable() {
 		buf.WriteString("queue ")
-		buf.WriteString(q.LftpGetCmd)
+		buf.WriteString(q.Client.GetCmd)
 		buf.WriteString(" ")
 		buf.WriteString(item.Path)
 		buf.WriteString(" ")
@@ -120,9 +122,5 @@ func (q *Queue) Start() error {
 		return err
 	}
 	defer os.Remove(name)
-	cmd := Lftp{
-		Path: q.LftpPath,
-		Args: []string{"-f", name},
-	}
-	return cmd.Run()
+	return q.Client.Run([]string{"-f", name})
 }

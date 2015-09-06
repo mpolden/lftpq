@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/martinp/lftpq/lftp"
 	"github.com/martinp/lftpq/parser"
 )
 
@@ -26,7 +27,7 @@ func (s Items) Swap(i, j int) {
 }
 
 type Item struct {
-	Dir
+	lftp.Dir
 	LocalDir string
 	Transfer bool
 	Reason   string
@@ -98,7 +99,7 @@ func (i *Item) setMetadata() {
 	i.LocalDir = d
 }
 
-func newItem(q *Queue, d Dir) Item {
+func newItem(q *Queue, d lftp.Dir) Item {
 	item := Item{Queue: q, Dir: d, Reason: "no match"}
 	item.setMetadata()
 	return item

@@ -31,7 +31,7 @@ func (c *CLI) LogVerbose(format string, v ...interface{}) {
 }
 
 func (c *CLI) Run(s site.Site) error {
-	dirs, err := s.DirList()
+	dirs, err := s.Client.List(s.Name, s.Dir)
 	if err != nil {
 		return err
 	}

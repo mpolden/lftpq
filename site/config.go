@@ -10,12 +10,34 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/martinp/lftpq/lftp"
 	"github.com/martinp/lftpq/parser"
 )
 
 type Config struct {
-	Client Client
+	Client lftp.Client
 	Sites  []Site
+}
+
+type Site struct {
+	Client       lftp.Client
+	Name         string
+	Dir          string
+	MaxAge       string
+	maxAge       time.Duration
+	Patterns     []string
+	patterns     []*regexp.Regexp
+	Filters      []string
+	filters      []*regexp.Regexp
+	SkipSymlinks bool
+	SkipExisting bool
+	Parser       string
+	parser       parser.Parser
+	LocalDir     string
+	localDir     *template.Template
+	Priorities   []string
+	priorities   []*regexp.Regexp
+	Deduplicate  bool
 }
 
 func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {
