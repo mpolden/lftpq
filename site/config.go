@@ -73,6 +73,51 @@ func isExecutable(s string) error {
 	return nil
 }
 
+func (c *Config) Load() error {
+	for i, _ := range c.Sites {
+		site := &c.Sites[i]
+		site.Client = c.Client
+		maxAge, err := time.ParseDuration(site.MaxAge)
+		if err != nil {
+			return err
+		}
+		site.maxAge = maxAge
+		patterns, err := compilePatterns(site.Patterns)
+		if err != nil {
+			return err
+		}
+		site.patterns = patterns
+		filters, err := compilePatterns(site.Filters)
+		if err != nil {
+			return err
+		}
+		site.filters = filters
+		priorities, err := compilePatterns(site.Priorities)
+		if err != nil {
+			return err
+		}
+		site.priorities = priorities
+
+		tmpl, err := parseTemplate(site.LocalDir)
+		if err != nil {
+			return err
+		}
+		site.localDir = tmpl
+		switch site.Parser {
+		case "show":
+			site.parser = parser.Show
+		case "movie":
+			site.parser = parser.Movie
+		case "":
+			site.parser = parser.Default
+		default:
+			return fmt.Errorf("invalid parser: %q (must be %q, %q or %q)",
+				site.Parser, "show", "movie", "")
+		}
+	}
+	return nil
+}
+
 func ReadConfig(name string) (Config, error) {
 	if name == "~/.lftpqrc" {
 		home := os.Getenv("HOME")
@@ -89,44 +134,8 @@ func ReadConfig(name string) (Config, error) {
 	if err := isExecutable(cfg.Client.Path); err != nil {
 		return Config{}, err
 	}
-	for i, site := range cfg.Sites {
-		maxAge, err := time.ParseDuration(site.MaxAge)
-		if err != nil {
-			return Config{}, err
-		}
-		cfg.Sites[i].maxAge = maxAge
-		patterns, err := compilePatterns(site.Patterns)
-		if err != nil {
-			return Config{}, err
-		}
-		cfg.Sites[i].patterns = patterns
-		filters, err := compilePatterns(site.Filters)
-		if err != nil {
-			return Config{}, err
-		}
-		cfg.Sites[i].filters = filters
-		priorities, err := compilePatterns(site.Priorities)
-		if err != nil {
-			return Config{}, err
-		}
-		cfg.Sites[i].priorities = priorities
-		cfg.Sites[i].Client = cfg.Client
-		tmpl, err := parseTemplate(site.LocalDir)
-		if err != nil {
-			return Config{}, err
-		}
-		cfg.Sites[i].localDir = tmpl
-		switch site.Parser {
-		case "show":
-			cfg.Sites[i].parser = parser.Show
-		case "movie":
-			cfg.Sites[i].parser = parser.Movie
-		case "":
-			cfg.Sites[i].parser = parser.Default
-		default:
-			return Config{}, fmt.Errorf("invalid parser: %q (must be %q, %q or %q)",
-				site.Parser, "show", "movie", "")
-		}
+	if err := cfg.Load(); err != nil {
+		return Config{}, err
 	}
 	return cfg, nil
 }
