@@ -1,6 +1,7 @@
 package lftp
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -25,5 +26,13 @@ func TestParseDirList(t *testing.T) {
 		if !e.Created.Equal(a.Created) || e.Path != a.Path || e.IsSymlink != a.IsSymlink {
 			t.Fatalf("Expected %+v, got %+v", e, a)
 		}
+	}
+}
+
+func TestListArgs(t *testing.T) {
+	expected := []string{"-e", "cls -1 --classify --date --time-style='%F %T %z %Z' /foo && exit", "bar"}
+	args := listArgs("bar", "/foo")
+	if !reflect.DeepEqual(expected, args) {
+		t.Fatalf("Expected %q, got %q", expected, args)
 	}
 }

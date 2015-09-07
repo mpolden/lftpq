@@ -46,10 +46,13 @@ func parseDirList(r io.Reader) ([]Dir, error) {
 	return dirs, nil
 }
 
-func (c *Client) List(name, path string) ([]Dir, error) {
+func listArgs(name, path string) []string {
 	script := "cls -1 --classify --date --time-style='%F %T %z %Z' " + path + " && exit"
-	args := []string{"-e", script, name}
-	cmd := exec.Command(c.Path, args...)
+	return []string{"-e", script, name}
+}
+
+func (c *Client) List(name, path string) ([]Dir, error) {
+	cmd := exec.Command(c.Path, listArgs(name, path)...)
 
 	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
