@@ -2,10 +2,13 @@ package site
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"sort"
+	"strings"
 
 	"github.com/martinp/lftpq/lftp"
 )
@@ -123,4 +126,18 @@ func (q *Queue) Start() error {
 	}
 	defer os.Remove(name)
 	return q.Client.Run([]string{"-f", name})
+}
+
+func (q *Queue) PostCommand() (*exec.Cmd, error) {
+	if q.Site.PostCommand == "" {
+		return nil, nil
+	}
+	json, err := json.Marshal(q.Items)
+	if err != nil {
+		return nil, err
+	}
+	argv := strings.Split(q.Site.PostCommand, " ")
+	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd.Stdin = bytes.NewReader(json)
+	return cmd, nil
 }

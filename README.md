@@ -49,7 +49,8 @@ Help Options:
       ],
       "Filters": [
         "(?i)incomplete"
-      ]
+      ],
+      "PostCommand": "/usr/local/bin/post-process.sh"
     }
   ]
 }
@@ -118,3 +119,6 @@ queue.
 `Filters` is a list of patterns used when excluding directories. A directory
 matching any of these patterns will be excluded from the queue. `Filters` has
 precedence over `Patterns`.
+
+`PostCommand` specifies a command for post-processing of the queue. The queue
+will be passed to the command on stdin, in JSON format. Leave empty to disable.

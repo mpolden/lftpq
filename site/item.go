@@ -32,7 +32,7 @@ type Item struct {
 	Transfer bool
 	Reason   string
 	Media    parser.Media
-	*Queue
+	*Queue   `json:"-"`
 }
 
 func (i *Item) String() string {

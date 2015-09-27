@@ -40,6 +40,7 @@ type Site struct {
 	Priorities   []string
 	priorities   []*regexp.Regexp
 	Deduplicate  bool
+	PostCommand  string
 }
 
 func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {
@@ -103,6 +104,11 @@ func (c *Config) Load() error {
 			return err
 		}
 		site.localDir = tmpl
+
+		if err := isExecutable(site.PostCommand); err != nil {
+			return err
+		}
+
 		switch site.Parser {
 		case "show":
 			site.parser = parser.Show

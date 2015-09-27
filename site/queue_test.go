@@ -1,6 +1,8 @@
 package site
 
 import (
+	"io/ioutil"
+	"reflect"
 	"regexp"
 	"testing"
 	"text/template"
@@ -159,5 +161,36 @@ func TestDeduplicate(t *testing.T) {
 		if actual[i].Path != expected[i].Path {
 			t.Errorf("Expected %s, got %s", expected[i].Path, actual[i].Path)
 		}
+	}
+}
+
+func TestPostCommand(t *testing.T) {
+	s := Site{
+		parser:      parser.Default,
+		PostCommand: "xargs echo",
+	}
+	q := Queue{Site: s}
+	q.Items = []Item{newItem(&q, lftp.Dir{Path: "/tmp/foo"})}
+	cmd, err := q.PostCommand()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"xargs", "echo"}; !reflect.DeepEqual(want, cmd.Args) {
+		t.Fatalf("Expected %+v, got %+v", want, cmd.Args)
+	}
+	data, err := ioutil.ReadAll(cmd.Stdin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data) == 0 {
+		t.Fatal("Expected stdin to contain data")
+	}
+}
+
+func TestPostCommandDisabled(t *testing.T) {
+	q := Queue{Site: Site{}}
+	_, err := q.PostCommand()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
