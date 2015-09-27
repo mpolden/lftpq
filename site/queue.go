@@ -119,13 +119,13 @@ func (q *Queue) Write() (string, error) {
 	return f.Name(), nil
 }
 
-func (q *Queue) Start() error {
+func (q *Queue) Start(inheritIO bool) error {
 	name, err := q.Write()
 	if err != nil {
 		return err
 	}
 	defer os.Remove(name)
-	return q.Client.Run([]string{"-f", name})
+	return q.Client.Run([]string{"-f", name}, inheritIO)
 }
 
 func (q *Queue) PostCommand() (*exec.Cmd, error) {

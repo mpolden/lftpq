@@ -50,7 +50,7 @@ func (c *CLI) Run(s site.Site) error {
 		fmt.Print(queue.Script())
 		return nil
 	}
-	if err := queue.Start(); err != nil {
+	if err := queue.Start(!c.Quiet); err != nil {
 		return err
 	}
 	if cmd, err := queue.PostCommand(); err != nil {
