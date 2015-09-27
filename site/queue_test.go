@@ -186,11 +186,3 @@ func TestPostCommand(t *testing.T) {
 		t.Fatal("Expected stdin to contain data")
 	}
 }
-
-func TestPostCommandDisabled(t *testing.T) {
-	q := Queue{Site: Site{}}
-	_, err := q.PostCommand()
-	if err != nil {
-		t.Fatal(err)
-	}
-}

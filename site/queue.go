@@ -129,9 +129,6 @@ func (q *Queue) Start(inheritIO bool) error {
 }
 
 func (q *Queue) PostCommand() (*exec.Cmd, error) {
-	if q.Site.PostCommand == "" {
-		return nil, nil
-	}
 	json, err := json.Marshal(q.Items)
 	if err != nil {
 		return nil, err
