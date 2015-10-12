@@ -1,6 +1,7 @@
 package site
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -42,5 +43,47 @@ func TestLoad(t *testing.T) {
 	}
 	if site.parser == nil {
 		t.Error("Expected parser to be set")
+	}
+}
+
+func TestReadConfig(t *testing.T) {
+	jsonConfig := `
+{
+  "Default": {
+    "Parser": "show"
+  },
+  "Sites": [
+    {
+      "Name": "foo"
+    },
+    {
+      "Name": "bar",
+      "Parser": "movie"
+    },
+    {
+      "Name": "baz",
+      "Parser": ""
+    }
+  ]
+}
+`
+	cfg, err := readConfig(strings.NewReader(jsonConfig))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Test that defaults are applied and can be overridden
+	var tests = []struct {
+		i   int
+		out string
+	}{
+		{0, "show"},
+		{1, "movie"},
+		{2, ""},
+	}
+	for _, tt := range tests {
+		site := cfg.Sites[tt.i]
+		if got := site.Parser; got != tt.out {
+			t.Errorf("Expected Parser=%q, got Parser=%q for Name=%q", tt.out, got, site.Name)
+		}
 	}
 }

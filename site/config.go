@@ -3,6 +3,7 @@ package site
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -130,12 +131,8 @@ func (c *Config) JSON() ([]byte, error) {
 	return json.MarshalIndent(c, "", "  ")
 }
 
-func ReadConfig(name string) (Config, error) {
-	if name == "~/.lftpqrc" {
-		home := os.Getenv("HOME")
-		name = filepath.Join(home, ".lftpqrc")
-	}
-	data, err := ioutil.ReadFile(name)
+func readConfig(r io.Reader) (Config, error) {
+	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return Config{}, err
 	}
@@ -150,6 +147,23 @@ func ReadConfig(name string) (Config, error) {
 	// Unmarshal config again, letting individual sites override the defaults
 	cfg := defaults
 	if err := json.Unmarshal(data, &cfg); err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
+}
+
+func ReadConfig(name string) (Config, error) {
+	if name == "~/.lftpqrc" {
+		home := os.Getenv("HOME")
+		name = filepath.Join(home, ".lftpqrc")
+	}
+	f, err := os.Open(name)
+	if err != nil {
+		return Config{}, err
+	}
+	defer f.Close()
+	cfg, err := readConfig(f)
+	if err != nil {
 		return Config{}, err
 	}
 	if err := cfg.Load(); err != nil {
