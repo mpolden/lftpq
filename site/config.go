@@ -17,8 +17,8 @@ import (
 )
 
 type Config struct {
-	Client lftp.Client
-	Sites  []Site
+	Default Site
+	Sites   []Site
 }
 
 type Site struct {
@@ -77,7 +77,6 @@ func isExecutable(s string) error {
 func (c *Config) Load() error {
 	for i, _ := range c.Sites {
 		site := &c.Sites[i]
-		site.Client = c.Client
 		maxAge, err := time.ParseDuration(site.MaxAge)
 		if err != nil {
 			return err
@@ -105,6 +104,9 @@ func (c *Config) Load() error {
 		}
 		site.localDir = tmpl
 
+		if err := isExecutable(site.Client.Path); err != nil {
+			return err
+		}
 		if err := isExecutable(site.PostCommand); err != nil {
 			return err
 		}
@@ -137,11 +139,17 @@ func ReadConfig(name string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	var cfg Config
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	// Unmarshal config and replace every site with the default one
+	var defaults Config
+	if err := json.Unmarshal(data, &defaults); err != nil {
 		return Config{}, err
 	}
-	if err := isExecutable(cfg.Client.Path); err != nil {
+	for i, _ := range defaults.Sites {
+		defaults.Sites[i] = defaults.Default
+	}
+	// Unmarshal config again, letting individual sites override the defaults
+	cfg := defaults
+	if err := json.Unmarshal(data, &cfg); err != nil {
 		return Config{}, err
 	}
 	if err := cfg.Load(); err != nil {

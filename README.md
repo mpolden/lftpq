@@ -26,9 +26,11 @@ Help Options:
 
 ```json
 {
-  "Client": {
-    "Path": "lftp",
-    "GetCmd": "mirror"
+  "Default": {
+    "Client": {
+      "Path": "lftp",
+      "GetCmd": "mirror"
+    }
   },
   "Sites": [
     {
@@ -57,6 +59,10 @@ Help Options:
 ```
 
 ## Configuration options
+
+`Default` holds the default site configuration, which will apply to all sites.
+All options can be overridden per site. This is useful when you want to apply
+the same options to multiple sites.
 
 `Client` holds configuration related to lftp.
 
