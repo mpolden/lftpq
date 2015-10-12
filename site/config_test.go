@@ -1,19 +1,12 @@
 package site
 
 import (
-	"reflect"
 	"testing"
 	"time"
-
-	"github.com/martinp/lftpq/lftp"
 )
 
 func TestLoad(t *testing.T) {
 	cfg := Config{
-		Client: lftp.Client{
-			Path:   "lftp",
-			GetCmd: "mirror",
-		},
 		Sites: []Site{Site{
 			Name:         "foo",
 			Dir:          "/site",
@@ -32,9 +25,6 @@ func TestLoad(t *testing.T) {
 	}
 
 	site := cfg.Sites[0]
-	if !reflect.DeepEqual(site.Client, cfg.Client) {
-		t.Error("Expected client to be set")
-	}
 	if want := time.Duration(24) * time.Hour; site.maxAge != want {
 		t.Errorf("Expected %s, got %s", want, site.maxAge)
 	}
