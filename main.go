@@ -75,7 +75,11 @@ func main() {
 		log.Fatal(err)
 	}
 	if cli.Test {
-		fmt.Printf("%+v\n", cfg)
+		json, err := cfg.JSON()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", json)
 		return
 	}
 	for _, s := range cfg.Sites {

@@ -124,6 +124,10 @@ func (c *Config) Load() error {
 	return nil
 }
 
+func (c *Config) JSON() ([]byte, error) {
+	return json.MarshalIndent(c, "", "  ")
+}
+
 func ReadConfig(name string) (Config, error) {
 	if name == "~/.lftpqrc" {
 		home := os.Getenv("HOME")
