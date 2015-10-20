@@ -37,39 +37,32 @@ func (q *Queue) deduplicate() {
 	}
 }
 
-func (q *Queue) skipNonEmptyDstDir() {
-	for _, item := range q.Transferable() {
-		if empty := item.IsDstDirEmpty(); !empty {
-			item.Reject(fmt.Sprintf("IsDstDirEmpty=%t", empty))
-		}
-	}
-}
-
 func NewQueue(site Site, dirs []lftp.Dir) Queue {
-	items := make(Items, 0, len(dirs))
-	q := Queue{Site: site}
+	q := Queue{Site: site, Items: make(Items, 0, len(dirs))}
+	// Initial filtering
 	for _, dir := range dirs {
 		item := newItem(&q, dir)
 		if dir.IsSymlink && q.SkipSymlinks {
 			item.Reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks))
-		} else if age := dir.Age(); age > q.maxAge {
-			item.Reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.MaxAge))
 		} else if p, match := dir.MatchAny(q.filters); match {
 			item.Reject(fmt.Sprintf("Filter=%s", p))
 		} else if p, match := dir.MatchAny(q.patterns); match {
 			item.Accept(fmt.Sprintf("Match=%s", p))
 		}
-		items = append(items, item)
+		q.Items = append(q.Items, item)
 	}
-	sort.Sort(items)
-	q.Items = items
+	sort.Sort(q.Items)
 	if q.Deduplicate {
 		q.deduplicate()
 	}
-	// Skipping of existing directories must be done after deduplication. This is because items with a higher weight
-	// might have been transferred in a previous run, but should still be respected during deduplication.
-	if q.SkipExisting {
-		q.skipNonEmptyDstDir()
+	// Deduplication must happen before MaxAge and IsDstDir checks. This is because items with a higher weight might
+	// have been transferred in past runs.
+	for _, item := range q.Transferable() {
+		if age := item.Age(); age > q.maxAge {
+			item.Reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
+		} else if q.SkipExisting && !item.IsDstDirEmpty() {
+			item.Reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
+		}
 	}
 	return q
 }

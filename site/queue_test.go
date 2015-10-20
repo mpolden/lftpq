@@ -60,7 +60,7 @@ func TestNewQueue(t *testing.T) {
 	q := NewQueue(s, dirs)
 	expected := []Item{
 		Item{Queue: &q, Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
-		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge="},
+		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
 		Item{Queue: &q, Dir: dirs[2], Transfer: true, Reason: "Match=dir\\d"},
 		Item{Queue: &q, Dir: dirs[3], Transfer: true, Reason: "Match=dir\\d"},
 		Item{Queue: &q, Dir: dirs[4], Transfer: false, Reason: "no match"},
@@ -161,6 +161,26 @@ func TestDeduplicate(t *testing.T) {
 		if actual[i].Path != expected[i].Path {
 			t.Errorf("Expected %s, got %s", expected[i].Path, actual[i].Path)
 		}
+	}
+}
+
+func TestDeduplicateIgnoresAge(t *testing.T) {
+	now := time.Now().Round(time.Second)
+	s := Site{
+		parser:      parser.Show,
+		priorities:  []*regexp.Regexp{regexp.MustCompile("\\.HDTV\\.")},
+		patterns:    []*regexp.Regexp{regexp.MustCompile(".*")},
+		maxAge:      time.Duration(24) * time.Hour,
+		localDir:    template.Must(template.New("").Parse("/tmp/")),
+		Deduplicate: true,
+	}
+	dirs := []lftp.Dir{
+		lftp.Dir{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Created: now.Add(-time.Duration(48) * time.Hour)},
+		lftp.Dir{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Created: now},
+	}
+	q := NewQueue(s, dirs)
+	for _, item := range q.Transferable() {
+		t.Errorf("Expected empty queue, got %s", item.Path)
 	}
 }
 
