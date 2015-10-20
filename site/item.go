@@ -3,7 +3,6 @@ package site
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,11 +45,6 @@ func (i *Item) DstDir() string {
 		return filepath.Join(i.LocalDir, i.Dir.Base())
 	}
 	return i.LocalDir
-}
-
-func (i *Item) IsDstDirEmpty() bool {
-	dirs, _ := ioutil.ReadDir(i.DstDir())
-	return len(dirs) == 0
 }
 
 func (i *Item) Weight() int {

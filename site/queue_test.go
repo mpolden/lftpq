@@ -12,6 +12,8 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
+func isEmptyDirStub(dirname string) bool { return true }
+
 func TestNewQueue(t *testing.T) {
 	now := time.Now().Round(time.Second)
 	s := Site{
@@ -21,7 +23,8 @@ func TestNewQueue(t *testing.T) {
 		patterns:     []*regexp.Regexp{regexp.MustCompile("dir\\d")},
 		filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
 		SkipSymlinks: true,
-		localDir:     template.Must(template.New("").Parse("/tmp/")),
+		SkipExisting: true,
+		localDir:     template.Must(template.New("").Parse("/data/")),
 		parser:       parser.Default,
 	}
 	dirs := []lftp.Dir{
@@ -47,6 +50,11 @@ func TestNewQueue(t *testing.T) {
 			Created: now,
 		},
 		lftp.Dir{
+			Path: "/tmp/dir5",
+			// Filtered because it already exists
+			Created: now,
+		},
+		lftp.Dir{
 			Path: "/tmp/foo",
 			// Filtered because of not matching any Patterns
 			Created: now,
@@ -57,14 +65,15 @@ func TestNewQueue(t *testing.T) {
 			Created: now,
 		},
 	}
-	q := NewQueue(s, dirs)
+	q := newQueue(s, dirs, func(dirname string) bool { return dirname != "/data/dir5" })
 	expected := []Item{
 		Item{Queue: &q, Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
 		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
 		Item{Queue: &q, Dir: dirs[2], Transfer: true, Reason: "Match=dir\\d"},
 		Item{Queue: &q, Dir: dirs[3], Transfer: true, Reason: "Match=dir\\d"},
-		Item{Queue: &q, Dir: dirs[4], Transfer: false, Reason: "no match"},
-		Item{Queue: &q, Dir: dirs[5], Transfer: false, Reason: "Filter=^incomplete-"},
+		Item{Queue: &q, Dir: dirs[4], Transfer: false, Reason: "IsDstDirEmpty=false"},
+		Item{Queue: &q, Dir: dirs[5], Transfer: false, Reason: "no match"},
+		Item{Queue: &q, Dir: dirs[6], Transfer: false, Reason: "Filter=^incomplete-"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {
@@ -178,7 +187,7 @@ func TestDeduplicateIgnoresAge(t *testing.T) {
 		lftp.Dir{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Created: now.Add(-time.Duration(48) * time.Hour)},
 		lftp.Dir{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Created: now},
 	}
-	q := NewQueue(s, dirs)
+	q := newQueue(s, dirs, isEmptyDirStub)
 	for _, item := range q.Transferable() {
 		t.Errorf("Expected empty queue, got %s", item.Path)
 	}
