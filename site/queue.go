@@ -78,13 +78,11 @@ func NewQueue(site Site, dirs []lftp.Dir) Queue {
 }
 
 func (q *Queue) Transferable() []*Item {
-	items := []*Item{}
+	var items []*Item
 	for i, _ := range q.Items {
-		item := &q.Items[i]
-		if !item.Transfer {
-			continue
+		if item := &q.Items[i]; item.Transfer {
+			items = append(items, item)
 		}
-		items = append(items, item)
 	}
 	return items
 }
