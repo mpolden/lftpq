@@ -16,6 +16,7 @@ func TestParseDir(t *testing.T) {
 		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", Dir{Created: t1, Path: "/bar/foo"}},
 		{"2015-02-03 15:12:30 +0100 CET /foo/bar@", Dir{Created: t2, Path: "/foo/bar", IsSymlink: true}},
 		{"2014-12-16 00:04:30 +0100 CET /foo/bar baz/", Dir{Created: t1, Path: "/foo/bar baz"}},
+		{"2014-12-16 00:04:30 +0100 CET /foo/baz", Dir{Created: t1, Path: "/foo/baz", IsFile: true}},
 	}
 	for _, tt := range tests {
 		d, err := ParseDir(tt.in)
@@ -28,10 +29,12 @@ func TestParseDir(t *testing.T) {
 		}
 		if !d.Created.Equal(tt.out.Created) {
 			t.Errorf("Expected %s, got %s", tt.out.Created, d.Created)
-
 		}
 		if d.IsSymlink != tt.out.IsSymlink {
 			t.Errorf("Expected %t, got %t", tt.out.IsSymlink, d.IsSymlink)
+		}
+		if d.IsFile != tt.out.IsFile {
+			t.Errorf("Expected %t, got %t", tt.out.IsFile, d.IsFile)
 		}
 	}
 }

@@ -39,6 +39,7 @@ Help Options:
       "LocalDir": "/tmp/{{ .Name }}/S{{ .Season }}/",
       "SkipSymlinks": true,
       "SkipExisting": true,
+      "SkipFiles": true,
       "Priorities": [
         "^important",
         "^less\\.important"
@@ -103,13 +104,17 @@ Variable  | Description                                    | Example
 `SkipExisting` determines whether to ignore non-empty directories that already
 exist in `LocalDir`.
 
+`SkipFiles` determines whether to ignore files when generating the queue. When
+`true` only directories will be included in the queue. Files inside a directory
+will still be transferred.
+
 `Priorities` is a list of patterns used to deduplicate directories which contain
 the same media (e.g. same show, season and episode, but different release).
 Directories are deduplicated based on the order of matching patterns, where the
 earliest match is given the highest weight. For example, if the items
 `Foo.1.important` and `Foo.1.less.important` are determined to be the same
 media, then given the priorities in the example above, `Foo.1.important` would
-be kept and `Foo.2.less.Important` would be removed from the queue.
+be kept and `Foo.2.less.important` would be removed from the queue.
 
 `Parser` sets the parser to use when parsing media. Valid values are `show`,
 `movie` or empty string (disable parsing).

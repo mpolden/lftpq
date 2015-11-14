@@ -34,6 +34,7 @@ type Site struct {
 	filters      []*regexp.Regexp
 	SkipSymlinks bool
 	SkipExisting bool
+	SkipFiles    bool
 	Parser       string
 	parser       parser.Parser
 	LocalDir     string

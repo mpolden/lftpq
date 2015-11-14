@@ -24,6 +24,7 @@ func TestNewQueue(t *testing.T) {
 		filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
 		SkipSymlinks: true,
 		SkipExisting: true,
+		SkipFiles:    true,
 		localDir:     template.Must(template.New("").Parse("/data/")),
 		parser:       parser.Default,
 	}
@@ -35,34 +36,40 @@ func TestNewQueue(t *testing.T) {
 			IsSymlink: true,
 		},
 		lftp.Dir{
-			Path: "/tmp/dir2",
+			Path: "/tmp/dir2/",
 			// Filtered because of exceeded MaxAge
 			Created: now.Add(-time.Duration(48) * time.Hour),
 		},
 		lftp.Dir{
-			Path: "/tmp/dir3",
+			Path: "/tmp/dir3/",
 			// Included because of equal MaxAge
 			Created: now.Add(-time.Duration(24) * time.Hour),
 		},
 		lftp.Dir{
-			Path: "/tmp/dir4",
+			Path: "/tmp/dir4/",
 			// Included because less than MaxAge
 			Created: now,
 		},
 		lftp.Dir{
-			Path: "/tmp/dir5",
+			Path: "/tmp/dir5/",
 			// Filtered because it already exists
 			Created: now,
 		},
 		lftp.Dir{
-			Path: "/tmp/foo",
+			Path: "/tmp/foo/",
 			// Filtered because of not matching any Patterns
 			Created: now,
 		},
 		lftp.Dir{
-			Path: "/tmp/incomplete-dir3",
+			Path: "/tmp/incomplete-dir3/",
 			// Filtered because of matching any Filters
 			Created: now,
+		},
+		lftp.Dir{
+			Path: "/tmp/xfile",
+			// Filtered because it is not a directory
+			Created: now,
+			IsFile:  true,
 		},
 	}
 	q := newQueue(s, dirs, func(dirname string) bool { return dirname != "/data/dir5" })
@@ -74,10 +81,11 @@ func TestNewQueue(t *testing.T) {
 		Item{Queue: &q, Dir: dirs[4], Transfer: false, Reason: "IsDstDirEmpty=false"},
 		Item{Queue: &q, Dir: dirs[5], Transfer: false, Reason: "no match"},
 		Item{Queue: &q, Dir: dirs[6], Transfer: false, Reason: "Filter=^incomplete-"},
+		Item{Queue: &q, Dir: dirs[7], Transfer: false, Reason: "IsFile=true SkipFiles=true"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {
-		t.Fatal("Expected equal length")
+		t.Fatalf("Expected length=%d, got length=%d", len(expected), len(actual))
 	}
 	for i, _ := range expected {
 		e := expected[i]
