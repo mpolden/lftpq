@@ -12,14 +12,15 @@ Usage:
   lftpq [OPTIONS]
 
 Application Options:
-  -f, --config=FILE    Path to config (~/.lftpqrc)
-  -n, --dryrun         Print generated queue and exit without executing lftp
-  -t, --test           Test and print config
-  -q, --quiet          Only print errors
-  -v, --verbose        Verbose output
+  -f, --config=FILE      Path to config (default: ~/.lftpqrc)
+  -n, --dryrun           Print generated queue and exit without executing lftp
+  -t, --test             Test and print config
+  -q, --quiet            Only print errors
+  -v, --verbose          Verbose output
+  -m, --match=PATTERN    Only process sites matching PATTERN
 
 Help Options:
-  -h, --help           Show this help message
+  -h, --help             Show this help message
 ```
 
 ## Example config
