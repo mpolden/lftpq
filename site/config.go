@@ -22,6 +22,12 @@ type Config struct {
 	Sites   []Site
 }
 
+type Replacement struct {
+	Pattern     string
+	pattern     *regexp.Regexp
+	Replacement string
+}
+
 type Site struct {
 	Client       lftp.Client
 	Name         string
@@ -43,6 +49,7 @@ type Site struct {
 	priorities   []*regexp.Regexp
 	Deduplicate  bool
 	PostCommand  string
+	Replacements []Replacement
 }
 
 func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {
@@ -53,6 +60,19 @@ func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {
 			return nil, err
 		}
 		res = append(res, re)
+	}
+	return res, nil
+}
+
+func compileReplacements(replacements []Replacement) ([]Replacement, error) {
+	res := make([]Replacement, 0, len(replacements))
+	for _, r := range replacements {
+		pattern, err := regexp.Compile(r.Pattern)
+		if err != nil {
+			return nil, err
+		}
+		r.pattern = pattern
+		res = append(res, r)
 	}
 	return res, nil
 }
@@ -99,6 +119,11 @@ func (c *Config) Load() error {
 			return err
 		}
 		site.priorities = priorities
+		replacements, err := compileReplacements(site.Replacements)
+		if err != nil {
+			return err
+		}
+		site.Replacements = replacements
 
 		tmpl, err := parseTemplate(site.LocalDir)
 		if err != nil {

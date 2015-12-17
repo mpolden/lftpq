@@ -2,6 +2,7 @@ package parser
 
 import (
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -142,5 +143,14 @@ func TestShowFail(t *testing.T) {
 	_, err := Show("foo")
 	if err == nil {
 		t.Fatal("Expected error")
+	}
+}
+
+func TestReplaceName(t *testing.T) {
+	m := Media{Name: "Youre.The.Worst"}
+	re := regexp.MustCompile("\\.The\\.")
+	m.ReplaceName(re, ".the.")
+	if want := "Youre.the.Worst"; m.Name != want {
+		t.Errorf("Expected %q, got %q", want, m.Name)
 	}
 }

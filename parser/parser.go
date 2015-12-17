@@ -30,6 +30,10 @@ func (m *Media) IsEmpty() bool {
 	return m.Name == ""
 }
 
+func (m *Media) ReplaceName(re *regexp.Regexp, repl string) {
+	m.Name = re.ReplaceAllString(m.Name, repl)
+}
+
 func (a *Media) Equal(b Media) bool {
 	if a.IsEmpty() {
 		return false

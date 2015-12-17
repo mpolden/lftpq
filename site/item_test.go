@@ -74,6 +74,44 @@ func TestNewItemUnparsable(t *testing.T) {
 	}
 }
 
+func TestNewItemWithReplacements(t *testing.T) {
+	tmpl := template.Must(template.New("").Parse(
+		"/tmp/{{ .Name }}/S{{ .Season }}/"))
+	s := Site{
+		localDir: tmpl,
+		parser:   parser.Show,
+		Replacements: []Replacement{
+			Replacement{
+				pattern:     regexp.MustCompile("\\.Of\\."),
+				Replacement: ".of.",
+			},
+			Replacement{
+				pattern:     regexp.MustCompile("\\.the\\."),
+				Replacement: ".The.",
+			},
+			Replacement{
+				pattern:     regexp.MustCompile("\\.And\\."),
+				Replacement: ".and.",
+			},
+		},
+	}
+	q := Queue{Site: s}
+	var tests = []struct {
+		in  Item
+		out string
+	}{
+		{newItem(&q, lftp.Dir{Path: "/foo/Game.Of.Thrones.S01E01"}), "Game.of.Thrones"},
+		{newItem(&q, lftp.Dir{Path: "/foo/Fear.the.Walking.Dead.S01E01"}), "Fear.The.Walking.Dead"},
+		{newItem(&q, lftp.Dir{Path: "/foo/Halt.And.Catch.Fire.S01E01"}), "Halt.and.Catch.Fire"},
+	}
+	for _, tt := range tests {
+		if tt.in.Media.Name != tt.out {
+			t.Errorf("Expected %q, got %q", tt.out, tt.in.Media.Name)
+		}
+	}
+
+}
+
 func TestWeight(t *testing.T) {
 	s := Site{
 		priorities: []*regexp.Regexp{regexp.MustCompile("\\.PROPER\\."), regexp.MustCompile("\\.REPACK\\.")},

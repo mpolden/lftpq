@@ -83,6 +83,9 @@ func (i *Item) setMetadata() {
 		i.Reject(err.Error())
 		return
 	}
+	for _, r := range i.Replacements {
+		m.ReplaceName(r.pattern, r.Replacement)
+	}
 	i.Media = m
 
 	d, err := i.parseLocalDir()

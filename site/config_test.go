@@ -19,6 +19,11 @@ func TestLoad(t *testing.T) {
 			LocalDir:     "/tmp/{{ .Name }}",
 			Priorities:   []string{"important"},
 			Deduplicate:  true,
+			Replacements: []Replacement{
+				Replacement{
+					Pattern:     "\\.the\\.",
+					Replacement: ".The.",
+				}},
 		}},
 	}
 	if err := cfg.Load(); err != nil {
@@ -43,6 +48,9 @@ func TestLoad(t *testing.T) {
 	}
 	if site.parser == nil {
 		t.Error("Expected parser to be set")
+	}
+	if len(site.Replacements) == 0 {
+		t.Error("Expected non-empty replacements")
 	}
 }
 

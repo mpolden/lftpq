@@ -54,6 +54,12 @@ Help Options:
       "Filters": [
         "(?i)incomplete"
       ],
+      "Replacements": [
+        {
+          "Pattern": "\\.The\\.",
+          "Replacement": ".the."
+        }
+      ],
       "PostCommand": "/usr/local/bin/post-process.sh"
     }
   ]
@@ -131,6 +137,11 @@ queue.
 `Filters` is a list of patterns used when excluding directories. A directory
 matching any of these patterns will be excluded from the queue. `Filters` has
 precedence over `Patterns`.
+
+`Replacements` is a list of replacements that can be used to replace
+misspellings or incorrect casing in media titles. `Pattern` is a regular
+expression and `Replacement` is the replacement string. If multiple replacements
+are given, they will be processed in the order they are listed.
 
 `PostCommand` specifies a command for post-processing of the queue. The queue
 will be passed to the command on stdin, in JSON format. Leave empty to disable.
