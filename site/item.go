@@ -77,11 +77,10 @@ func (i *Item) parseLocalDir() (string, error) {
 	return b.String(), nil
 }
 
-func (i *Item) setMetadata() {
+func (i *Item) setMetadata() error {
 	m, err := i.Queue.parser(i.Dir.Base())
 	if err != nil {
-		i.Reject(err.Error())
-		return
+		return err
 	}
 	for _, r := range i.Replacements {
 		m.ReplaceName(r.pattern, r.Replacement)
@@ -90,14 +89,16 @@ func (i *Item) setMetadata() {
 
 	d, err := i.parseLocalDir()
 	if err != nil {
-		i.Reject(err.Error())
-		return
+		return err
 	}
 	i.LocalDir = d
+	return nil
 }
 
-func newItem(q *Queue, d lftp.Dir) Item {
+func newItem(q *Queue, d lftp.Dir) (Item, error) {
 	item := Item{Queue: q, Dir: d, Reason: "no match"}
-	item.setMetadata()
-	return item
+	if err := item.setMetadata(); err != nil {
+		return item, err
+	}
+	return item, nil
 }

@@ -10,6 +10,11 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
+func newTestItem(q *Queue, dir lftp.Dir) Item {
+	item, _ := newItem(q, dir)
+	return item
+}
+
 func TestNewItemShow(t *testing.T) {
 	tmpl := template.Must(template.New("").Parse(
 		"/tmp/{{ .Name }}/S{{ .Season }}/"))
@@ -19,7 +24,7 @@ func TestNewItemShow(t *testing.T) {
 	}
 	d := lftp.Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
-	item := newItem(&q, d)
+	item := newTestItem(&q, d)
 	if expected := "/tmp/The.Wire/S03/"; item.LocalDir != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
@@ -34,7 +39,7 @@ func TestNewItemMovie(t *testing.T) {
 	}
 	d := lftp.Dir{Path: "/foo/Apocalypse.Now.1979"}
 	q := Queue{Site: s}
-	item := newItem(&q, d)
+	item := newTestItem(&q, d)
 	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
@@ -47,7 +52,7 @@ func TestNewItemDefaultParser(t *testing.T) {
 	}
 	d := lftp.Dir{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
-	item := newItem(&q, d)
+	item := newTestItem(&q, d)
 	if expected := "/tmp/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
 	}
@@ -62,15 +67,15 @@ func TestNewItemUnparsable(t *testing.T) {
 	}
 	d := lftp.Dir{Path: "/foo/bar"}
 	q := Queue{Site: s}
-	item := newItem(&q, d)
+	item, err := newItem(&q, d)
+	if err == nil {
+		t.Fatal("Expected error")
+	}
 	if item.LocalDir != "" {
 		t.Fatal("Expected empty string")
 	}
 	if item.Transfer {
-		t.Fatal("Expected item to be rejected")
-	}
-	if item.Reason == "" {
-		t.Fatal("Expected non-empty reason")
+		t.Fatal("Expected item to not be transferred")
 	}
 }
 
@@ -100,9 +105,9 @@ func TestNewItemWithReplacements(t *testing.T) {
 		in  Item
 		out string
 	}{
-		{newItem(&q, lftp.Dir{Path: "/foo/Game.Of.Thrones.S01E01"}), "Game.of.Thrones"},
-		{newItem(&q, lftp.Dir{Path: "/foo/Fear.the.Walking.Dead.S01E01"}), "Fear.The.Walking.Dead"},
-		{newItem(&q, lftp.Dir{Path: "/foo/Halt.And.Catch.Fire.S01E01"}), "Halt.and.Catch.Fire"},
+		{newTestItem(&q, lftp.Dir{Path: "/foo/Game.Of.Thrones.S01E01"}), "Game.of.Thrones"},
+		{newTestItem(&q, lftp.Dir{Path: "/foo/Fear.the.Walking.Dead.S01E01"}), "Fear.The.Walking.Dead"},
+		{newTestItem(&q, lftp.Dir{Path: "/foo/Halt.And.Catch.Fire.S01E01"}), "Halt.and.Catch.Fire"},
 	}
 	for _, tt := range tests {
 		if tt.in.Media.Name != tt.out {

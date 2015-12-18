@@ -43,8 +43,10 @@ func newQueue(site Site, dirs []lftp.Dir, isEmpty isEmptyDir) Queue {
 	q := Queue{Site: site, Items: make(Items, 0, len(dirs))}
 	// Initial filtering
 	for _, dir := range dirs {
-		item := newItem(&q, dir)
-		if q.SkipSymlinks && dir.IsSymlink {
+		item, err := newItem(&q, dir)
+		if err != nil {
+			item.Reject(err.Error())
+		} else if q.SkipSymlinks && dir.IsSymlink {
 			item.Reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks))
 		} else if q.SkipFiles && dir.IsFile {
 			item.Reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", dir.IsFile, q.SkipFiles))

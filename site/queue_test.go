@@ -101,6 +101,18 @@ func TestNewQueue(t *testing.T) {
 	}
 }
 
+func TestNewQueueRejectsUnparsableItem(t *testing.T) {
+	s := Site{parser: parser.Show}
+	q := newQueue(s, []lftp.Dir{lftp.Dir{Path: "/foo/bar"}}, isEmptyDirStub)
+	if got := q.Items[0].Transfer; got {
+		t.Errorf("Expected false, got %t", got)
+	}
+	want := "failed to parse: bar"
+	if got := q.Items[0].Reason; got != want {
+		t.Errorf("Expected %q, got %q", want, got)
+	}
+}
+
 func TestScript(t *testing.T) {
 	s := Site{
 		Client: lftp.Client{
@@ -155,13 +167,13 @@ func TestDeduplicate(t *testing.T) {
 	}
 	q := Queue{Site: s}
 	q.Items = []Item{
-		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.foo"}),
-		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}), /* keep */
-		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}),
-		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.bar"}),
-		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}), /* keep */
-		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.bar"}),           /* keep */
-		newItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"}),
+		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.foo"}),
+		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}), /* keep */
+		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}),
+		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.bar"}),
+		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}), /* keep */
+		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.bar"}),           /* keep */
+		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"}),
 	}
 	// Accept all but the last item
 	for i, _ := range q.Items[:len(q.Items)-1] {
@@ -207,7 +219,7 @@ func TestPostCommand(t *testing.T) {
 		PostCommand: "xargs echo",
 	}
 	q := Queue{Site: s}
-	q.Items = []Item{newItem(&q, lftp.Dir{Path: "/tmp/foo"})}
+	q.Items = []Item{newTestItem(&q, lftp.Dir{Path: "/tmp/foo"})}
 	cmd, err := q.PostCommand()
 	if err != nil {
 		t.Fatal(err)
