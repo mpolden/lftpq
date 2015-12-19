@@ -16,18 +16,12 @@ type CLI struct {
 	Dryrun  bool   `short:"n" long:"dryrun" description:"Print generated queue and exit without executing lftp"`
 	Test    bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet   bool   `short:"q" long:"quiet" description:"Only print errors"`
-	Verbose bool   `short:"v" long:"verbose" description:"Verbose output"`
+	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
 	Pattern string `short:"m" long:"match" description:"Only process sites matching PATTERN" value-name:"PATTERN"`
 }
 
 func (c *CLI) Log(format string, v ...interface{}) {
-	if !c.Quiet && !c.Dryrun && !c.Verbose {
-		log.Printf(format, v...)
-	}
-}
-
-func (c *CLI) LogVerbose(format string, v ...interface{}) {
-	if c.Verbose {
+	if !c.Quiet {
 		log.Printf(format, v...)
 	}
 }
@@ -39,13 +33,12 @@ func (c *CLI) Run(s site.Site) error {
 	}
 	queue := site.NewQueue(s, dirs)
 	for _, item := range queue.Items {
-		c.LogVerbose(item.String())
-		if item.Transfer {
+		if (item.Transfer && len(c.Verbose) == 1) || len(c.Verbose) > 1 {
 			c.Log(item.String())
 		}
 	}
 	if len(queue.Transferable()) == 0 {
-		c.LogVerbose("Nothing to transfer")
+		c.Log("Nothing to transfer")
 		return nil
 	}
 	if c.Dryrun {
