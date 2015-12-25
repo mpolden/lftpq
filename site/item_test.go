@@ -16,8 +16,10 @@ func newTestItem(q *Queue, dir lftp.Dir) Item {
 }
 
 func TestNewItemShow(t *testing.T) {
-	tmpl := template.Must(template.New("").Parse(
-		"/tmp/{{ .Name }}/S{{ .Season }}/"))
+	tmpl, err := parseTemplate(`/tmp/{{ .Name }}/S{{ .Season | Sprintf "%02d" }}/`)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s := Site{
 		localDir: tmpl,
 		parser:   parser.Show,

@@ -13,13 +13,13 @@ func TestEqual(t *testing.T) {
 		out bool
 	}{
 		{
-			Media{Name: "The.Wire", Season: "01", Episode: "01"},
-			Media{Name: "The.Wire", Season: "01", Episode: "01"},
+			Media{Name: "The.Wire", Season: 1, Episode: 1},
+			Media{Name: "The.Wire", Season: 1, Episode: 1},
 			true,
 		},
 		{
-			Media{Name: "The.Wire", Season: "01", Episode: "01"},
-			Media{Name: "The.Wire", Season: "02", Episode: "01"},
+			Media{Name: "The.Wire", Season: 1, Episode: 1},
+			Media{Name: "The.Wire", Season: 2, Episode: 1},
 			false,
 		},
 		{
@@ -88,43 +88,43 @@ func TestShow(t *testing.T) {
 			Media{
 				Release: "Gotham.S01E01.720p.HDTV.X264-DIMENSION",
 				Name:    "Gotham",
-				Season:  "01",
-				Episode: "01",
+				Season:  1,
+				Episode: 1,
 			}},
 		{"Top_Gear.21x02.720p_HDTV_x264-FoV",
 			Media{
 				Release: "Top_Gear.21x02.720p_HDTV_x264-FoV",
 				Name:    "Top_Gear",
-				Season:  "21",
-				Episode: "02",
+				Season:  21,
+				Episode: 2,
 			}},
 		{"Eastbound.and.Down.S02E05.720p.BluRay.X264-REWARD",
 			Media{
 				Release: "Eastbound.and.Down.S02E05.720p.BluRay.X264-REWARD",
 				Name:    "Eastbound.and.Down",
-				Season:  "02",
-				Episode: "05",
+				Season:  2,
+				Episode: 5,
 			}},
 		{"Olive.Kitteridge.Part.4.720p.HDTV.x264-KILLERS",
 			Media{
 				Release: "Olive.Kitteridge.Part.4.720p.HDTV.x264-KILLERS",
 				Name:    "Olive.Kitteridge",
-				Season:  "01",
-				Episode: "04",
+				Season:  1,
+				Episode: 4,
 			}},
 		{"Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015.Part1.720p.HDTV.x264-W4F",
 			Media{
 				Release: "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015.Part1.720p.HDTV.x264-W4F",
 				Name:    "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015",
-				Season:  "01",
-				Episode: "01",
+				Season:  1,
+				Episode: 1,
 			}},
 		{"The.Jinx-The.Life.and.Deaths.of.Robert.Durst.E04.1080p.BluRay.x264-ROVERS",
 			Media{
 				Release: "The.Jinx-The.Life.and.Deaths.of.Robert.Durst.E04.1080p.BluRay.x264-ROVERS",
 				Name:    "The.Jinx-The.Life.and.Deaths.of.Robert.Durst",
-				Season:  "01",
-				Episode: "04",
+				Season:  1,
+				Episode: 4,
 			}},
 	}
 	for _, tt := range tests {

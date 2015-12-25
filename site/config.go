@@ -78,7 +78,8 @@ func compileReplacements(replacements []Replacement) ([]Replacement, error) {
 }
 
 func parseTemplate(tmpl string) (*template.Template, error) {
-	t, err := template.New("").Parse(tmpl)
+	funcMap := template.FuncMap{"Sprintf": fmt.Sprintf}
+	t, err := template.New("").Funcs(funcMap).Parse(tmpl)
 	if err != nil {
 		return nil, err
 	}

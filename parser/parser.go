@@ -21,8 +21,8 @@ type Media struct {
 	Release string
 	Name    string
 	Year    int
-	Season  string
-	Episode string
+	Season  int
+	Episode int
 }
 
 func (m *Media) IsEmpty() bool {
@@ -52,7 +52,7 @@ func Movie(s string) (Media, error) {
 	name := m[0][1]
 	year, err := strconv.Atoi(m[0][2])
 	if err != nil {
-		return Media{}, fmt.Errorf("failed to parse year for %s", s)
+		return Media{}, err
 	}
 	return Media{
 		Release: s,
@@ -83,15 +83,18 @@ func Show(s string) (Media, error) {
 		season = "1"
 		episode = m[0][7]
 	}
-	if season == "" || episode == "" {
-		return Media{}, fmt.Errorf("failed to parse: %s season=%q episode=%q", s, season, episode)
+	ss, err := strconv.Atoi(season)
+	if err != nil {
+		return Media{}, err
 	}
-	season = fmt.Sprintf("%02s", season)
-	episode = fmt.Sprintf("%02s", episode)
+	ep, err := strconv.Atoi(episode)
+	if err != nil {
+		return Media{}, err
+	}
 	return Media{
 		Release: s,
 		Name:    name,
-		Season:  season,
-		Episode: episode,
+		Season:  ss,
+		Episode: ep,
 	}, nil
 }
