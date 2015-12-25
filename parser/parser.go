@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 var (
@@ -67,7 +66,7 @@ func Show(s string) (Media, error) {
 	if len(m) == 0 || len(m[0]) < 8 {
 		return Media{}, fmt.Errorf("failed to parse: %s", s)
 	}
-	name := strings.Replace(m[0][1], "_", ".", -1)
+	name := m[0][1]
 	var season string
 	var episode string
 	if m[0][4] != "" {

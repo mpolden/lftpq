@@ -94,7 +94,7 @@ func TestShow(t *testing.T) {
 		{"Top_Gear.21x02.720p_HDTV_x264-FoV",
 			Media{
 				Release: "Top_Gear.21x02.720p_HDTV_x264-FoV",
-				Name:    "Top.Gear",
+				Name:    "Top_Gear",
 				Season:  "21",
 				Episode: "02",
 			}},

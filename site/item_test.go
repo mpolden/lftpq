@@ -86,18 +86,10 @@ func TestNewItemWithReplacements(t *testing.T) {
 		localDir: tmpl,
 		parser:   parser.Show,
 		Replacements: []Replacement{
-			Replacement{
-				pattern:     regexp.MustCompile("\\.Of\\."),
-				Replacement: ".of.",
-			},
-			Replacement{
-				pattern:     regexp.MustCompile("\\.the\\."),
-				Replacement: ".The.",
-			},
-			Replacement{
-				pattern:     regexp.MustCompile("\\.And\\."),
-				Replacement: ".and.",
-			},
+			Replacement{pattern: regexp.MustCompile("_"), Replacement: "."},
+			Replacement{pattern: regexp.MustCompile("\\.Of\\."), Replacement: ".of."},
+			Replacement{pattern: regexp.MustCompile("\\.the\\."), Replacement: ".The."},
+			Replacement{pattern: regexp.MustCompile("\\.And\\."), Replacement: ".and."},
 		},
 	}
 	q := Queue{Site: s}
@@ -108,6 +100,7 @@ func TestNewItemWithReplacements(t *testing.T) {
 		{newTestItem(&q, lftp.Dir{Path: "/foo/Game.Of.Thrones.S01E01"}), "Game.of.Thrones"},
 		{newTestItem(&q, lftp.Dir{Path: "/foo/Fear.the.Walking.Dead.S01E01"}), "Fear.The.Walking.Dead"},
 		{newTestItem(&q, lftp.Dir{Path: "/foo/Halt.And.Catch.Fire.S01E01"}), "Halt.and.Catch.Fire"},
+		{newTestItem(&q, lftp.Dir{Path: "/foo/Top_Gear.01x01"}), "Top.Gear"},
 	}
 	for _, tt := range tests {
 		if tt.in.Media.Name != tt.out {
