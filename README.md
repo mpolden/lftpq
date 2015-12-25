@@ -91,20 +91,24 @@ alias. For example: If you have `alias m "mirror --only-missing"` in your
 a template. When the `show` parser is used, the following template variables are
 available:
 
-Variable  | Description                                    | Example
---------- | ---------------------------------------------- | -------
-`Name`    | Name of the show                               | `The.Wire`
-`Season`  | Show season                                    | `01`
-`Episode` | Show episode                                   | `05`
-`Release` | Release/directory name                         | `The.Wire.S01E05.720p.BluRay.X264`
+Variable  | Description            | Type   | Example
+--------- | -----------------------|------- | -------
+`Name`    | Name of the show       | string | `The.Wire`
+`Season`  | Show season            | int    | `1`
+`Episode` | Show episode           | int    | `5`
+`Release` | Release/directory name | string | `The.Wire.S01E05.720p.BluRay.X264`
 
 When using the `movie` parser, the following variables are available:
 
-Variable  | Description                                    | Example
---------- | ---------------------------------------------- | -------
-`Name`    | Movie name                                     | `Apocalypse.Now`
-`Year`    | Production year                                | `1979`
-`Release` | Release/directory name                         | `Apocalypse.Now.1979.720p.BluRay.X264`
+Variable  | Description            | Type   | Example
+--------- | -----------------------| -------| -------
+`Name`    | Movie name             | string | `Apocalypse.Now`
+`Year`    | Production year        | int    | `1979`
+`Release` | Release/directory name | string | `Apocalypse.Now.1979.720p.BluRay.X264`
+
+All variables can be formatted with `Sprintf`. For example `/mydir/{{ .Name
+}}/S{{ .Season | Sprintf "%02" }}/` would format the season using two decimals
+and would result in `/mydir/The.Wire/S01`.
 
 `SkipSymlinks` determines whether to ignore symlinks when generating the queue.
 
