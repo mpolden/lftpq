@@ -57,7 +57,7 @@ func TestAge(t *testing.T) {
 		{Dir{Created: now.Add(-time.Duration(48) * time.Hour)}, time.Duration(48) * time.Hour},
 	}
 	for _, tt := range tests {
-		if got := tt.in.Age(); got != tt.out {
+		if got := tt.in.Age(now); got != tt.out {
 			t.Errorf("Expected %s, got %s", tt.out, got)
 		}
 	}

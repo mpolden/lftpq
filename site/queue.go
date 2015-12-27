@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/martinp/lftpq/lftp"
 )
@@ -63,8 +64,9 @@ func newQueue(site Site, dirs []lftp.Dir, isEmpty isEmptyDir) Queue {
 	}
 	// Deduplication must happen before MaxAge and IsDstDir checks. This is because items with a higher weight might
 	// have been transferred in past runs.
+	now := time.Now()
 	for _, item := range q.Transferable() {
-		if age := item.Age(); age > q.maxAge {
+		if age := item.Age(now); age > q.maxAge {
 			item.Reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
 		} else if q.SkipExisting && !isEmpty(item.DstDir()) {
 			item.Reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
