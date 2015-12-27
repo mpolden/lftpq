@@ -1,5 +1,3 @@
-NAME=lftpq
-
 all: deps test vet install
 
 fmt:
