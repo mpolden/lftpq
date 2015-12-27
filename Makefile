@@ -1,6 +1,6 @@
 NAME=lftpq
 
-all: deps test build
+all: deps test install
 
 fmt:
 	go fmt ./...
@@ -13,7 +13,3 @@ deps:
 
 install:
 	go install
-
-build:
-	@mkdir -p bin
-	go build -o bin/$(NAME)
