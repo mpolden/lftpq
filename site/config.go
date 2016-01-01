@@ -50,6 +50,7 @@ type Site struct {
 	Deduplicate  bool
 	PostCommand  string
 	Replacements []Replacement
+	Merge        bool
 }
 
 func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {

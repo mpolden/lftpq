@@ -41,6 +41,7 @@ Help Options:
       "SkipSymlinks": true,
       "SkipExisting": true,
       "SkipFiles": true,
+      "Merge": true,
       "Priorities": [
         "^important",
         "^less\\.important"
@@ -118,6 +119,18 @@ exist in `LocalDir`.
 `SkipFiles` determines whether to ignore files when generating the queue. When
 `true` only directories will be included in the queue. Files inside a directory
 will still be transferred.
+
+`Merge` determines whether files/directories that exist locally should be merged
+into the queue before deduplication takes place. This information can then be
+used when doing post-processing of the queue.
+
+For example: Candidate `A` is transferred during session `1` and candidate `B`
+is transferred during session `2`. If candidate `B` has a higher priority than
+`A`, so that `A` is considered a duplicate of `B`, `B` will be transferred
+during session `2`. This means that both candidates exist on disk after session
+`2` ends. If `Merge` is `true`, the queue passed to `PostCommand` will contain
+candidate `A` along with its duplication status (the fields `Merged` and
+`Duplicate` will both be `true`).
 
 `Priorities` is a list of patterns used to deduplicate directories which contain
 the same media (e.g. same show, season and episode, but different release).

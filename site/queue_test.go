@@ -160,6 +160,7 @@ func TestTransferable(t *testing.T) {
 		Items: []Item{
 			Item{Dir: lftp.Dir{Path: "/tmp/d1"}, Transfer: true},
 			Item{Dir: lftp.Dir{Path: "/tmp/d2"}, Transfer: false},
+			Item{Dir: lftp.Dir{Path: "/tmp/d2"}, Transfer: false},
 		},
 	}
 	actual := q.Transferable()
@@ -249,5 +250,35 @@ func TestPostCommand(t *testing.T) {
 	}
 	if len(data) == 0 {
 		t.Fatal("Expected stdin to contain data")
+	}
+}
+
+func TestMerge(t *testing.T) {
+	tmpl := template.Must(template.New("").Parse(
+		"/tmp/{{ .Name }}/S{{ .Season }}/"))
+	s := Site{
+		localDir:   tmpl,
+		parser:     parser.Show,
+		priorities: []*regexp.Regexp{regexp.MustCompile("\\.foo$")},
+	}
+	q := Queue{Site: s}
+	readDir := func(dirname string) ([]os.FileInfo, error) {
+		return []os.FileInfo{
+			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"},
+			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.baz"},
+		}, nil
+	}
+	item := newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.foo"})
+	item.Transfer = true
+	q.Items = []Item{item}
+	q.merge(readDir)
+	q.deduplicate()
+	if l := len(q.Items); l != 3 {
+		t.Fatalf("Expected length 3, got %d", l)
+	}
+	for _, i := range q.Items[1:] {
+		if !i.Duplicate {
+			t.Errorf("Expected Duplicate=true for Path=%q", i.Dir.Path)
+		}
 	}
 }

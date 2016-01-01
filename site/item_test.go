@@ -214,3 +214,31 @@ func TestIsEmpty(t *testing.T) {
 		}
 	}
 }
+
+func TestMergable(t *testing.T) {
+	tmpl := template.Must(template.New("").Parse(
+		"/tmp/{{ .Name }}/S{{ .Season }}/"))
+	s := Site{
+		localDir:   tmpl,
+		parser:     parser.Show,
+		priorities: []*regexp.Regexp{regexp.MustCompile("\\.foo\\.")},
+	}
+	q := Queue{Site: s}
+	readDir := func(dirname string) ([]os.FileInfo, error) {
+		return []os.FileInfo{fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"}}, nil
+	}
+	item := newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire/S01/The.Wire.S01E01.foo"})
+	items := item.mergable(readDir)
+	if len(items) == 0 {
+		t.Fatalf("Expected non-zero mergable items")
+	}
+	if !items[0].Merged {
+		t.Errorf("Expected Merged=true")
+	}
+	if !items[0].Transfer {
+		t.Errorf("Expected Transfer=true")
+	}
+	if items[0].Media.IsEmpty() {
+		t.Errorf("Expected non-empty media")
+	}
+}

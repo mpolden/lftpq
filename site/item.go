@@ -27,11 +27,13 @@ func (s Items) Swap(i, j int) {
 
 type Item struct {
 	lftp.Dir
-	LocalDir string
-	Transfer bool
-	Reason   string
-	Media    parser.Media
-	*Queue   `json:"-"`
+	LocalDir  string
+	Transfer  bool
+	Reason    string
+	Media     parser.Media
+	Duplicate bool
+	Merged    bool
+	*Queue    `json:"-"`
 }
 
 func (i *Item) String() string {
@@ -82,8 +84,8 @@ func (i *Item) parseLocalDir() (string, error) {
 	return b.String(), nil
 }
 
-func (i *Item) setMetadata() error {
-	m, err := i.Queue.parser(i.Dir.Base())
+func (i *Item) setMedia(dirname string) error {
+	m, err := i.Queue.parser(dirname)
 	if err != nil {
 		return err
 	}
@@ -91,7 +93,10 @@ func (i *Item) setMetadata() error {
 		m.ReplaceName(r.pattern, r.Replacement)
 	}
 	i.Media = m
+	return nil
+}
 
+func (i *Item) setLocalDir() error {
 	d, err := i.parseLocalDir()
 	if err != nil {
 		return err
@@ -100,9 +105,32 @@ func (i *Item) setMetadata() error {
 	return nil
 }
 
+func (i *Item) mergable(readDir readDir) Items {
+	var items Items
+	parent := filepath.Join(i.DstDir(), "..")
+	dirs, _ := readDir(parent)
+	for _, fi := range dirs {
+		path := filepath.Join(parent, fi.Name())
+		item := Item{
+			Queue:    i.Queue,
+			LocalDir: path,
+			Transfer: true, // True to make it considerable for deduplication
+			Merged:   true,
+		}
+		if err := item.setMedia(filepath.Base(path)); err != nil {
+			item.Reject(err.Error())
+		}
+		items = append(items, item)
+	}
+	return items
+}
+
 func newItem(q *Queue, d lftp.Dir) (Item, error) {
 	item := Item{Queue: q, Dir: d, Reason: "no match"}
-	if err := item.setMetadata(); err != nil {
+	if err := item.setMedia(d.Base()); err != nil {
+		return item, err
+	}
+	if err := item.setLocalDir(); err != nil {
 		return item, err
 	}
 	return item, nil

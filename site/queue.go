@@ -31,11 +31,22 @@ func (q *Queue) deduplicate() {
 			b := &q.Items[j]
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
 				if a.Weight() <= b.Weight() {
+					a.Duplicate = true
 					a.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Dir.Path, a.Weight()))
 				} else {
+					b.Duplicate = true
 					b.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Dir.Path, b.Weight()))
 				}
 			}
+		}
+	}
+}
+
+func (q *Queue) merge(readDir readDir) {
+	// Merge local directories with the queue so that they can be deduplicated
+	for _, i := range q.Transferable() {
+		for _, item := range i.mergable(readDir) {
+			q.Items = append(q.Items, item)
 		}
 	}
 }
@@ -57,6 +68,9 @@ func newQueue(site Site, dirs []lftp.Dir, readDir readDir) Queue {
 			item.Accept(fmt.Sprintf("Match=%s", p))
 		}
 		q.Items = append(q.Items, item)
+	}
+	if q.Merge {
+		q.merge(readDir)
 	}
 	sort.Sort(q.Items)
 	if q.Deduplicate {
