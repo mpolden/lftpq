@@ -47,6 +47,11 @@ func (i *Item) DstDir() string {
 	return i.LocalDir
 }
 
+func (i *Item) IsEmpty(readDir readDir) bool {
+	dirs, _ := readDir(i.DstDir())
+	return len(dirs) == 0
+}
+
 func (i *Item) Weight() int {
 	for _i, p := range i.Queue.priorities {
 		if i.Dir.Match(p) {

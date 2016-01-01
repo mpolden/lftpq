@@ -1,6 +1,7 @@
 package site
 
 import (
+	"os"
 	"regexp"
 	"sort"
 	"testing"
@@ -189,6 +190,27 @@ func TestDstDir(t *testing.T) {
 	for _, tt := range tests {
 		if got := tt.in.DstDir(); got != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, got)
+		}
+	}
+}
+
+func TestIsEmpty(t *testing.T) {
+	readDir := func(dirname string) ([]os.FileInfo, error) {
+		if dirname == "/tmp/bar" {
+			return []os.FileInfo{fileInfoStub{}}, nil
+		}
+		return nil, nil
+	}
+	var tests = []struct {
+		in  Item
+		out bool
+	}{
+		{Item{LocalDir: "/tmp/foo"}, true},
+		{Item{LocalDir: "/tmp/bar"}, false},
+	}
+	for _, tt := range tests {
+		if got := tt.in.IsEmpty(readDir); got != tt.out {
+			t.Errorf("Expected %t, got %t", tt.out, got)
 		}
 	}
 }

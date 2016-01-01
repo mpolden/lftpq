@@ -2,6 +2,7 @@ package site
 
 import (
 	"io/ioutil"
+	"os"
 	"reflect"
 	"regexp"
 	"testing"
@@ -12,7 +13,16 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
-func isEmptyDirStub(dirname string) bool { return true }
+func readDirStub(dirname string) ([]os.FileInfo, error) { return nil, nil }
+
+type fileInfoStub struct{ name string }
+
+func (f fileInfoStub) Name() string       { return f.name }
+func (f fileInfoStub) Size() int64        { return 0 }
+func (f fileInfoStub) Mode() os.FileMode  { return 0 }
+func (f fileInfoStub) ModTime() time.Time { return time.Time{} }
+func (f fileInfoStub) IsDir() bool        { return false }
+func (f fileInfoStub) Sys() interface{}   { return nil }
 
 func TestNewQueue(t *testing.T) {
 	now := time.Now().Round(time.Second)
@@ -72,7 +82,13 @@ func TestNewQueue(t *testing.T) {
 			IsFile:  true,
 		},
 	}
-	q := newQueue(s, dirs, func(dirname string) bool { return dirname != "/data/dir5" })
+	readDir := func(dirname string) ([]os.FileInfo, error) {
+		if dirname == "/data/dir5" {
+			return []os.FileInfo{fileInfoStub{}}, nil
+		}
+		return nil, nil
+	}
+	q := newQueue(s, dirs, readDir)
 	expected := []Item{
 		Item{Queue: &q, Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
 		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
@@ -103,7 +119,7 @@ func TestNewQueue(t *testing.T) {
 
 func TestNewQueueRejectsUnparsableItem(t *testing.T) {
 	s := Site{parser: parser.Show}
-	q := newQueue(s, []lftp.Dir{lftp.Dir{Path: "/foo/bar"}}, isEmptyDirStub)
+	q := newQueue(s, []lftp.Dir{lftp.Dir{Path: "/foo/bar"}}, readDirStub)
 	if got := q.Items[0].Transfer; got {
 		t.Errorf("Expected false, got %t", got)
 	}
@@ -207,7 +223,7 @@ func TestDeduplicateIgnoresAge(t *testing.T) {
 		lftp.Dir{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Created: now.Add(-time.Duration(48) * time.Hour)},
 		lftp.Dir{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Created: now},
 	}
-	q := newQueue(s, dirs, isEmptyDirStub)
+	q := newQueue(s, dirs, readDirStub)
 	for _, item := range q.Transferable() {
 		t.Errorf("Expected empty queue, got %s", item.Path)
 	}

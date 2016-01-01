@@ -14,7 +14,7 @@ import (
 	"github.com/martinp/lftpq/lftp"
 )
 
-type isEmptyDir func(dirname string) bool
+type readDir func(dirname string) ([]os.FileInfo, error)
 
 type Queue struct {
 	Site
@@ -40,7 +40,7 @@ func (q *Queue) deduplicate() {
 	}
 }
 
-func newQueue(site Site, dirs []lftp.Dir, isEmpty isEmptyDir) Queue {
+func newQueue(site Site, dirs []lftp.Dir, readDir readDir) Queue {
 	q := Queue{Site: site, Items: make(Items, 0, len(dirs))}
 	// Initial filtering
 	for _, dir := range dirs {
@@ -68,7 +68,7 @@ func newQueue(site Site, dirs []lftp.Dir, isEmpty isEmptyDir) Queue {
 	for _, item := range q.Transferable() {
 		if age := item.Age(now); age > q.maxAge {
 			item.Reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
-		} else if q.SkipExisting && !isEmpty(item.DstDir()) {
+		} else if q.SkipExisting && !item.IsEmpty(readDir) {
 			item.Reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
 		}
 	}
@@ -76,11 +76,7 @@ func newQueue(site Site, dirs []lftp.Dir, isEmpty isEmptyDir) Queue {
 }
 
 func NewQueue(site Site, dirs []lftp.Dir) Queue {
-	isEmpty := func(dirname string) bool {
-		dirs, _ := ioutil.ReadDir(dirname)
-		return len(dirs) == 0
-	}
-	return newQueue(site, dirs, isEmpty)
+	return newQueue(site, dirs, ioutil.ReadDir)
 }
 
 func (q *Queue) Transferable() []*Item {
