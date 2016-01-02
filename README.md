@@ -12,8 +12,9 @@ Usage:
   lftpq [OPTIONS]
 
 Application Options:
-  -f, --config=FILE      Path to config (default: ~/.lftpqrc)
-  -n, --dryrun           Print generated queue and exit without executing lftp
+  -f, --config=FILE      Path to config (~/.lftpqrc)
+  -n, --dryrun           Print queue in lftpq format and exit
+  -d, --debug            Print queue in JSON format and exit
   -t, --test             Test and print config
   -q, --quiet            Only print errors
   -v, --verbose          Verbose output

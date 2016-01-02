@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -13,7 +14,8 @@ import (
 
 type CLI struct {
 	Config  string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpqrc"`
-	Dryrun  bool   `short:"n" long:"dryrun" description:"Print generated queue and exit without executing lftp"`
+	Dryrun  bool   `short:"n" long:"dryrun" description:"Print queue in lftp format and exit"`
+	Debug   bool   `short:"d" long:"debug" description:"Print queue in JSON format and exit"`
 	Test    bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet   bool   `short:"q" long:"quiet" description:"Only print errors"`
 	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
@@ -39,6 +41,14 @@ func (c *CLI) Run(s site.Site) error {
 	}
 	if len(queue.Transferable()) == 0 {
 		c.Log("Nothing to transfer")
+		return nil
+	}
+	if c.Debug {
+		json, err := json.Marshal(queue.Items)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", json)
 		return nil
 	}
 	if c.Dryrun {
