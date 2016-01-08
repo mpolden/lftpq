@@ -43,9 +43,9 @@ func (q *Queue) deduplicate() {
 }
 
 func (q *Queue) merge(readDir readDir) {
-	// Merge local directories with the queue so that they can be deduplicated
+	// Merge local duplicates into the queue so that they can included in deduplication
 	for _, i := range q.Transferable() {
-		for _, item := range i.mergable(readDir) {
+		for _, item := range i.duplicates(readDir) {
 			q.Items = append(q.Items, item)
 		}
 	}

@@ -105,11 +105,15 @@ func (i *Item) setLocalDir() error {
 	return nil
 }
 
-func (i *Item) mergable(readDir readDir) Items {
+func (i *Item) duplicates(readDir readDir) Items {
 	var items Items
 	parent := filepath.Join(i.DstDir(), "..")
 	dirs, _ := readDir(parent)
 	for _, fi := range dirs {
+		// Ignore self
+		if i.Dir.Base() == fi.Name() {
+			continue
+		}
 		path := filepath.Join(parent, fi.Name())
 		item := Item{
 			Queue:    i.Queue,
@@ -119,6 +123,10 @@ func (i *Item) mergable(readDir readDir) Items {
 		}
 		if err := item.setMedia(filepath.Base(path)); err != nil {
 			item.Reject(err.Error())
+		}
+		// Ignore unequal media
+		if !i.Media.Equal(item.Media) {
+			continue
 		}
 		items = append(items, item)
 	}

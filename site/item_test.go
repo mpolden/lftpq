@@ -215,7 +215,7 @@ func TestIsEmpty(t *testing.T) {
 	}
 }
 
-func TestMergable(t *testing.T) {
+func TestDuplicates(t *testing.T) {
 	tmpl := template.Must(template.New("").Parse(
 		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{
@@ -225,12 +225,19 @@ func TestMergable(t *testing.T) {
 	}
 	q := Queue{Site: s}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
-		return []os.FileInfo{fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"}}, nil
+		return []os.FileInfo{
+			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.foo"},
+			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"},
+			fileInfoStub{name: "The.Wire.S01E02.720p.BluRay.baz"},
+		}, nil
 	}
-	item := newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire/S01/The.Wire.S01E01.foo"})
-	items := item.mergable(readDir)
-	if len(items) == 0 {
-		t.Fatalf("Expected non-zero mergable items")
+	item := newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire/S01/The.Wire.S01E01.720p.BluRay.foo"})
+	items := item.duplicates(readDir)
+	if l := len(items); l != 1 {
+		t.Fatalf("Expected 1 duplicate, got %d", l)
+	}
+	if want := "The.Wire.S01E01.720p.BluRay.bar"; items[0].Media.Release != want {
+		t.Errorf("Expected %q, got %+v", want, items[0].Media.Release)
 	}
 	if !items[0].Merged {
 		t.Errorf("Expected Merged=true")
