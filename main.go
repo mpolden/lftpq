@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -33,17 +32,19 @@ func (c *CLI) run(s site.Site) error {
 	}
 	queue := site.NewQueue(s, dirs)
 	if c.Dryrun {
-		var out []byte
-		var err error
 		if c.Format == "json" {
-			out, err = json.Marshal(queue.Items)
+			json, err := json.Marshal(queue.Items)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%s\n", json)
 		} else {
-			out, err = queue.Script()
+			fmt.Print(queue.Script())
 		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("%s\n", bytes.TrimRight(out, "\n"))
+		return nil
+	}
+	if len(queue.Transferable()) == 0 {
+		c.log("queue is empty")
 		return nil
 	}
 	if err := queue.Start(!c.Quiet); err != nil {
