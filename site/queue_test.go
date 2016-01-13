@@ -237,7 +237,7 @@ func TestPostCommand(t *testing.T) {
 	}
 	q := Queue{Site: s}
 	q.Items = []Item{newTestItem(&q, lftp.Dir{Path: "/tmp/foo"})}
-	cmd, err := q.PostCommand()
+	cmd, err := q.PostCommand(false)
 	if err != nil {
 		t.Fatal(err)
 	}
