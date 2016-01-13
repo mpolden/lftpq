@@ -12,15 +12,15 @@ Usage:
   lftpq [OPTIONS]
 
 Application Options:
-  -f, --config=FILE    Path to config (default: ~/.lftpqrc)
-  -n, --dryrun         Print queue in lftp format and exit
-  -d, --debug          Print queue in JSON format and exit
-  -t, --test           Test and print config
-  -q, --quiet          Only print errors
-  -v, --verbose        Verbose output
+  -f, --config=FILE           Path to config (default: ~/.lftpqrc)
+  -n, --dryrun                Print queue and exit
+  -F, --format=[lftp|json]    Format to use in dryrun mode (default: lftp)
+  -t, --test                  Test and print config
+  -q, --quiet                 Only print errors
+  -v, --verbose               Verbose output
 
 Help Options:
-  -h, --help           Show this help message
+  -h, --help                  Show this help message
 ```
 
 ## Example config

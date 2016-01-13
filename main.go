@@ -13,8 +13,8 @@ import (
 
 type CLI struct {
 	Config  string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpqrc"`
-	Dryrun  bool   `short:"n" long:"dryrun" description:"Print queue in lftp format and exit"`
-	Debug   bool   `short:"d" long:"debug" description:"Print queue in JSON format and exit"`
+	Dryrun  bool   `short:"n" long:"dryrun" description:"Print queue and exit"`
+	Format  string `short:"F" long:"format" description:"Format to use in dryrun mode" choice:"lftp" choice:"json" default:"lftp"`
 	Test    bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet   bool   `short:"q" long:"quiet" description:"Only print errors"`
 	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
@@ -41,16 +41,16 @@ func (c *CLI) Run(s site.Site) error {
 		c.Log("Nothing to transfer")
 		return nil
 	}
-	if c.Debug {
-		json, err := json.Marshal(queue.Items)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("%s\n", json)
-		return nil
-	}
 	if c.Dryrun {
-		fmt.Print(queue.Script())
+		if c.Format == "json" {
+			json, err := json.Marshal(queue.Items)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%s\n", json)
+		} else {
+			fmt.Print(queue.Script())
+		}
 		return nil
 	}
 	if err := queue.Start(!c.Quiet); err != nil {
