@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	flags "github.com/jessevdk/go-flags"
 
@@ -19,7 +18,6 @@ type CLI struct {
 	Test    bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet   bool   `short:"q" long:"quiet" description:"Only print errors"`
 	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
-	Pattern string `short:"m" long:"match" description:"Only process sites matching PATTERN" value-name:"PATTERN"`
 }
 
 func (c *CLI) Log(format string, v ...interface{}) {
@@ -88,16 +86,6 @@ func main() {
 		return
 	}
 	for _, s := range cfg.Sites {
-		if cli.Pattern != "" {
-			match, err := filepath.Match(cli.Pattern, s.Name)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if !match {
-				fmt.Printf("Skipping site: %s (did not match %s)\n", s.Name, cli.Pattern)
-				continue
-			}
-		}
 		if err := cli.Run(s); err != nil {
 			log.Print(err)
 		}
