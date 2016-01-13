@@ -16,8 +16,8 @@ Application Options:
   -n, --dryrun                Print queue and exit
   -F, --format=[lftp|json]    Format to use in dryrun mode (default: lftp)
   -t, --test                  Test and print config
-  -q, --quiet                 Only print errors
-  -v, --verbose               Verbose output
+  -q, --quiet                 Do not print output from lftp
+  -v, --verbose               Verbose output. Can be specified multiple times
 
 Help Options:
   -h, --help                  Show this help message

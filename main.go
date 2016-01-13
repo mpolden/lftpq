@@ -16,8 +16,8 @@ type CLI struct {
 	Dryrun  bool   `short:"n" long:"dryrun" description:"Print queue and exit"`
 	Format  string `short:"F" long:"format" description:"Format to use in dryrun mode" choice:"lftp" choice:"json" default:"lftp"`
 	Test    bool   `short:"t" long:"test" description:"Test and print config"`
-	Quiet   bool   `short:"q" long:"quiet" description:"Only print errors"`
-	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
+	Quiet   bool   `short:"q" long:"quiet" description:"Do not print output from lftp"`
+	Verbose []bool `short:"v" long:"verbose" description:"Verbose output. Can be specified multiple times"`
 }
 
 func (c *CLI) Log(format string, v ...interface{}) {
