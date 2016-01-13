@@ -142,7 +142,10 @@ func TestScript(t *testing.T) {
 		Item{Dir: lftp.Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
 	}
 	q := Queue{Site: s, Items: items}
-	script := q.Script()
+	script, err := q.Script()
+	if err != nil {
+		t.Fatal(err)
+	}
 	expected := `open siteA
 queue mirror /foo /tmp
 queue mirror /bar /tmp
@@ -150,8 +153,15 @@ queue start
 wait
 exit
 `
-	if script != expected {
+	if string(script) != expected {
 		t.Fatalf("Expected %q, got %q", expected, script)
+	}
+}
+
+func TestScriptWithoutTransferableItems(t *testing.T) {
+	q := Queue{Items: []Item{Item{Transfer: false}}}
+	if _, err := q.Script(); err == nil {
+		t.Fatal("Expected error")
 	}
 }
 

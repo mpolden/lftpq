@@ -20,13 +20,13 @@ type CLI struct {
 	Verbose []bool `short:"v" long:"verbose" description:"Verbose output. Can be specified multiple times"`
 }
 
-func (c *CLI) Log(format string, v ...interface{}) {
+func (c *CLI) log(format string, v ...interface{}) {
 	if !c.Quiet {
 		log.Printf(format, v...)
 	}
 }
 
-func (c *CLI) Run(s site.Site) error {
+func (c *CLI) run(s site.Site) error {
 	dirs, err := s.Client.List(s.Name, s.Dir)
 	if err != nil {
 		return err
@@ -34,29 +34,26 @@ func (c *CLI) Run(s site.Site) error {
 	queue := site.NewQueue(s, dirs)
 	for _, item := range queue.Items {
 		if (item.Transfer && len(c.Verbose) == 1) || len(c.Verbose) > 1 {
-			c.Log(item.String())
+			c.log(item.String())
 		}
-	}
-	if len(queue.Transferable()) == 0 {
-		c.Log("Nothing to transfer")
-		return nil
 	}
 	if c.Dryrun {
+		var out []byte
+		var err error
 		if c.Format == "json" {
-			json, err := json.Marshal(queue.Items)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("%s\n", json)
+			out, err = json.Marshal(queue.Items)
 		} else {
-			fmt.Print(queue.Script())
+			out, err = queue.Script()
 		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", out)
 		return nil
 	}
 	if err := queue.Start(!c.Quiet); err != nil {
 		return err
 	}
-
 	if s.PostCommand != "" {
 		if cmd, err := queue.PostCommand(!c.Quiet); err != nil {
 			return err
@@ -86,7 +83,7 @@ func main() {
 		return
 	}
 	for _, s := range cfg.Sites {
-		if err := cli.Run(s); err != nil {
+		if err := cli.run(s); err != nil {
 			log.Print(err)
 		}
 	}

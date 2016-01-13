@@ -103,12 +103,16 @@ func (q *Queue) Transferable() []*Item {
 	return items
 }
 
-func (q *Queue) Script() string {
+func (q *Queue) Script() ([]byte, error) {
+	items := q.Transferable()
+	if len(items) == 0 {
+		return nil, fmt.Errorf("queue is empty")
+	}
 	var buf bytes.Buffer
 	buf.WriteString("open ")
 	buf.WriteString(q.Site.Name)
 	buf.WriteString("\n")
-	for _, item := range q.Transferable() {
+	for _, item := range items {
 		buf.WriteString("queue ")
 		buf.WriteString(q.Client.GetCmd)
 		buf.WriteString(" ")
@@ -118,16 +122,20 @@ func (q *Queue) Script() string {
 		buf.WriteString("\n")
 	}
 	buf.WriteString("queue start\nwait\nexit\n")
-	return buf.String()
+	return buf.Bytes(), nil
 }
 
 func (q *Queue) Write() (string, error) {
+	script, err := q.Script()
+	if err != nil {
+		return "", err
+	}
 	f, err := ioutil.TempFile("", "lftpq")
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
-	if _, err := f.WriteString(q.Script()); err != nil {
+	if _, err := f.Write(script); err != nil {
 		return "", err
 	}
 	return f.Name(), nil
