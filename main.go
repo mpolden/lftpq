@@ -58,7 +58,7 @@ func (c *CLI) Run(s site.Site) error {
 	}
 
 	if s.PostCommand != "" {
-		if cmd, err := queue.PostCommand(); err != nil {
+		if cmd, err := queue.PostCommand(!c.Quiet); err != nil {
 			return err
 		} else if err := cmd.Run(); err != nil {
 			return err

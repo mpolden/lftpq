@@ -142,7 +142,7 @@ func (q *Queue) Start(inheritIO bool) error {
 	return q.Client.Run([]string{"-f", name}, inheritIO)
 }
 
-func (q *Queue) PostCommand() (*exec.Cmd, error) {
+func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {
 	json, err := json.Marshal(q.Items)
 	if err != nil {
 		return nil, err
@@ -150,5 +150,9 @@ func (q *Queue) PostCommand() (*exec.Cmd, error) {
 	argv := strings.Split(q.Site.PostCommand, " ")
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Stdin = bytes.NewReader(json)
+	if inheritIO {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
 	return cmd, nil
 }
