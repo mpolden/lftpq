@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -42,7 +43,7 @@ func (c *CLI) run(s site.Site) error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%s\n", out)
+		fmt.Printf("%s\n", bytes.TrimRight(out, "\n"))
 		return nil
 	}
 	if err := queue.Start(!c.Quiet); err != nil {
