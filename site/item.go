@@ -36,10 +36,6 @@ type Item struct {
 	*Queue    `json:"-"`
 }
 
-func (i *Item) String() string {
-	return fmt.Sprintf("Path=%q LocalDir=%q Transfer=%t Reason=%q", i.Path, i.LocalDir, i.Transfer, i.Reason)
-}
-
 func (i *Item) DstDir() string {
 	// When LocalDir has a trailing slash, the actual destination dir will be a directory inside LocalDir (same
 	// behaviour as rsync)

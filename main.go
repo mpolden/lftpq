@@ -12,12 +12,11 @@ import (
 )
 
 type CLI struct {
-	Config  string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpqrc"`
-	Dryrun  bool   `short:"n" long:"dryrun" description:"Print queue and exit"`
-	Format  string `short:"F" long:"format" description:"Format to use in dryrun mode" choice:"lftp" choice:"json" default:"lftp"`
-	Test    bool   `short:"t" long:"test" description:"Test and print config"`
-	Quiet   bool   `short:"q" long:"quiet" description:"Do not print output from lftp"`
-	Verbose []bool `short:"v" long:"verbose" description:"Verbose output. Can be specified multiple times"`
+	Config string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpqrc"`
+	Dryrun bool   `short:"n" long:"dryrun" description:"Print queue and exit"`
+	Format string `short:"F" long:"format" description:"Format to use in dryrun mode" choice:"lftp" choice:"json" default:"lftp"`
+	Test   bool   `short:"t" long:"test" description:"Test and print config"`
+	Quiet  bool   `short:"q" long:"quiet" description:"Do not print output from lftp"`
 }
 
 func (c *CLI) log(format string, v ...interface{}) {
@@ -32,11 +31,6 @@ func (c *CLI) run(s site.Site) error {
 		return err
 	}
 	queue := site.NewQueue(s, dirs)
-	for _, item := range queue.Items {
-		if (item.Transfer && len(c.Verbose) == 1) || len(c.Verbose) > 1 {
-			c.log(item.String())
-		}
-	}
 	if c.Dryrun {
 		var out []byte
 		var err error
