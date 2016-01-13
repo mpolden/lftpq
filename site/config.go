@@ -1,6 +1,7 @@
 package site
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -185,12 +186,18 @@ func ReadConfig(name string) (Config, error) {
 		home := os.Getenv("HOME")
 		name = filepath.Join(home, ".lftpqrc")
 	}
-	f, err := os.Open(name)
-	if err != nil {
-		return Config{}, err
+	var r io.Reader
+	if name == "-" {
+		r = bufio.NewReader(os.Stdin)
+	} else {
+		f, err := os.Open(name)
+		if err != nil {
+			return Config{}, err
+		}
+		defer f.Close()
+		r = f
 	}
-	defer f.Close()
-	cfg, err := readConfig(f)
+	cfg, err := readConfig(r)
 	if err != nil {
 		return Config{}, err
 	}
