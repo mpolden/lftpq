@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -33,7 +32,7 @@ func (c *CLI) run(s site.Site) error {
 	queue := site.NewQueue(s, dirs)
 	if c.Dryrun {
 		if c.Format == "json" {
-			json, err := json.Marshal(queue.Items)
+			json, err := queue.JSON()
 			if err != nil {
 				log.Fatal(err)
 			}

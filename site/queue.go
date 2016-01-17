@@ -121,6 +121,10 @@ func (q *Queue) Script() string {
 	return buf.String()
 }
 
+func (q *Queue) JSON() ([]byte, error) {
+	return json.MarshalIndent(q.Items, "", "  ")
+}
+
 func (q *Queue) Write() (string, error) {
 	f, err := ioutil.TempFile("", "lftpq")
 	if err != nil {
