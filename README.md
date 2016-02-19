@@ -1,6 +1,6 @@
 # lftpq
 
-[![Build Status](https://travis-ci.org/martinp/lftpq.png)](https://travis-ci.org/martinp/lftpq)
+[![Build Status](https://travis-ci.org/martinp/lftpq.svg)](https://travis-ci.org/martinp/lftpq)
 
 A queue generator for [lftp](http://lftp.yar.ru).
 
