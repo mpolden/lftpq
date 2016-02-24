@@ -112,6 +112,7 @@ func (i *Item) duplicates(readDir readDir) Items {
 		}
 		path := filepath.Join(parent, fi.Name())
 		item := Item{
+			Dir:      lftp.Dir{Path: path}, // Needs to be set as weight is calculated based on Path
 			Queue:    i.Queue,
 			LocalDir: path,
 			Transfer: true, // True to make it considerable for deduplication

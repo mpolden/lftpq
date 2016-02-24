@@ -248,4 +248,7 @@ func TestDuplicates(t *testing.T) {
 	if items[0].Media.IsEmpty() {
 		t.Errorf("Expected non-empty media")
 	}
+	if items[0].Path != items[0].LocalDir {
+		t.Errorf("Expected Path=%q and LocalDir=%q to be equal", items[0].Path, items[0].LocalDir)
+	}
 }
