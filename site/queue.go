@@ -29,6 +29,10 @@ func (q *Queue) deduplicate() {
 			}
 			a := &q.Items[i]
 			b := &q.Items[j]
+			// Ignore self
+			if a.Dir.Path == b.Dir.Path {
+				continue
+			}
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
 				if a.Weight() <= b.Weight() {
 					a.Duplicate = true

@@ -230,6 +230,27 @@ func TestDeduplicateIgnoresAge(t *testing.T) {
 	}
 }
 
+func TestDeduplicateIgnoreSelf(t *testing.T) {
+	now := time.Now().Round(time.Second)
+	s := Site{
+		parser:      parser.Show,
+		patterns:    []*regexp.Regexp{regexp.MustCompile(".*")},
+		maxAge:      time.Duration(24) * time.Hour,
+		localDir:    template.Must(template.New("").Parse("/tmp/")),
+		Deduplicate: true,
+	}
+	dirs := []lftp.Dir{
+		lftp.Dir{Path: "/tmp/The.Wire.S01E01", Created: now},
+		lftp.Dir{Path: "/tmp/The.Wire.S01E01", Created: now},
+	}
+	q := newQueue(s, dirs, readDirStub)
+	for _, item := range q.Items {
+		if item.Duplicate {
+			t.Errorf("Expected Duplicate=false for %+v", item)
+		}
+	}
+}
+
 func TestPostCommand(t *testing.T) {
 	s := Site{
 		parser:      parser.Default,
