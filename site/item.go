@@ -18,7 +18,7 @@ func (s Items) Len() int {
 }
 
 func (s Items) Less(i, j int) bool {
-	return s[i].Dir.Path < s[j].Dir.Path
+	return s[i].Remote.Path < s[j].Remote.Path
 }
 
 func (s Items) Swap(i, j int) {
@@ -26,7 +26,7 @@ func (s Items) Swap(i, j int) {
 }
 
 type Item struct {
-	lftp.Dir
+	Remote    lftp.File
 	LocalDir  string
 	Transfer  bool
 	Reason    string
@@ -40,7 +40,7 @@ func (i *Item) DstDir() string {
 	// When LocalDir has a trailing slash, the actual destination dir will be a directory inside LocalDir (same
 	// behaviour as rsync)
 	if strings.HasSuffix(i.LocalDir, string(os.PathSeparator)) {
-		return filepath.Join(i.LocalDir, i.Dir.Base())
+		return filepath.Join(i.LocalDir, i.Remote.Base())
 	}
 	return i.LocalDir
 }
@@ -52,7 +52,7 @@ func (i *Item) IsEmpty(readDir readDir) bool {
 
 func (i *Item) Weight() int {
 	for _i, p := range i.Queue.priorities {
-		if i.Dir.Match(p) {
+		if i.Remote.Match(p) {
 			return len(i.Queue.priorities) - _i
 		}
 	}
@@ -107,12 +107,12 @@ func (i *Item) duplicates(readDir readDir) Items {
 	dirs, _ := readDir(parent)
 	for _, fi := range dirs {
 		// Ignore self
-		if i.Dir.Base() == fi.Name() {
+		if i.Remote.Base() == fi.Name() {
 			continue
 		}
 		path := filepath.Join(parent, fi.Name())
 		item := Item{
-			Dir:      lftp.Dir{Path: path}, // Needs to be set as weight is calculated based on Path
+			Remote:   lftp.File{Path: path}, // Needs to be set as weight is calculated based on Path
 			Queue:    i.Queue,
 			LocalDir: path,
 			Transfer: true, // True to make it considerable for deduplication
@@ -130,9 +130,9 @@ func (i *Item) duplicates(readDir readDir) Items {
 	return items
 }
 
-func newItem(q *Queue, d lftp.Dir) (Item, error) {
-	item := Item{Queue: q, Dir: d, Reason: "no match"}
-	if err := item.setMedia(d.Base()); err != nil {
+func newItem(q *Queue, f lftp.File) (Item, error) {
+	item := Item{Queue: q, Remote: f, Reason: "no match"}
+	if err := item.setMedia(f.Base()); err != nil {
 		return item, err
 	}
 	if err := item.setLocalDir(); err != nil {

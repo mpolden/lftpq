@@ -38,48 +38,54 @@ func TestNewQueue(t *testing.T) {
 		localDir:     template.Must(template.New("").Parse("/data/")),
 		parser:       parser.Default,
 	}
-	dirs := []lftp.Dir{
-		lftp.Dir{
+	files := []lftp.File{
+		lftp.File{
 			Path:    "/tmp/dir1@",
 			Created: now,
 			// Filtered because of symlink
-			IsSymlink: true,
+			FileMode: os.ModeSymlink,
 		},
-		lftp.Dir{
+		lftp.File{
 			Path: "/tmp/dir2/",
 			// Filtered because of exceeded MaxAge
-			Created: now.Add(-time.Duration(48) * time.Hour),
+			Created:  now.Add(-time.Duration(48) * time.Hour),
+			FileMode: os.ModeDir,
 		},
-		lftp.Dir{
+		lftp.File{
 			Path: "/tmp/dir3/",
 			// Included because of equal MaxAge
-			Created: now.Add(-time.Duration(24) * time.Hour),
+			Created:  now.Add(-time.Duration(24) * time.Hour),
+			FileMode: os.ModeDir,
 		},
-		lftp.Dir{
+		lftp.File{
 			Path: "/tmp/dir4/",
 			// Included because less than MaxAge
-			Created: now,
+			Created:  now,
+			FileMode: os.ModeDir,
 		},
-		lftp.Dir{
+		lftp.File{
 			Path: "/tmp/dir5/",
 			// Filtered because it already exists
-			Created: now,
+			Created:  now,
+			FileMode: os.ModeDir,
 		},
-		lftp.Dir{
+		lftp.File{
 			Path: "/tmp/foo/",
 			// Filtered because of not matching any Patterns
-			Created: now,
+			Created:  now,
+			FileMode: os.ModeDir,
 		},
-		lftp.Dir{
+		lftp.File{
 			Path: "/tmp/incomplete-dir3/",
 			// Filtered because of matching any Filters
-			Created: now,
+			Created:  now,
+			FileMode: os.ModeDir,
 		},
-		lftp.Dir{
+		lftp.File{
 			Path: "/tmp/xfile",
 			// Filtered because it is not a directory
-			Created: now,
-			IsFile:  true,
+			Created:  now,
+			FileMode: os.FileMode(0),
 		},
 	}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
@@ -88,16 +94,16 @@ func TestNewQueue(t *testing.T) {
 		}
 		return nil, nil
 	}
-	q := newQueue(s, dirs, readDir)
+	q := newQueue(s, files, readDir)
 	expected := []Item{
-		Item{Queue: &q, Dir: dirs[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
-		Item{Queue: &q, Dir: dirs[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
-		Item{Queue: &q, Dir: dirs[2], Transfer: true, Reason: "Match=dir\\d"},
-		Item{Queue: &q, Dir: dirs[3], Transfer: true, Reason: "Match=dir\\d"},
-		Item{Queue: &q, Dir: dirs[4], Transfer: false, Reason: "IsDstDirEmpty=false"},
-		Item{Queue: &q, Dir: dirs[5], Transfer: false, Reason: "no match"},
-		Item{Queue: &q, Dir: dirs[6], Transfer: false, Reason: "Filter=^incomplete-"},
-		Item{Queue: &q, Dir: dirs[7], Transfer: false, Reason: "IsFile=true SkipFiles=true"},
+		Item{Queue: &q, Remote: files[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
+		Item{Queue: &q, Remote: files[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
+		Item{Queue: &q, Remote: files[2], Transfer: true, Reason: "Match=dir\\d"},
+		Item{Queue: &q, Remote: files[3], Transfer: true, Reason: "Match=dir\\d"},
+		Item{Queue: &q, Remote: files[4], Transfer: false, Reason: "IsDstDirEmpty=false"},
+		Item{Queue: &q, Remote: files[5], Transfer: false, Reason: "no match"},
+		Item{Queue: &q, Remote: files[6], Transfer: false, Reason: "Filter=^incomplete-"},
+		Item{Queue: &q, Remote: files[7], Transfer: false, Reason: "IsFile=true SkipFiles=true"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {
@@ -108,10 +114,10 @@ func TestNewQueue(t *testing.T) {
 		a := actual[i]
 		if a.Transfer != e.Transfer {
 			t.Errorf("Expected Dir=%s to have Transfer=%t, got Transfer=%t",
-				e.Dir.Path, e.Transfer, a.Transfer)
+				e.Remote.Path, e.Transfer, a.Transfer)
 		}
 		if a.Reason != e.Reason {
-			t.Errorf("Expected Dir=%s to have Reason=%s, got Reason=%s", e.Dir.Path,
+			t.Errorf("Expected Dir=%s to have Reason=%s, got Reason=%s", e.Remote.Path,
 				e.Reason, a.Reason)
 		}
 	}
@@ -119,7 +125,7 @@ func TestNewQueue(t *testing.T) {
 
 func TestNewQueueRejectsUnparsableItem(t *testing.T) {
 	s := Site{parser: parser.Show}
-	q := newQueue(s, []lftp.Dir{lftp.Dir{Path: "/foo/bar"}}, readDirStub)
+	q := newQueue(s, []lftp.File{lftp.File{Path: "/foo/bar"}}, readDirStub)
 	if got := q.Items[0].Transfer; got {
 		t.Errorf("Expected false, got %t", got)
 	}
@@ -138,8 +144,8 @@ func TestScript(t *testing.T) {
 		Name: "siteA",
 	}
 	items := []Item{
-		Item{Dir: lftp.Dir{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
-		Item{Dir: lftp.Dir{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
+		Item{Remote: lftp.File{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
+		Item{Remote: lftp.File{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
 	}
 	q := Queue{Site: s, Items: items}
 	script := q.Script()
@@ -158,9 +164,9 @@ exit
 func TestTransferable(t *testing.T) {
 	q := Queue{
 		Items: []Item{
-			Item{Dir: lftp.Dir{Path: "/tmp/d1"}, Transfer: true},
-			Item{Dir: lftp.Dir{Path: "/tmp/d2"}, Transfer: false},
-			Item{Dir: lftp.Dir{Path: "/tmp/d2"}, Transfer: false},
+			Item{Remote: lftp.File{Path: "/tmp/d1"}, Transfer: true},
+			Item{Remote: lftp.File{Path: "/tmp/d2"}, Transfer: false},
+			Item{Remote: lftp.File{Path: "/tmp/d2"}, Transfer: false},
 		},
 	}
 	actual := q.Transferable()
@@ -168,7 +174,7 @@ func TestTransferable(t *testing.T) {
 	if len(actual) != 1 {
 		t.Fatal("Expected length to be 1")
 	}
-	if got := actual[0].Path; got != expected {
+	if got := actual[0].Remote.Path; got != expected {
 		t.Fatalf("Expected %s, got %s", expected, got)
 	}
 }
@@ -184,13 +190,13 @@ func TestDeduplicate(t *testing.T) {
 	}
 	q := Queue{Site: s}
 	q.Items = []Item{
-		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.foo"}),
-		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}), /* keep */
-		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}),
-		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.bar"}),
-		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}), /* keep */
-		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.bar"}),           /* keep */
-		newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"}),
+		newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E01.foo"}),
+		newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}), /* keep */
+		newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}),
+		newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E02.bar"}),
+		newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}), /* keep */
+		newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E03.bar"}),           /* keep */
+		newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"}),
 	}
 	// Accept all but the last item
 	for i, _ := range q.Items[:len(q.Items)-1] {
@@ -204,8 +210,8 @@ func TestDeduplicate(t *testing.T) {
 		t.Fatalf("Expected length %d, got %d", len(expected), len(actual))
 	}
 	for i, _ := range actual {
-		if actual[i].Path != expected[i].Path {
-			t.Errorf("Expected %s, got %s", expected[i].Path, actual[i].Path)
+		if actual[i].Remote.Path != expected[i].Remote.Path {
+			t.Errorf("Expected %s, got %s", expected[i].Remote.Path, actual[i].Remote.Path)
 		}
 	}
 }
@@ -220,13 +226,13 @@ func TestDeduplicateIgnoresAge(t *testing.T) {
 		localDir:    template.Must(template.New("").Parse("/tmp/")),
 		Deduplicate: true,
 	}
-	dirs := []lftp.Dir{
-		lftp.Dir{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Created: now.Add(-time.Duration(48) * time.Hour)},
-		lftp.Dir{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Created: now},
+	files := []lftp.File{
+		lftp.File{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Created: now.Add(-time.Duration(48) * time.Hour)},
+		lftp.File{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Created: now},
 	}
-	q := newQueue(s, dirs, readDirStub)
+	q := newQueue(s, files, readDirStub)
 	for _, item := range q.Transferable() {
-		t.Errorf("Expected empty queue, got %s", item.Path)
+		t.Errorf("Expected empty queue, got %s", item.Remote.Path)
 	}
 }
 
@@ -239,11 +245,11 @@ func TestDeduplicateIgnoreSelf(t *testing.T) {
 		localDir:    template.Must(template.New("").Parse("/tmp/")),
 		Deduplicate: true,
 	}
-	dirs := []lftp.Dir{
-		lftp.Dir{Path: "/tmp/The.Wire.S01E01", Created: now},
-		lftp.Dir{Path: "/tmp/The.Wire.S01E01", Created: now},
+	files := []lftp.File{
+		lftp.File{Path: "/tmp/The.Wire.S01E01", Created: now},
+		lftp.File{Path: "/tmp/The.Wire.S01E01", Created: now},
 	}
-	q := newQueue(s, dirs, readDirStub)
+	q := newQueue(s, files, readDirStub)
 	for _, item := range q.Items {
 		if item.Duplicate {
 			t.Errorf("Expected Duplicate=false for %+v", item)
@@ -257,7 +263,7 @@ func TestPostCommand(t *testing.T) {
 		PostCommand: "xargs echo",
 	}
 	q := Queue{Site: s}
-	q.Items = []Item{newTestItem(&q, lftp.Dir{Path: "/tmp/foo"})}
+	q.Items = []Item{newTestItem(&q, lftp.File{Path: "/tmp/foo"})}
 	cmd, err := q.PostCommand(false)
 	if err != nil {
 		t.Fatal(err)
@@ -289,7 +295,7 @@ func TestMerge(t *testing.T) {
 			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.baz"},
 		}, nil
 	}
-	item := newTestItem(&q, lftp.Dir{Path: "/tmp/The.Wire.S01E01.foo"})
+	item := newTestItem(&q, lftp.File{Path: "/tmp/The.Wire.S01E01.foo"})
 	item.Transfer = true
 	q.Items = []Item{item}
 	q.merge(readDir)
@@ -299,7 +305,7 @@ func TestMerge(t *testing.T) {
 	}
 	for _, i := range q.Items[1:] {
 		if !i.Duplicate {
-			t.Errorf("Expected Duplicate=true for Path=%q", i.Dir.Path)
+			t.Errorf("Expected Duplicate=true for Path=%q", i.Remote.Path)
 		}
 	}
 }

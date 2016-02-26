@@ -30,16 +30,16 @@ func (q *Queue) deduplicate() {
 			a := &q.Items[i]
 			b := &q.Items[j]
 			// Ignore self
-			if a.Dir.Path == b.Dir.Path {
+			if a.Remote.Path == b.Remote.Path {
 				continue
 			}
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
 				if a.Weight() <= b.Weight() {
 					a.Duplicate = true
-					a.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Dir.Path, a.Weight()))
+					a.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, a.Weight()))
 				} else {
 					b.Duplicate = true
-					b.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Dir.Path, b.Weight()))
+					b.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, b.Weight()))
 				}
 			}
 		}
@@ -55,20 +55,20 @@ func (q *Queue) merge(readDir readDir) {
 	}
 }
 
-func newQueue(site Site, dirs []lftp.Dir, readDir readDir) Queue {
-	q := Queue{Site: site, Items: make(Items, 0, len(dirs))}
+func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
+	q := Queue{Site: site, Items: make(Items, 0, len(files))}
 	// Initial filtering
-	for _, dir := range dirs {
-		item, err := newItem(&q, dir)
+	for _, f := range files {
+		item, err := newItem(&q, f)
 		if err != nil {
 			item.Reject(err.Error())
-		} else if q.SkipSymlinks && dir.IsSymlink {
-			item.Reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", dir.IsSymlink, q.SkipSymlinks))
-		} else if q.SkipFiles && dir.IsFile {
-			item.Reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", dir.IsFile, q.SkipFiles))
-		} else if p, match := dir.MatchAny(q.filters); match {
+		} else if q.SkipSymlinks && f.IsSymlink() {
+			item.Reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", f.IsSymlink(), q.SkipSymlinks))
+		} else if q.SkipFiles && f.IsRegular() {
+			item.Reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.IsRegular(), q.SkipFiles))
+		} else if p, match := f.MatchAny(q.filters); match {
 			item.Reject(fmt.Sprintf("Filter=%s", p))
-		} else if p, match := dir.MatchAny(q.patterns); match {
+		} else if p, match := f.MatchAny(q.patterns); match {
 			item.Accept(fmt.Sprintf("Match=%s", p))
 		}
 		q.Items = append(q.Items, item)
@@ -84,7 +84,7 @@ func newQueue(site Site, dirs []lftp.Dir, readDir readDir) Queue {
 	// have been transferred in past runs.
 	now := time.Now()
 	for _, item := range q.Transferable() {
-		if age := item.Age(now); age > q.maxAge {
+		if age := item.Remote.Age(now); age > q.maxAge {
 			item.Reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
 		} else if q.SkipExisting && !item.IsEmpty(readDir) {
 			item.Reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
@@ -93,8 +93,8 @@ func newQueue(site Site, dirs []lftp.Dir, readDir readDir) Queue {
 	return q
 }
 
-func NewQueue(site Site, dirs []lftp.Dir) Queue {
-	return newQueue(site, dirs, ioutil.ReadDir)
+func NewQueue(site Site, files []lftp.File) Queue {
+	return newQueue(site, files, ioutil.ReadDir)
 }
 
 func (q *Queue) Transferable() []*Item {
@@ -116,7 +116,7 @@ func (q *Queue) Script() string {
 		buf.WriteString("queue ")
 		buf.WriteString(q.Client.GetCmd)
 		buf.WriteString(" ")
-		buf.WriteString(item.Path)
+		buf.WriteString(item.Remote.Path)
 		buf.WriteString(" ")
 		buf.WriteString(item.LocalDir)
 		buf.WriteString("\n")
