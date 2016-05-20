@@ -52,6 +52,7 @@ type Site struct {
 	PostCommand  string
 	Replacements []Replacement
 	Merge        bool
+	Skip         bool
 }
 
 func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {

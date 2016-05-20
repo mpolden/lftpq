@@ -19,7 +19,7 @@ type CLI struct {
 	Import string `short:"i" long:"import" description:"Read remote paths from stdin and build a queue for SITE" value-name:"SITE"`
 }
 
-func (c *CLI) log(format string, v ...interface{}) {
+func (c *CLI) logf(format string, v ...interface{}) {
 	if !c.Quiet {
 		log.Printf(format, v...)
 	}
@@ -38,6 +38,10 @@ func (c *CLI) importQueue(name string, cfg site.Config) error {
 }
 
 func (c *CLI) buildQueue(s site.Site) error {
+	if s.Skip {
+		c.logf("[%s] Skipping site (Skip=%t)", s.Name, s.Skip)
+		return nil
+	}
 	dirs, err := s.Client.List(s.Name, s.Dir)
 	if err != nil {
 		return err
@@ -46,14 +50,14 @@ func (c *CLI) buildQueue(s site.Site) error {
 	if err := c.process(queue); err != nil {
 		return err
 	}
-	if s.PostCommand != "" {
-		if cmd, err := queue.PostCommand(!c.Quiet); err != nil {
-			return err
-		} else if err := cmd.Run(); err != nil {
-			return err
-		}
+	if c.Dryrun || s.PostCommand == "" {
+		return nil
 	}
-	return nil
+	cmd, err := queue.PostCommand(!c.Quiet)
+	if err != nil {
+		return err
+	}
+	return cmd.Run()
 }
 
 func (c *CLI) process(queue site.Queue) error {
@@ -70,7 +74,7 @@ func (c *CLI) process(queue site.Queue) error {
 		return nil
 	}
 	if len(queue.Transferable()) == 0 {
-		c.log("queue is empty")
+		c.logf("[%s] Queue is empty", queue.Site.Name)
 		return nil
 	}
 	return queue.Start(!c.Quiet)
@@ -100,9 +104,9 @@ func main() {
 				log.Print(err)
 			}
 		}
-	} else {
-		if err := cli.importQueue(cli.Import, cfg); err != nil {
-			log.Print(err)
-		}
+		return
+	}
+	if err := cli.importQueue(cli.Import, cfg); err != nil {
+		log.Print(err)
 	}
 }
