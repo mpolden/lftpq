@@ -1,9 +1,11 @@
 package site
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -95,6 +97,28 @@ func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
 
 func NewQueue(site Site, files []lftp.File) Queue {
 	return newQueue(site, files, ioutil.ReadDir)
+}
+
+func ReadQueue(site Site, r io.Reader) (Queue, error) {
+	q := Queue{Site: site}
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		p := strings.TrimSpace(scanner.Text())
+		if len(p) == 0 {
+			continue
+		}
+		item, err := newItem(&q, lftp.File{Path: p})
+		if err != nil {
+			item.Reject(err.Error())
+		} else {
+			item.Accept("Import=true")
+		}
+		q.Items = append(q.Items, item)
+	}
+	if err := scanner.Err(); err != nil {
+		return Queue{}, err
+	}
+	return q, nil
 }
 
 func (q *Queue) Transferable() []*Item {

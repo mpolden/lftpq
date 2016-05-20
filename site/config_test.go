@@ -95,3 +95,18 @@ func TestReadConfig(t *testing.T) {
 		}
 	}
 }
+
+func TestLookupSite(t *testing.T) {
+	s := Site{Name: "foo"}
+	cfg := Config{Sites: []Site{s}}
+	site, err := cfg.LookupSite("foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if site.Name != s.Name {
+		t.Errorf("Expected %q, got %q", s.Name, site.Name)
+	}
+	if _, err := cfg.LookupSite("bar"); err == nil {
+		t.Error("Expected error")
+	}
+}

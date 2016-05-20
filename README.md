@@ -17,6 +17,7 @@ Application Options:
   -F, --format=[lftp|json]    Format to use in dryrun mode (default: lftp)
   -t, --test                  Test and print config
   -q, --quiet                 Do not print output from lftp
+  -i, --import=SITE           Read remote paths from stdin and build a queue for SITE
 
 Help Options:
   -h, --help                  Show this help message

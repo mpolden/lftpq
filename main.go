@@ -16,6 +16,7 @@ type CLI struct {
 	Format string `short:"F" long:"format" description:"Format to use in dryrun mode" choice:"lftp" choice:"json" default:"lftp"`
 	Test   bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet  bool   `short:"q" long:"quiet" description:"Do not print output from lftp"`
+	Import string `short:"i" long:"import" description:"Read remote paths from stdin and build a queue for SITE" value-name:"SITE"`
 }
 
 func (c *CLI) log(format string, v ...interface{}) {
@@ -24,12 +25,38 @@ func (c *CLI) log(format string, v ...interface{}) {
 	}
 }
 
-func (c *CLI) run(s site.Site) error {
+func (c *CLI) importQueue(name string, cfg site.Config) error {
+	s, err := cfg.LookupSite(name)
+	if err != nil {
+		return err
+	}
+	queue, err := site.ReadQueue(s, os.Stdin)
+	if err != nil {
+		return err
+	}
+	return c.process(queue)
+}
+
+func (c *CLI) buildQueue(s site.Site) error {
 	dirs, err := s.Client.List(s.Name, s.Dir)
 	if err != nil {
 		return err
 	}
 	queue := site.NewQueue(s, dirs)
+	if err := c.process(queue); err != nil {
+		return err
+	}
+	if s.PostCommand != "" {
+		if cmd, err := queue.PostCommand(!c.Quiet); err != nil {
+			return err
+		} else if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *CLI) process(queue site.Queue) error {
 	if c.Dryrun {
 		if c.Format == "json" {
 			json, err := queue.JSON()
@@ -46,17 +73,7 @@ func (c *CLI) run(s site.Site) error {
 		c.log("queue is empty")
 		return nil
 	}
-	if err := queue.Start(!c.Quiet); err != nil {
-		return err
-	}
-	if s.PostCommand != "" {
-		if cmd, err := queue.PostCommand(!c.Quiet); err != nil {
-			return err
-		} else if err := cmd.Run(); err != nil {
-			return err
-		}
-	}
-	return nil
+	return queue.Start(!c.Quiet)
 }
 
 func main() {
@@ -77,8 +94,14 @@ func main() {
 		fmt.Printf("%s\n", json)
 		return
 	}
-	for _, s := range cfg.Sites {
-		if err := cli.run(s); err != nil {
+	if cli.Import == "" {
+		for _, s := range cfg.Sites {
+			if err := cli.buildQueue(s); err != nil {
+				log.Print(err)
+			}
+		}
+	} else {
+		if err := cli.importQueue(cli.Import, cfg); err != nil {
 			log.Print(err)
 		}
 	}

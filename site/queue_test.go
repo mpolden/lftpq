@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 	"text/template"
 	"time"
@@ -306,6 +307,35 @@ func TestMerge(t *testing.T) {
 	for _, i := range q.Items[1:] {
 		if !i.Duplicate {
 			t.Errorf("Expected Duplicate=true for Path=%q", i.Remote.Path)
+		}
+	}
+}
+
+func TestReadQueue(t *testing.T) {
+	json := `
+/tv/The.Wire.S01E01
+
+/tv/The.Wire.S01E02
+
+  /tv/The.Wire.S01E03
+`
+	tmpl := template.Must(template.New("").Parse(
+		"/tmp/{{ .Name }}/S{{ .Season }}/"))
+	s := Site{localDir: tmpl, parser: parser.Show}
+
+	q, err := ReadQueue(s, strings.NewReader(json))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(q.Items) != 3 {
+		t.Fatal("Expected 3 items")
+	}
+	for i, _ := range q.Items {
+		if want := "The.Wire"; q.Items[i].Media.Name != want {
+			t.Errorf("Expected Items[%d].Media.Name=%q, want %q", i, q.Items[0].Media.Name, want)
+		}
+		if !q.Items[i].Transfer {
+			t.Errorf("Expected Items[%d].Transfer=true", i)
 		}
 	}
 }
