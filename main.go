@@ -50,7 +50,7 @@ func (c *CLI) buildQueue(s site.Site) error {
 	if err := c.process(queue); err != nil {
 		return err
 	}
-	if c.Dryrun || s.PostCommand == "" {
+	if c.Dryrun || len(queue.Transferable()) == 0 || s.PostCommand == "" {
 		return nil
 	}
 	cmd, err := queue.PostCommand(!c.Quiet)
