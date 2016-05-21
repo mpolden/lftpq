@@ -323,7 +323,7 @@ func TestReadQueue(t *testing.T) {
 		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{localDir: tmpl, parser: parser.Show}
 
-	q, err := ReadQueue(s, strings.NewReader(json))
+	q, err := Read(s, strings.NewReader(json))
 	if err != nil {
 		t.Fatal(err)
 	}

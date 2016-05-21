@@ -95,11 +95,11 @@ func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
 	return q
 }
 
-func NewQueue(site Site, files []lftp.File) Queue {
+func New(site Site, files []lftp.File) Queue {
 	return newQueue(site, files, ioutil.ReadDir)
 }
 
-func ReadQueue(site Site, r io.Reader) (Queue, error) {
+func Read(site Site, r io.Reader) (Queue, error) {
 	q := Queue{Site: site}
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {

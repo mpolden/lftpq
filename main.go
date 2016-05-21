@@ -30,7 +30,7 @@ func (c *CLI) importQueue(name string, cfg queue.Config) error {
 	if err != nil {
 		return err
 	}
-	queue, err := queue.ReadQueue(s, os.Stdin)
+	queue, err := queue.Read(s, os.Stdin)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (c *CLI) buildQueue(s queue.Site) error {
 	if err != nil {
 		return err
 	}
-	queue := queue.NewQueue(s, dirs)
+	queue := queue.New(s, dirs)
 	if err := c.process(queue); err != nil {
 		return err
 	}
