@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -337,5 +338,60 @@ func TestReadQueue(t *testing.T) {
 		if !q.Items[i].Transfer {
 			t.Errorf("Expected Items[%d].Transfer=true", i)
 		}
+	}
+}
+
+func TestFprintln(t *testing.T) {
+	s := Site{
+		Client: lftp.Client{GetCmd: "mirror"},
+		Name:   "siteA",
+	}
+	items := []Item{{Remote: lftp.File{Path: "/foo"}, LocalDir: "/tmp", Transfer: true}}
+	q := Queue{Site: s, Items: items}
+
+	var buf bytes.Buffer
+	if err := q.Fprintln(&buf, true); err != nil {
+		t.Fatal(err)
+	}
+
+	json := `[
+  {
+    "Remote": {
+      "Created": "0001-01-01T00:00:00Z",
+      "Path": "/foo",
+      "FileMode": 0
+    },
+    "LocalDir": "/tmp",
+    "Transfer": true,
+    "Reason": "",
+    "Media": {
+      "Release": "",
+      "Name": "",
+      "Year": 0,
+      "Season": 0,
+      "Episode": 0
+    },
+    "Duplicate": false,
+    "Merged": false
+  }
+]
+`
+	if got := buf.String(); got != json {
+		t.Errorf("Expected %q, got %q", json, got)
+	}
+
+	buf.Reset()
+	if err := q.Fprintln(&buf, false); err != nil {
+		t.Fatal(err)
+	}
+
+	script := `open siteA
+queue mirror /foo /tmp
+queue start
+wait
+exit
+`
+	if got := buf.String(); got != script {
+		t.Errorf("Expected %q, got %q", script, got)
 	}
 }

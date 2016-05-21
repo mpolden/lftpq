@@ -149,10 +149,6 @@ func (q *Queue) Script() string {
 	return buf.String()
 }
 
-func (q *Queue) JSON() ([]byte, error) {
-	return json.MarshalIndent(q.Items, "", "  ")
-}
-
 func (q *Queue) Write() (string, error) {
 	f, err := ioutil.TempFile("", "lftpq")
 	if err != nil {
@@ -172,6 +168,19 @@ func (q *Queue) Start(inheritIO bool) error {
 	}
 	defer os.Remove(name)
 	return q.Client.Run([]string{"-f", name}, inheritIO)
+}
+
+func (q *Queue) Fprintln(w io.Writer, printJSON bool) error {
+	if printJSON {
+		b, err := json.MarshalIndent(q.Items, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(w, "%s\n", b)
+	} else {
+		fmt.Fprint(w, q.Script())
+	}
+	return nil
 }
 
 func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {
