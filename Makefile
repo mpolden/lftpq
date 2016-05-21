@@ -1,4 +1,4 @@
-all: deps test vet install
+all: deps test install vet
 
 fmt:
 	go fmt ./...
