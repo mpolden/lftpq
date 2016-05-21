@@ -7,7 +7,7 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 
-	"github.com/martinp/lftpq/site"
+	"github.com/martinp/lftpq/queue"
 )
 
 type CLI struct {
@@ -25,19 +25,19 @@ func (c *CLI) logf(format string, v ...interface{}) {
 	}
 }
 
-func (c *CLI) importQueue(name string, cfg site.Config) error {
+func (c *CLI) importQueue(name string, cfg queue.Config) error {
 	s, err := cfg.LookupSite(name)
 	if err != nil {
 		return err
 	}
-	queue, err := site.ReadQueue(s, os.Stdin)
+	queue, err := queue.ReadQueue(s, os.Stdin)
 	if err != nil {
 		return err
 	}
 	return c.process(queue)
 }
 
-func (c *CLI) buildQueue(s site.Site) error {
+func (c *CLI) buildQueue(s queue.Site) error {
 	if s.Skip {
 		c.logf("[%s] Skipping site (Skip=%t)", s.Name, s.Skip)
 		return nil
@@ -46,7 +46,7 @@ func (c *CLI) buildQueue(s site.Site) error {
 	if err != nil {
 		return err
 	}
-	queue := site.NewQueue(s, dirs)
+	queue := queue.NewQueue(s, dirs)
 	if err := c.process(queue); err != nil {
 		return err
 	}
@@ -60,24 +60,24 @@ func (c *CLI) buildQueue(s site.Site) error {
 	return cmd.Run()
 }
 
-func (c *CLI) process(queue site.Queue) error {
+func (c *CLI) process(q queue.Queue) error {
 	if c.Dryrun {
 		if c.Format == "json" {
-			json, err := queue.JSON()
+			json, err := q.JSON()
 			if err != nil {
 				log.Fatal(err)
 			}
 			fmt.Printf("%s\n", json)
 		} else {
-			fmt.Print(queue.Script())
+			fmt.Print(q.Script())
 		}
 		return nil
 	}
-	if len(queue.Transferable()) == 0 {
-		c.logf("[%s] Queue is empty", queue.Site.Name)
+	if len(q.Transferable()) == 0 {
+		c.logf("[%s] Queue is empty", q.Site.Name)
 		return nil
 	}
-	return queue.Start(!c.Quiet)
+	return q.Start(!c.Quiet)
 }
 
 func main() {
@@ -86,7 +86,7 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	cfg, err := site.ReadConfig(cli.Config)
+	cfg, err := queue.ReadConfig(cli.Config)
 	if err != nil {
 		log.Fatal(err)
 	}
