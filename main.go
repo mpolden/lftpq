@@ -47,17 +47,7 @@ func (c *CLI) buildQueue(s queue.Site) error {
 		return err
 	}
 	queue := queue.New(s, dirs)
-	if err := c.process(queue); err != nil {
-		return err
-	}
-	if c.Dryrun || len(queue.Transferable()) == 0 || s.PostCommand == "" {
-		return nil
-	}
-	cmd, err := queue.PostCommand(!c.Quiet)
-	if err != nil {
-		return err
-	}
-	return cmd.Run()
+	return c.process(queue)
 }
 
 func (c *CLI) process(q queue.Queue) error {
@@ -68,7 +58,17 @@ func (c *CLI) process(q queue.Queue) error {
 		c.logf("[%s] Queue is empty", q.Site.Name)
 		return nil
 	}
-	return q.Start(!c.Quiet)
+	if err := q.Start(!c.Quiet); err != nil {
+		return err
+	}
+	if q.Site.PostCommand == "" {
+		return nil
+	}
+	cmd, err := q.PostCommand(!c.Quiet)
+	if err != nil {
+		return err
+	}
+	return cmd.Run()
 }
 
 func main() {
