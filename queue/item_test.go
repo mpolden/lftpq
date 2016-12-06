@@ -11,8 +11,8 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
-func newTestItem(q *Queue, dir lftp.File) Item {
-	item, _ := newItem(q, dir)
+func newTestItem(q *Queue, remotePath string) Item {
+	item, _ := newItem(q, lftp.File{Path: remotePath})
 	return item
 }
 
@@ -25,9 +25,8 @@ func TestNewItemShow(t *testing.T) {
 		localDir: tmpl,
 		parser:   parser.Show,
 	}
-	d := lftp.File{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
-	item := newTestItem(&q, d)
+	item := newTestItem(&q, "/foo/The.Wire.S03E01")
 	if expected := "/tmp/The.Wire/S03/"; item.LocalDir != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
@@ -40,9 +39,8 @@ func TestNewItemMovie(t *testing.T) {
 		localDir: tmpl,
 		parser:   parser.Movie,
 	}
-	d := lftp.File{Path: "/foo/Apocalypse.Now.1979"}
 	q := Queue{Site: s}
-	item := newTestItem(&q, d)
+	item := newTestItem(&q, "/foo/Apocalypse.Now.1979")
 	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
@@ -53,24 +51,20 @@ func TestNewItemDefaultParser(t *testing.T) {
 		localDir: template.Must(template.New("").Parse("/tmp/")),
 		parser:   parser.Default,
 	}
-	d := lftp.File{Path: "/foo/The.Wire.S03E01"}
 	q := Queue{Site: s}
-	item := newTestItem(&q, d)
+	item := newTestItem(&q, "/foo/The.Wire.S03E01")
 	if expected := "/tmp/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
 	}
 }
 
 func TestNewItemUnparsable(t *testing.T) {
-	tmpl := template.Must(template.New("").Parse(
-		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{
-		localDir: tmpl,
+		localDir: testTemplate,
 		parser:   parser.Show,
 	}
-	d := lftp.File{Path: "/foo/bar"}
 	q := Queue{Site: s}
-	item, err := newItem(&q, d)
+	item, err := newItem(&q, lftp.File{Path: "/foo/bar"})
 	if err == nil {
 		t.Fatal("Expected error")
 	}
@@ -83,10 +77,8 @@ func TestNewItemUnparsable(t *testing.T) {
 }
 
 func TestNewItemWithReplacements(t *testing.T) {
-	tmpl := template.Must(template.New("").Parse(
-		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{
-		localDir: tmpl,
+		localDir: testTemplate,
 		parser:   parser.Show,
 		Replacements: []Replacement{
 			Replacement{pattern: regexp.MustCompile("_"), Replacement: "."},
@@ -100,10 +92,10 @@ func TestNewItemWithReplacements(t *testing.T) {
 		in  Item
 		out string
 	}{
-		{newTestItem(&q, lftp.File{Path: "/foo/Game.Of.Thrones.S01E01"}), "Game.of.Thrones"},
-		{newTestItem(&q, lftp.File{Path: "/foo/Fear.the.Walking.Dead.S01E01"}), "Fear.The.Walking.Dead"},
-		{newTestItem(&q, lftp.File{Path: "/foo/Halt.And.Catch.Fire.S01E01"}), "Halt.and.Catch.Fire"},
-		{newTestItem(&q, lftp.File{Path: "/foo/Top_Gear.01x01"}), "Top.Gear"},
+		{newTestItem(&q, "/foo/Game.Of.Thrones.S01E01"), "Game.of.Thrones"},
+		{newTestItem(&q, "/foo/Fear.the.Walking.Dead.S01E01"), "Fear.The.Walking.Dead"},
+		{newTestItem(&q, "/foo/Halt.And.Catch.Fire.S01E01"), "Halt.and.Catch.Fire"},
+		{newTestItem(&q, "/foo/Top_Gear.01x01"), "Top.Gear"},
 	}
 	for _, tt := range tests {
 		if tt.in.Media.Name != tt.out {
@@ -216,10 +208,8 @@ func TestIsEmpty(t *testing.T) {
 }
 
 func TestDuplicates(t *testing.T) {
-	tmpl := template.Must(template.New("").Parse(
-		"/tmp/{{ .Name }}/S{{ .Season }}/"))
 	s := Site{
-		localDir:   tmpl,
+		localDir:   testTemplate,
 		parser:     parser.Show,
 		priorities: []*regexp.Regexp{regexp.MustCompile("\\.foo\\.")},
 	}
@@ -231,7 +221,7 @@ func TestDuplicates(t *testing.T) {
 			fileInfoStub{name: "The.Wire.S01E02.720p.BluRay.baz"},
 		}, nil
 	}
-	item := newTestItem(&q, lftp.File{Path: "/tmp/The.Wire/S01/The.Wire.S01E01.720p.BluRay.foo"})
+	item := newTestItem(&q, "/tmp/The.Wire/S01/The.Wire.S01E01.720p.BluRay.foo")
 	items := item.duplicates(readDir)
 	if l := len(items); l != 1 {
 		t.Fatalf("Expected 1 duplicate, got %d", l)
