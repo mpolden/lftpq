@@ -10,8 +10,8 @@ import (
 )
 
 type File struct {
-	Created time.Time
-	Path    string
+	Modified time.Time
+	Path     string
 	os.FileMode
 }
 
@@ -21,7 +21,7 @@ func ParseFile(s string) (File, error) {
 		return File{}, fmt.Errorf("failed to parse file: %s", s)
 	}
 	t := strings.Join(parts[:4], " ")
-	created, err := time.Parse("2006-01-02 15:04:05 -0700 MST", t)
+	modified, err := time.Parse("2006-01-02 15:04:05 -0700 MST", t)
 	if err != nil {
 		return File{}, err
 	}
@@ -39,7 +39,7 @@ func ParseFile(s string) (File, error) {
 	path = strings.TrimRight(path, "@/")
 	return File{
 		Path:     path,
-		Created:  created,
+		Modified: modified,
 		FileMode: fileMode,
 	}, nil
 }
@@ -53,7 +53,7 @@ func (f *File) Base() string {
 }
 
 func (f *File) Age(since time.Time) time.Duration {
-	return since.Round(time.Second).Sub(f.Created)
+	return since.Round(time.Second).Sub(f.Modified)
 }
 
 func (f *File) MatchAny(patterns []*regexp.Regexp) (string, bool) {

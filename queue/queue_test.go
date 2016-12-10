@@ -44,51 +44,51 @@ func TestNewQueue(t *testing.T) {
 	}
 	files := []lftp.File{
 		{
-			Path:    "/remote/dir1@",
-			Created: now,
+			Path:     "/remote/dir1@",
+			Modified: now,
 			// Filtered because of symlink
 			FileMode: os.ModeSymlink,
 		},
 		{
 			Path: "/remote/dir2/",
 			// Filtered because of exceeded MaxAge
-			Created:  now.Add(-time.Duration(48) * time.Hour),
+			Modified: now.Add(-time.Duration(48) * time.Hour),
 			FileMode: os.ModeDir,
 		},
 		{
 			Path: "/remote/dir3/",
 			// Included because of equal MaxAge
-			Created:  now.Add(-time.Duration(24) * time.Hour),
+			Modified: now.Add(-time.Duration(24) * time.Hour),
 			FileMode: os.ModeDir,
 		},
 		{
 			Path: "/remote/dir4/",
 			// Included because less than MaxAge
-			Created:  now,
+			Modified: now,
 			FileMode: os.ModeDir,
 		},
 		{
 			Path: "/remote/dir5/",
 			// Filtered because it already exists
-			Created:  now,
+			Modified: now,
 			FileMode: os.ModeDir,
 		},
 		{
 			Path: "/remote/foo/",
 			// Filtered because of not matching any Patterns
-			Created:  now,
+			Modified: now,
 			FileMode: os.ModeDir,
 		},
 		{
 			Path: "/remote/incomplete-dir3/",
 			// Filtered because of matching any Filters
-			Created:  now,
+			Modified: now,
 			FileMode: os.ModeDir,
 		},
 		{
 			Path: "/remote/xfile",
 			// Filtered because it is not a directory
-			Created:  now,
+			Modified: now,
 			FileMode: os.FileMode(0),
 		},
 	}
@@ -230,8 +230,8 @@ func TestDeduplicateIgnoresAge(t *testing.T) {
 		Deduplicate: true,
 	}
 	files := []lftp.File{
-		{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Created: now.Add(-time.Duration(48) * time.Hour)},
-		{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Created: now},
+		{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Modified: now.Add(-time.Duration(48) * time.Hour)},
+		{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Modified: now},
 	}
 	q := newQueue(s, files, readDirStub)
 	for _, item := range q.Transferable() {
@@ -249,8 +249,8 @@ func TestDeduplicateIgnoreSelf(t *testing.T) {
 		Deduplicate: true,
 	}
 	files := []lftp.File{
-		{Path: "/tmp/The.Wire.S01E01", Created: now},
-		{Path: "/tmp/The.Wire.S01E01", Created: now},
+		{Path: "/tmp/The.Wire.S01E01", Modified: now},
+		{Path: "/tmp/The.Wire.S01E01", Modified: now},
 	}
 	q := newQueue(s, files, readDirStub)
 	for _, item := range q.Items {
@@ -353,7 +353,7 @@ func TestFprintln(t *testing.T) {
 	json := `[
   {
     "Remote": {
-      "Created": "0001-01-01T00:00:00Z",
+      "Modified": "0001-01-01T00:00:00Z",
       "Path": "/foo",
       "FileMode": 0
     },

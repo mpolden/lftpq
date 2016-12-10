@@ -16,14 +16,14 @@ func TestParseFile(t *testing.T) {
 		IsDir     bool
 		IsRegular bool
 	}{
-		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", File{Created: t1, Path: "/bar/foo"},
+		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", File{Modified: t1, Path: "/bar/foo"},
 			false /* IsDir */, true, false},
 		{"2015-02-03 15:12:30 +0100 CET /foo/bar@",
-			File{Created: t2, Path: "/foo/bar"} /* IsSymlink */, true, false, false},
+			File{Modified: t2, Path: "/foo/bar"} /* IsSymlink */, true, false, false},
 		{"2014-12-16 00:04:30 +0100 CET /foo/bar baz/",
-			File{Created: t1, Path: "/foo/bar baz"}, false /* IsDir */, true, false},
+			File{Modified: t1, Path: "/foo/bar baz"}, false /* IsDir */, true, false},
 		{"2014-12-16 00:04:30 +0100 CET /foo/baz",
-			File{Created: t1, Path: "/foo/baz"}, false, false /* IsRegular */, true},
+			File{Modified: t1, Path: "/foo/baz"}, false, false /* IsRegular */, true},
 	}
 	for _, tt := range tests {
 		f, err := ParseFile(tt.in)
@@ -34,8 +34,8 @@ func TestParseFile(t *testing.T) {
 		if f.Path != tt.out.Path {
 			t.Errorf("Expected %q, got %q", tt.out.Path, f.Path)
 		}
-		if !f.Created.Equal(tt.out.Created) {
-			t.Errorf("Expected %s, got %s", tt.out.Created, f.Created)
+		if !f.Modified.Equal(tt.out.Modified) {
+			t.Errorf("Expected %s, got %s", tt.out.Modified, f.Modified)
 		}
 		if f.IsDir() != tt.IsDir {
 			t.Errorf("Expected IsDir=%t, got %t", tt.IsDir, f.IsDir())
@@ -63,8 +63,8 @@ func TestAge(t *testing.T) {
 		in  File
 		out time.Duration
 	}{
-		{File{Created: now}, time.Duration(0)},
-		{File{Created: now.Add(-time.Duration(48) * time.Hour)}, time.Duration(48) * time.Hour},
+		{File{Modified: now}, time.Duration(0)},
+		{File{Modified: now.Add(-time.Duration(48) * time.Hour)}, time.Duration(48) * time.Hour},
 	}
 	for _, tt := range tests {
 		if got := tt.in.Age(now); got != tt.out {
