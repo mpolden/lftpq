@@ -23,78 +23,6 @@ type Queue struct {
 	Items
 }
 
-func (q *Queue) deduplicate() {
-	for i, _ := range q.Items {
-		for j, _ := range q.Items {
-			if i == j {
-				continue
-			}
-			a := &q.Items[i]
-			b := &q.Items[j]
-			// Ignore self
-			if a.Remote.Path == b.Remote.Path {
-				continue
-			}
-			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
-				if a.weight() <= b.weight() {
-					a.Duplicate = true
-					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, a.weight()))
-				} else {
-					b.Duplicate = true
-					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, b.weight()))
-				}
-			}
-		}
-	}
-}
-
-func (q *Queue) merge(readDir readDir) {
-	// Merge local duplicates into the queue so that they can included in deduplication
-	for _, i := range q.Transferable() {
-		for _, item := range i.duplicates(readDir) {
-			q.Items = append(q.Items, item)
-		}
-	}
-}
-
-func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
-	q := Queue{Site: site, Items: make(Items, 0, len(files))}
-	// Initial filtering
-	for _, f := range files {
-		item, err := newItem(&q, f)
-		if err != nil {
-			item.reject(err.Error())
-		} else if q.SkipSymlinks && f.IsSymlink() {
-			item.reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", f.IsSymlink(), q.SkipSymlinks))
-		} else if q.SkipFiles && f.IsRegular() {
-			item.reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.IsRegular(), q.SkipFiles))
-		} else if p, match := f.MatchAny(q.filters); match {
-			item.reject(fmt.Sprintf("Filter=%s", p))
-		} else if p, match := f.MatchAny(q.patterns); match {
-			item.accept(fmt.Sprintf("Match=%s", p))
-		}
-		q.Items = append(q.Items, item)
-	}
-	if q.Merge {
-		q.merge(readDir)
-	}
-	sort.Sort(q.Items)
-	if q.Deduplicate {
-		q.deduplicate()
-	}
-	// Deduplication must happen before MaxAge and IsDstDir checks. This is because items with a higher weight might
-	// have been transferred in past runs.
-	now := time.Now()
-	for _, item := range q.Transferable() {
-		if age := item.Remote.Age(now); age > q.maxAge {
-			item.reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
-		} else if q.SkipExisting && !item.isEmpty(readDir) {
-			item.reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
-		}
-	}
-	return q
-}
-
 func New(site Site, files []lftp.File) Queue {
 	return newQueue(site, files, ioutil.ReadDir)
 }
@@ -196,4 +124,76 @@ func (q *Queue) write() (string, error) {
 		return "", err
 	}
 	return f.Name(), nil
+}
+
+func (q *Queue) deduplicate() {
+	for i, _ := range q.Items {
+		for j, _ := range q.Items {
+			if i == j {
+				continue
+			}
+			a := &q.Items[i]
+			b := &q.Items[j]
+			// Ignore self
+			if a.Remote.Path == b.Remote.Path {
+				continue
+			}
+			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
+				if a.weight() <= b.weight() {
+					a.Duplicate = true
+					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, a.weight()))
+				} else {
+					b.Duplicate = true
+					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, b.weight()))
+				}
+			}
+		}
+	}
+}
+
+func (q *Queue) merge(readDir readDir) {
+	// Merge local duplicates into the queue so that they can included in deduplication
+	for _, i := range q.Transferable() {
+		for _, item := range i.duplicates(readDir) {
+			q.Items = append(q.Items, item)
+		}
+	}
+}
+
+func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
+	q := Queue{Site: site, Items: make(Items, 0, len(files))}
+	// Initial filtering
+	for _, f := range files {
+		item, err := newItem(&q, f)
+		if err != nil {
+			item.reject(err.Error())
+		} else if q.SkipSymlinks && f.IsSymlink() {
+			item.reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", f.IsSymlink(), q.SkipSymlinks))
+		} else if q.SkipFiles && f.IsRegular() {
+			item.reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.IsRegular(), q.SkipFiles))
+		} else if p, match := f.MatchAny(q.filters); match {
+			item.reject(fmt.Sprintf("Filter=%s", p))
+		} else if p, match := f.MatchAny(q.patterns); match {
+			item.accept(fmt.Sprintf("Match=%s", p))
+		}
+		q.Items = append(q.Items, item)
+	}
+	if q.Merge {
+		q.merge(readDir)
+	}
+	sort.Sort(q.Items)
+	if q.Deduplicate {
+		q.deduplicate()
+	}
+	// Deduplication must happen before MaxAge and IsDstDir checks. This is because items with a higher weight might
+	// have been transferred in past runs.
+	now := time.Now()
+	for _, item := range q.Transferable() {
+		if age := item.Remote.Age(now); age > q.maxAge {
+			item.reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
+		} else if q.SkipExisting && !item.isEmpty(readDir) {
+			item.reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
+		}
+	}
+	return q
 }
