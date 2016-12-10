@@ -69,17 +69,6 @@ func (i *Item) Reject(reason string) {
 	i.Reason = reason
 }
 
-func (i *Item) parseLocalDir() (string, error) {
-	if i.Queue.localDir == nil {
-		return "", fmt.Errorf("template is not set")
-	}
-	var b bytes.Buffer
-	if err := i.Queue.localDir.Execute(&b, i.Media); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
 func (i *Item) setMedia(dirname string) error {
 	m, err := i.Queue.parser(dirname)
 	if err != nil {
@@ -93,11 +82,14 @@ func (i *Item) setMedia(dirname string) error {
 }
 
 func (i *Item) setLocalDir() error {
-	d, err := i.parseLocalDir()
-	if err != nil {
+	if i.Queue.localDir == nil {
+		return fmt.Errorf("template is not set")
+	}
+	var b bytes.Buffer
+	if err := i.Queue.localDir.Execute(&b, i.Media); err != nil {
 		return err
 	}
-	i.LocalDir = d
+	i.LocalDir = b.String()
 	return nil
 }
 
