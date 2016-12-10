@@ -11,23 +11,11 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
-func newTestItem(q *Queue, remotePath string) Item {
-	item, _ := newItem(q, lftp.File{Path: remotePath})
-	return item
-}
-
 func TestNewItemShow(t *testing.T) {
-	tmpl, err := parseTemplate(`/tmp/{{ .Name }}/S{{ .Season | Sprintf "%02d" }}/`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := Site{
-		localDir: tmpl,
-		parser:   parser.Show,
-	}
+	s := newTestSite()
 	q := Queue{Site: s}
 	item := newTestItem(&q, "/foo/The.Wire.S03E01")
-	if expected := "/tmp/The.Wire/S03/"; item.LocalDir != expected {
+	if expected := "/tmp/The.Wire/S3/"; item.LocalDir != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
 }

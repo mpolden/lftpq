@@ -189,7 +189,7 @@ func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
 	// have been transferred in past runs.
 	now := time.Now()
 	for _, item := range q.Transferable() {
-		if age := item.Remote.Age(now); age > q.maxAge {
+		if age := item.Remote.Age(now); q.maxAge != 0 && age > q.maxAge {
 			item.reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
 		} else if q.SkipExisting && !item.isEmpty(readDir) {
 			item.reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
