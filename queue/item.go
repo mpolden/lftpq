@@ -36,7 +36,7 @@ type Item struct {
 	*Queue    `json:"-"`
 }
 
-func (i *Item) DstDir() string {
+func (i *Item) dstDir() string {
 	// When LocalDir has a trailing slash, the actual destination dir will be a directory inside LocalDir (same
 	// behaviour as rsync)
 	if strings.HasSuffix(i.LocalDir, string(os.PathSeparator)) {
@@ -45,12 +45,12 @@ func (i *Item) DstDir() string {
 	return i.LocalDir
 }
 
-func (i *Item) IsEmpty(readDir readDir) bool {
-	dirs, _ := readDir(i.DstDir())
+func (i *Item) isEmpty(readDir readDir) bool {
+	dirs, _ := readDir(i.dstDir())
 	return len(dirs) == 0
 }
 
-func (i *Item) Weight() int {
+func (i *Item) weight() int {
 	for _i, p := range i.Queue.priorities {
 		if i.Remote.Match(p) {
 			return len(i.Queue.priorities) - _i
@@ -59,12 +59,12 @@ func (i *Item) Weight() int {
 	return 0
 }
 
-func (i *Item) Accept(reason string) {
+func (i *Item) accept(reason string) {
 	i.Transfer = true
 	i.Reason = reason
 }
 
-func (i *Item) Reject(reason string) {
+func (i *Item) reject(reason string) {
 	i.Transfer = false
 	i.Reason = reason
 }
@@ -95,7 +95,7 @@ func (i *Item) setLocalDir() error {
 
 func (i *Item) duplicates(readDir readDir) Items {
 	var items Items
-	parent := filepath.Join(i.DstDir(), "..")
+	parent := filepath.Join(i.dstDir(), "..")
 	dirs, _ := readDir(parent)
 	for _, fi := range dirs {
 		// Ignore self
@@ -111,7 +111,7 @@ func (i *Item) duplicates(readDir readDir) Items {
 			Merged:   true,
 		}
 		if err := item.setMedia(filepath.Base(path)); err != nil {
-			item.Reject(err.Error())
+			item.reject(err.Error())
 		}
 		// Ignore unequal media
 		if !i.Media.Equal(item.Media) {

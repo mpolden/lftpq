@@ -119,7 +119,7 @@ func TestWeight(t *testing.T) {
 		{Item{Queue: &q, Remote: lftp.File{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}}, 1},
 	}
 	for _, tt := range tests {
-		if in := tt.in.Weight(); in != tt.out {
+		if in := tt.in.weight(); in != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, in)
 		}
 	}
@@ -151,7 +151,7 @@ func TestItemsSort(t *testing.T) {
 
 func TestAccept(t *testing.T) {
 	item := Item{}
-	item.Accept("foo")
+	item.accept("foo")
 	if !item.Transfer {
 		t.Error("Expected true")
 	}
@@ -162,7 +162,7 @@ func TestAccept(t *testing.T) {
 
 func TestReject(t *testing.T) {
 	item := Item{}
-	item.Reject("bar")
+	item.reject("bar")
 	if item.Transfer {
 		t.Error("Expected false")
 	}
@@ -180,7 +180,7 @@ func TestDstDir(t *testing.T) {
 		{Item{Remote: lftp.File{Path: "/foo/bar"}, LocalDir: "/tmp/foo/bar"}, "/tmp/foo/bar"},
 	}
 	for _, tt := range tests {
-		if got := tt.in.DstDir(); got != tt.out {
+		if got := tt.in.dstDir(); got != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, got)
 		}
 	}
@@ -201,7 +201,7 @@ func TestIsEmpty(t *testing.T) {
 		{Item{LocalDir: "/tmp/bar"}, false},
 	}
 	for _, tt := range tests {
-		if got := tt.in.IsEmpty(readDir); got != tt.out {
+		if got := tt.in.isEmpty(readDir); got != tt.out {
 			t.Errorf("Expected %t, got %t", tt.out, got)
 		}
 	}

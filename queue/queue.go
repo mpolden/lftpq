@@ -36,12 +36,12 @@ func (q *Queue) deduplicate() {
 				continue
 			}
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
-				if a.Weight() <= b.Weight() {
+				if a.weight() <= b.weight() {
 					a.Duplicate = true
-					a.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, a.Weight()))
+					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, a.weight()))
 				} else {
 					b.Duplicate = true
-					b.Reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, b.Weight()))
+					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, b.weight()))
 				}
 			}
 		}
@@ -63,15 +63,15 @@ func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
 	for _, f := range files {
 		item, err := newItem(&q, f)
 		if err != nil {
-			item.Reject(err.Error())
+			item.reject(err.Error())
 		} else if q.SkipSymlinks && f.IsSymlink() {
-			item.Reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", f.IsSymlink(), q.SkipSymlinks))
+			item.reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", f.IsSymlink(), q.SkipSymlinks))
 		} else if q.SkipFiles && f.IsRegular() {
-			item.Reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.IsRegular(), q.SkipFiles))
+			item.reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.IsRegular(), q.SkipFiles))
 		} else if p, match := f.MatchAny(q.filters); match {
-			item.Reject(fmt.Sprintf("Filter=%s", p))
+			item.reject(fmt.Sprintf("Filter=%s", p))
 		} else if p, match := f.MatchAny(q.patterns); match {
-			item.Accept(fmt.Sprintf("Match=%s", p))
+			item.accept(fmt.Sprintf("Match=%s", p))
 		}
 		q.Items = append(q.Items, item)
 	}
@@ -87,9 +87,9 @@ func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
 	now := time.Now()
 	for _, item := range q.Transferable() {
 		if age := item.Remote.Age(now); age > q.maxAge {
-			item.Reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
-		} else if q.SkipExisting && !item.IsEmpty(readDir) {
-			item.Reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
+			item.reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
+		} else if q.SkipExisting && !item.isEmpty(readDir) {
+			item.reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
 		}
 	}
 	return q
@@ -109,9 +109,9 @@ func Read(site Site, r io.Reader) (Queue, error) {
 		}
 		item, err := newItem(&q, lftp.File{Path: p})
 		if err != nil {
-			item.Reject(err.Error())
+			item.reject(err.Error())
 		} else {
-			item.Accept("Import=true")
+			item.accept("Import=true")
 		}
 		q.Items = append(q.Items, item)
 	}
@@ -149,20 +149,8 @@ func (q *Queue) Script() string {
 	return buf.String()
 }
 
-func (q *Queue) Write() (string, error) {
-	f, err := ioutil.TempFile("", "lftpq")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-	if _, err := f.WriteString(q.Script()); err != nil {
-		return "", err
-	}
-	return f.Name(), nil
-}
-
 func (q *Queue) Start(inheritIO bool) error {
-	name, err := q.Write()
+	name, err := q.write()
 	if err != nil {
 		return err
 	}
@@ -196,4 +184,16 @@ func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {
 		cmd.Stderr = os.Stderr
 	}
 	return cmd, nil
+}
+
+func (q *Queue) write() (string, error) {
+	f, err := ioutil.TempFile("", "lftpq")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	if _, err := f.WriteString(q.Script()); err != nil {
+		return "", err
+	}
+	return f.Name(), nil
 }

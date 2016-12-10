@@ -100,7 +100,7 @@ func isExecutable(s string) error {
 	return nil
 }
 
-func (c *Config) Load() error {
+func (c *Config) load() error {
 	for i, _ := range c.Sites {
 		site := &c.Sites[i]
 		maxAge, err := time.ParseDuration(site.MaxAge)
@@ -211,7 +211,7 @@ func ReadConfig(name string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	if err := cfg.Load(); err != nil {
+	if err := cfg.load(); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil

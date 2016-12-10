@@ -203,7 +203,7 @@ func TestDeduplicate(t *testing.T) {
 	}
 	// Accept all but the last item
 	for i, _ := range q.Items[:len(q.Items)-1] {
-		q.Items[i].Accept("")
+		q.Items[i].accept("")
 	}
 	q.deduplicate()
 

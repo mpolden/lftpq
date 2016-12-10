@@ -26,7 +26,7 @@ func TestLoad(t *testing.T) {
 				}},
 		}},
 	}
-	if err := cfg.Load(); err != nil {
+	if err := cfg.load(); err != nil {
 		t.Fatal(err)
 	}
 
