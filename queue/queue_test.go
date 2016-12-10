@@ -15,26 +15,21 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
-var testTemplate = template.Must(template.New("localDir").Parse("/tmp/{{ .Name }}/S{{ .Season }}/"))
-
 func newTestSite() Site {
-	localDir := template.Must(template.New("localDir").Parse("/tmp/{{ .Name }}/S{{ .Season }}/"))
+	localDir := template.Must(template.New("t").Parse("/tmp/{{ .Name }}/S{{ .Season }}/"))
 	patterns := []*regexp.Regexp{regexp.MustCompile(".*")}
 	return Site{
 		Name:     "test",
-		localDir: localDir,
 		patterns: patterns,
-		parser:   parser.Show,
+		itemParser: itemParser{
+			template: localDir,
+			parser:   parser.Show,
+		},
 	}
 }
 
 func newTestQueue(s Site, files []lftp.File) Queue {
 	return newQueue(s, files, readDirStub)
-}
-
-func newTestItem(q *Queue, remotePath string) Item {
-	item, _ := newItem(q, lftp.File{Path: remotePath})
-	return item
 }
 
 func readDirStub(dirname string) ([]os.FileInfo, error) { return nil, nil }
@@ -59,8 +54,10 @@ func TestNewQueue(t *testing.T) {
 		SkipSymlinks: true,
 		SkipExisting: true,
 		SkipFiles:    true,
-		localDir:     template.Must(template.New("localDir").Parse("/tmp/")),
-		parser:       parser.Default,
+		itemParser: itemParser{
+			template: template.Must(template.New("localDir").Parse("/tmp/")),
+			parser:   parser.Default,
+		},
 	}
 	files := []lftp.File{
 		{
@@ -120,14 +117,14 @@ func TestNewQueue(t *testing.T) {
 	}
 	q := newQueue(s, files, readDir)
 	expected := []Item{
-		Item{Queue: &q, Remote: files[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
-		Item{Queue: &q, Remote: files[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
-		Item{Queue: &q, Remote: files[2], Transfer: true, Reason: "Match=dir\\d"},
-		Item{Queue: &q, Remote: files[3], Transfer: true, Reason: "Match=dir\\d"},
-		Item{Queue: &q, Remote: files[4], Transfer: false, Reason: "IsDstDirEmpty=false"},
-		Item{Queue: &q, Remote: files[5], Transfer: false, Reason: "no match"},
-		Item{Queue: &q, Remote: files[6], Transfer: false, Reason: "Filter=^incomplete-"},
-		Item{Queue: &q, Remote: files[7], Transfer: false, Reason: "IsFile=true SkipFiles=true"},
+		Item{itemParser: q.itemParser, Remote: files[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
+		Item{itemParser: q.itemParser, Remote: files[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
+		Item{itemParser: q.itemParser, Remote: files[2], Transfer: true, Reason: "Match=dir\\d"},
+		Item{itemParser: q.itemParser, Remote: files[3], Transfer: true, Reason: "Match=dir\\d"},
+		Item{itemParser: q.itemParser, Remote: files[4], Transfer: false, Reason: "IsDstDirEmpty=false"},
+		Item{itemParser: q.itemParser, Remote: files[5], Transfer: false, Reason: "no match"},
+		Item{itemParser: q.itemParser, Remote: files[6], Transfer: false, Reason: "Filter=^incomplete-"},
+		Item{itemParser: q.itemParser, Remote: files[7], Transfer: false, Reason: "IsFile=true SkipFiles=true"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {

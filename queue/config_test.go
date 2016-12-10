@@ -43,13 +43,13 @@ func TestLoad(t *testing.T) {
 	if len(site.priorities) == 0 {
 		t.Error("Expected non-empty priorities")
 	}
-	if site.localDir == nil {
+	if site.itemParser.template == nil {
 		t.Error("Expected template to be compiled")
 	}
-	if site.parser == nil {
+	if site.itemParser.parser == nil {
 		t.Error("Expected parser to be set")
 	}
-	if len(site.Replacements) == 0 {
+	if len(site.itemParser.replacements) == 0 {
 		t.Error("Expected non-empty replacements")
 	}
 }

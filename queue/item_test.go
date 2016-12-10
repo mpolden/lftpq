@@ -11,104 +11,74 @@ import (
 	"github.com/martinp/lftpq/parser"
 )
 
+func newTestItem(remotePath string, itemParser itemParser) Item {
+	item, _ := newItem(lftp.File{Path: remotePath}, itemParser)
+	return item
+}
+
+func showItemParser() itemParser {
+	return itemParser{
+		parser:   parser.Show,
+		template: template.Must(template.New("t").Parse("/tmp/{{ .Name }}/S{{ .Season }}/")),
+	}
+}
+
+func movieItemParser() itemParser {
+	return itemParser{
+		parser:   parser.Movie,
+		template: template.Must(template.New("t").Parse("/tmp/{{ .Year }}/{{ .Name }}/")),
+	}
+}
+
 func TestNewItemShow(t *testing.T) {
-	s := newTestSite()
-	q := Queue{Site: s}
-	item := newTestItem(&q, "/foo/The.Wire.S03E01")
+	item := newTestItem("/foo/The.Wire.S03E01", showItemParser())
 	if expected := "/tmp/The.Wire/S3/"; item.LocalDir != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
 }
 
 func TestNewItemMovie(t *testing.T) {
-	tmpl := template.Must(template.New("").Parse(
-		"/tmp/{{ .Year }}/{{ .Name }}/"))
-	s := Site{
-		localDir: tmpl,
-		parser:   parser.Movie,
-	}
-	q := Queue{Site: s}
-	item := newTestItem(&q, "/foo/Apocalypse.Now.1979")
+	item := newTestItem("/foo/Apocalypse.Now.1979", movieItemParser())
 	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
 	}
 }
 
 func TestNewItemDefaultParser(t *testing.T) {
-	s := Site{
-		localDir: template.Must(template.New("").Parse("/tmp/")),
-		parser:   parser.Default,
-	}
-	q := Queue{Site: s}
-	item := newTestItem(&q, "/foo/The.Wire.S03E01")
+	tmpl := itemParser{parser: parser.Default, template: template.Must(template.New("t").Parse("/tmp/"))}
+	item := newTestItem("/foo/The.Wire.S03E01", tmpl)
 	if expected := "/tmp/"; item.LocalDir != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
 	}
 }
 
 func TestNewItemUnparsable(t *testing.T) {
-	s := Site{
-		localDir: testTemplate,
-		parser:   parser.Show,
-	}
-	q := Queue{Site: s}
-	item, err := newItem(&q, lftp.File{Path: "/foo/bar"})
+	_, err := newItem(lftp.File{Path: "/foo/bar"}, showItemParser())
 	if err == nil {
 		t.Fatal("Expected error")
-	}
-	if item.LocalDir != "" {
-		t.Fatal("Expected empty string")
-	}
-	if item.Transfer {
-		t.Fatal("Expected item to not be transferred")
 	}
 }
 
 func TestNewItemWithReplacements(t *testing.T) {
-	s := Site{
-		localDir: testTemplate,
-		parser:   parser.Show,
-		Replacements: []Replacement{
-			Replacement{pattern: regexp.MustCompile("_"), Replacement: "."},
-			Replacement{pattern: regexp.MustCompile("\\.Of\\."), Replacement: ".of."},
-			Replacement{pattern: regexp.MustCompile("\\.the\\."), Replacement: ".The."},
-			Replacement{pattern: regexp.MustCompile("\\.And\\."), Replacement: ".and."},
-		},
+	tmpl := showItemParser()
+	tmpl.replacements = []Replacement{
+		{pattern: regexp.MustCompile("_"), Replacement: "."},
+		{pattern: regexp.MustCompile("\\.Of\\."), Replacement: ".of."},
+		{pattern: regexp.MustCompile("\\.the\\."), Replacement: ".The."},
+		{pattern: regexp.MustCompile("\\.And\\."), Replacement: ".and."},
 	}
-	q := Queue{Site: s}
 	var tests = []struct {
 		in  Item
 		out string
 	}{
-		{newTestItem(&q, "/foo/Game.Of.Thrones.S01E01"), "Game.of.Thrones"},
-		{newTestItem(&q, "/foo/Fear.the.Walking.Dead.S01E01"), "Fear.The.Walking.Dead"},
-		{newTestItem(&q, "/foo/Halt.And.Catch.Fire.S01E01"), "Halt.and.Catch.Fire"},
-		{newTestItem(&q, "/foo/Top_Gear.01x01"), "Top.Gear"},
+		{newTestItem("/foo/Game.Of.Thrones.S01E01", tmpl), "Game.of.Thrones"},
+		{newTestItem("/foo/Fear.the.Walking.Dead.S01E01", tmpl), "Fear.The.Walking.Dead"},
+		{newTestItem("/foo/Halt.And.Catch.Fire.S01E01", tmpl), "Halt.and.Catch.Fire"},
+		{newTestItem("/foo/Top_Gear.01x01", tmpl), "Top.Gear"},
 	}
 	for _, tt := range tests {
 		if tt.in.Media.Name != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, tt.in.Media.Name)
-		}
-	}
-
-}
-
-func TestWeight(t *testing.T) {
-	s := Site{
-		priorities: []*regexp.Regexp{regexp.MustCompile("\\.PROPER\\."), regexp.MustCompile("\\.REPACK\\.")},
-	}
-	q := Queue{Site: s}
-	var tests = []struct {
-		in  Item
-		out int
-	}{
-		{Item{Queue: &q, Remote: lftp.File{Path: "/tmp/The.Wire.S01E01.foo"}}, 0},
-		{Item{Queue: &q, Remote: lftp.File{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}}, 2},
-		{Item{Queue: &q, Remote: lftp.File{Path: "/tmp/The.Wire.S01E01.REPACK.foo"}}, 1},
-	}
-	for _, tt := range tests {
-		if in := tt.in.weight(); in != tt.out {
-			t.Errorf("Expected %q, got %q", tt.out, in)
 		}
 	}
 }
@@ -192,41 +162,5 @@ func TestIsEmpty(t *testing.T) {
 		if got := tt.in.isEmpty(readDir); got != tt.out {
 			t.Errorf("Expected %t, got %t", tt.out, got)
 		}
-	}
-}
-
-func TestDuplicates(t *testing.T) {
-	s := Site{
-		localDir:   testTemplate,
-		parser:     parser.Show,
-		priorities: []*regexp.Regexp{regexp.MustCompile("\\.foo\\.")},
-	}
-	q := Queue{Site: s}
-	readDir := func(dirname string) ([]os.FileInfo, error) {
-		return []os.FileInfo{
-			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.foo"},
-			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"},
-			fileInfoStub{name: "The.Wire.S01E02.720p.BluRay.baz"},
-		}, nil
-	}
-	item := newTestItem(&q, "/tmp/The.Wire/S01/The.Wire.S01E01.720p.BluRay.foo")
-	items := item.duplicates(readDir)
-	if l := len(items); l != 1 {
-		t.Fatalf("Expected 1 duplicate, got %d", l)
-	}
-	if want := "The.Wire.S01E01.720p.BluRay.bar"; items[0].Media.Release != want {
-		t.Errorf("Expected %q, got %+v", want, items[0].Media.Release)
-	}
-	if !items[0].Merged {
-		t.Errorf("Expected Merged=true")
-	}
-	if !items[0].Transfer {
-		t.Errorf("Expected Transfer=true")
-	}
-	if items[0].Media.IsEmpty() {
-		t.Errorf("Expected non-empty media")
-	}
-	if items[0].Remote.Path != items[0].LocalDir {
-		t.Errorf("Expected Path=%q and LocalDir=%q to be equal", items[0].Remote.Path, items[0].LocalDir)
 	}
 }

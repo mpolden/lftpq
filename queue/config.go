@@ -43,9 +43,7 @@ type Site struct {
 	SkipExisting bool
 	SkipFiles    bool
 	Parser       string
-	parser       parser.Parser
 	LocalDir     string
-	localDir     *template.Template
 	Priorities   []string
 	priorities   []*regexp.Regexp
 	Deduplicate  bool
@@ -53,6 +51,13 @@ type Site struct {
 	Replacements []Replacement
 	Merge        bool
 	Skip         bool
+	itemParser
+}
+
+type itemParser struct {
+	parser       parser.Parser
+	template     *template.Template
+	replacements []Replacement
 }
 
 func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {
@@ -133,7 +138,6 @@ func (c *Config) load() error {
 		if err != nil {
 			return err
 		}
-		site.localDir = tmpl
 
 		if err := isExecutable(site.Client.Path); err != nil {
 			return err
@@ -142,16 +146,22 @@ func (c *Config) load() error {
 			return err
 		}
 
+		var parserFunc parser.Parser
 		switch site.Parser {
 		case "show":
-			site.parser = parser.Show
+			parserFunc = parser.Show
 		case "movie":
-			site.parser = parser.Movie
+			parserFunc = parser.Movie
 		case "":
-			site.parser = parser.Default
+			parserFunc = parser.Default
 		default:
 			return fmt.Errorf("invalid parser: %q (must be %q, %q or %q)",
 				site.Parser, "show", "movie", "")
+		}
+		site.itemParser = itemParser{
+			parser:       parserFunc,
+			replacements: site.Replacements,
+			template:     tmpl,
 		}
 	}
 	return nil

@@ -2,10 +2,11 @@ package queue
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"text/template"
 
 	"github.com/martinp/lftpq/lftp"
 	"github.com/martinp/lftpq/parser"
@@ -33,7 +34,7 @@ type Item struct {
 	Media     parser.Media
 	Duplicate bool
 	Merged    bool
-	*Queue    `json:"-"`
+	itemParser
 }
 
 func (i *Item) dstDir() string {
@@ -50,15 +51,6 @@ func (i *Item) isEmpty(readDir readDir) bool {
 	return len(dirs) == 0
 }
 
-func (i *Item) weight() int {
-	for _i, p := range i.Queue.priorities {
-		if i.Remote.Match(p) {
-			return len(i.Queue.priorities) - _i
-		}
-	}
-	return 0
-}
-
 func (i *Item) accept(reason string) {
 	i.Transfer = true
 	i.Reason = reason
@@ -70,23 +62,20 @@ func (i *Item) reject(reason string) {
 }
 
 func (i *Item) setMedia(dirname string) error {
-	m, err := i.Queue.parser(dirname)
+	m, err := i.itemParser.parser(dirname)
 	if err != nil {
 		return err
 	}
-	for _, r := range i.Replacements {
+	for _, r := range i.itemParser.replacements {
 		m.ReplaceName(r.pattern, r.Replacement)
 	}
 	i.Media = m
 	return nil
 }
 
-func (i *Item) setLocalDir() error {
-	if i.Queue.localDir == nil {
-		return fmt.Errorf("template is not set")
-	}
+func (i *Item) setLocalDir(t *template.Template) error {
 	var b bytes.Buffer
-	if err := i.Queue.localDir.Execute(&b, i.Media); err != nil {
+	if err := t.Execute(&b, i.Media); err != nil {
 		return err
 	}
 	i.LocalDir = b.String()
@@ -104,11 +93,11 @@ func (i *Item) duplicates(readDir readDir) Items {
 		}
 		path := filepath.Join(parent, fi.Name())
 		item := Item{
-			Remote:   lftp.File{Path: path}, // Needs to be set as weight is calculated based on Path
-			Queue:    i.Queue,
-			LocalDir: path,
-			Transfer: true, // True to make it considerable for deduplication
-			Merged:   true,
+			Remote:     lftp.File{Path: path}, // Needs to be set as weight is calculated based on Path
+			LocalDir:   path,
+			Transfer:   true, // True to make it considerable for deduplication
+			Merged:     true,
+			itemParser: i.itemParser,
 		}
 		if err := item.setMedia(filepath.Base(path)); err != nil {
 			item.reject(err.Error())
@@ -122,12 +111,12 @@ func (i *Item) duplicates(readDir readDir) Items {
 	return items
 }
 
-func newItem(q *Queue, f lftp.File) (Item, error) {
-	item := Item{Queue: q, Remote: f, Reason: "no match"}
-	if err := item.setMedia(f.Base()); err != nil {
+func newItem(file lftp.File, itemParser itemParser) (Item, error) {
+	item := Item{Remote: file, Reason: "no match", itemParser: itemParser}
+	if err := item.setMedia(file.Base()); err != nil {
 		return item, err
 	}
-	if err := item.setLocalDir(); err != nil {
+	if err := item.setLocalDir(itemParser.template); err != nil {
 		return item, err
 	}
 	return item, nil

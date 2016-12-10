@@ -35,7 +35,7 @@ func Read(site Site, r io.Reader) (Queue, error) {
 		if len(p) == 0 {
 			continue
 		}
-		item, err := newItem(&q, lftp.File{Path: p})
+		item, err := newItem(lftp.File{Path: p}, q.itemParser)
 		if err != nil {
 			item.reject(err.Error())
 		} else {
@@ -126,6 +126,15 @@ func (q *Queue) write() (string, error) {
 	return f.Name(), nil
 }
 
+func (q *Queue) weight(item *Item) int {
+	for i, p := range q.priorities {
+		if item.Remote.Match(p) {
+			return len(q.priorities) - i
+		}
+	}
+	return 0
+}
+
 func (q *Queue) deduplicate() {
 	for i, _ := range q.Items {
 		for j, _ := range q.Items {
@@ -139,12 +148,12 @@ func (q *Queue) deduplicate() {
 				continue
 			}
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
-				if a.weight() <= b.weight() {
+				if q.weight(a) <= q.weight(b) {
 					a.Duplicate = true
-					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, a.weight()))
+					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, q.weight(a)))
 				} else {
 					b.Duplicate = true
-					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, b.weight()))
+					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, q.weight(b)))
 				}
 			}
 		}
@@ -164,7 +173,7 @@ func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
 	q := Queue{Site: site, Items: make(Items, 0, len(files))}
 	// Initial filtering
 	for _, f := range files {
-		item, err := newItem(&q, f)
+		item, err := newItem(f, q.itemParser)
 		if err != nil {
 			item.reject(err.Error())
 		} else if q.SkipSymlinks && f.IsSymlink() {
