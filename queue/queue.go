@@ -43,10 +43,7 @@ func Read(site Site, r io.Reader) (Queue, error) {
 		}
 		q.Items = append(q.Items, item)
 	}
-	if err := scanner.Err(); err != nil {
-		return Queue{}, err
-	}
-	return q, nil
+	return q, scanner.Err()
 }
 
 func (q *Queue) Transferable() []*Item {
