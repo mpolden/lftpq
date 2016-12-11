@@ -92,15 +92,12 @@ func (i *Item) duplicates(readDir readDir) Items {
 			continue
 		}
 		path := filepath.Join(parent, fi.Name())
-		item := Item{
-			Remote:     lftp.File{Path: path}, // Needs to be set as weight is calculated based on Path
-			LocalDir:   path,
-			Transfer:   true, // True to make it considerable for deduplication
-			Merged:     true,
-			itemParser: i.itemParser,
-		}
-		if err := item.setMedia(filepath.Base(path)); err != nil {
+		item, err := newItem(lftp.File{Path: path}, i.itemParser)
+		if err != nil {
 			item.reject(err.Error())
+		} else {
+			item.accept("Merged=true") // Make it considerable for deduplication
+			item.Merged = true
 		}
 		// Ignore unequal media
 		if !i.Media.Equal(item.Media) {

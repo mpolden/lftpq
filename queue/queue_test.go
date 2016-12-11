@@ -264,7 +264,7 @@ func TestPostCommand(t *testing.T) {
 	}
 }
 
-func TestMerge(t *testing.T) {
+func TestMergePreferringRemoteCopy(t *testing.T) {
 	s := newTestSite()
 	s.Merge = true
 	s.Deduplicate = true
@@ -279,10 +279,36 @@ func TestMerge(t *testing.T) {
 	if l := len(q.Items); l != 3 {
 		t.Fatalf("Expected length 3, got %d", l)
 	}
+	if q.Items[0].Duplicate || q.Items[0].Merged {
+		t.Errorf("Expected Duplicate=false Merged=false for Path=%q", q.Items[0].Remote.Path)
+	}
 	for _, i := range q.Items[1:] {
-		if !i.Duplicate {
-			t.Errorf("Expected Duplicate=true for Path=%q", i.Remote.Path)
+		if !i.Duplicate || !i.Merged {
+			t.Errorf("Expected Duplicate=true Merged=true for Path=%q", i.Remote.Path)
 		}
+	}
+}
+
+func TestMergePreferringLocalCopy(t *testing.T) {
+	s := newTestSite()
+	s.Merge = true
+	s.Deduplicate = true
+	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.bar\.`)}
+	readDir := func(dirname string) ([]os.FileInfo, error) {
+		return []os.FileInfo{
+			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"},
+			fileInfoStub{name: "The.Wire.S01E02.720p.BluRay.baz"},
+		}, nil
+	}
+	q := newQueue(s, []lftp.File{{Path: "/tmp/The.Wire.S01E01.foo"}}, readDir)
+	if l := len(q.Items); l != 2 {
+		t.Fatalf("Expected length 2, got %d", l)
+	}
+	if !q.Items[0].Duplicate || q.Items[0].Merged {
+		t.Errorf("Expected Duplicate=true Merged=false for Path=%q", q.Items[0].Remote.Path)
+	}
+	if q.Items[1].Duplicate || !q.Items[1].Merged {
+		t.Errorf("Expected Duplicate=false Merged=true for Path=%q", q.Items[1].Remote.Path)
 	}
 }
 
