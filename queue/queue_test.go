@@ -49,7 +49,7 @@ func TestNewQueue(t *testing.T) {
 		Name:         "foo",
 		Dir:          "/remote",
 		maxAge:       time.Duration(24) * time.Hour,
-		patterns:     []*regexp.Regexp{regexp.MustCompile("dir\\d")},
+		patterns:     []*regexp.Regexp{regexp.MustCompile(`dir\d`)},
 		filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
 		SkipSymlinks: true,
 		SkipExisting: true,
@@ -130,7 +130,7 @@ func TestNewQueue(t *testing.T) {
 	if len(expected) != len(actual) {
 		t.Fatalf("Expected length=%d, got length=%d", len(expected), len(actual))
 	}
-	for i, _ := range expected {
+	for i := range expected {
 		e := expected[i]
 		a := actual[i]
 		if a.Transfer != e.Transfer {
@@ -186,9 +186,9 @@ func TestDeduplicate(t *testing.T) {
 	s := newTestSite()
 	s.Deduplicate = true
 	s.priorities = []*regexp.Regexp{
-		regexp.MustCompile("\\.PROPER\\.REPACK\\."),
-		regexp.MustCompile("\\.PROPER\\."),
-		regexp.MustCompile("\\.REPACK\\."),
+		regexp.MustCompile(`\.PROPER\.REPACK\.`),
+		regexp.MustCompile(`\.PROPER\.`),
+		regexp.MustCompile(`\.REPACK\.`),
 	}
 	files := []lftp.File{
 		{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}, /* keep */
@@ -205,7 +205,7 @@ func TestDeduplicate(t *testing.T) {
 	if len(expected) != len(actual) {
 		t.Fatalf("Expected length %d, got %d", len(expected), len(actual))
 	}
-	for i, _ := range actual {
+	for i := range actual {
 		if actual[i].Remote.Path != expected[i].Remote.Path {
 			t.Errorf("Expected %s, got %s", expected[i].Remote.Path, actual[i].Remote.Path)
 		}
@@ -215,7 +215,7 @@ func TestDeduplicate(t *testing.T) {
 func TestDeduplicateIgnoresAge(t *testing.T) {
 	now := time.Now().Round(time.Second)
 	s := newTestSite()
-	s.priorities = []*regexp.Regexp{regexp.MustCompile("\\.HDTV\\.")}
+	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.HDTV\.`)}
 	s.maxAge = time.Duration(24) * time.Hour
 	s.Deduplicate = true
 	files := []lftp.File{
@@ -268,7 +268,7 @@ func TestMerge(t *testing.T) {
 	s := newTestSite()
 	s.Merge = true
 	s.Deduplicate = true
-	s.priorities = []*regexp.Regexp{regexp.MustCompile("\\.foo$")}
+	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.foo$`)}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		return []os.FileInfo{
 			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"},
@@ -302,7 +302,7 @@ func TestReadQueue(t *testing.T) {
 	if len(q.Items) != 3 {
 		t.Fatal("Expected 3 items")
 	}
-	for i, _ := range q.Items {
+	for i := range q.Items {
 		if want := "The.Wire"; q.Items[i].Media.Name != want {
 			t.Errorf("Expected Items[%d].Media.Name=%q, want %q", i, q.Items[0].Media.Name, want)
 		}

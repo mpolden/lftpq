@@ -63,9 +63,9 @@ func TestNewItemWithReplacements(t *testing.T) {
 	tmpl := showItemParser()
 	tmpl.replacements = []Replacement{
 		{pattern: regexp.MustCompile("_"), Replacement: "."},
-		{pattern: regexp.MustCompile("\\.Of\\."), Replacement: ".of."},
-		{pattern: regexp.MustCompile("\\.the\\."), Replacement: ".The."},
-		{pattern: regexp.MustCompile("\\.And\\."), Replacement: ".and."},
+		{pattern: regexp.MustCompile(`\.Of\.`), Replacement: ".of."},
+		{pattern: regexp.MustCompile(`\.the\.`), Replacement: ".The."},
+		{pattern: regexp.MustCompile(`\.And\.`), Replacement: ".and."},
 	}
 	var tests = []struct {
 		in  Item

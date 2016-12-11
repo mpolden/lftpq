@@ -13,8 +13,8 @@ type Client struct {
 	GetCmd string
 }
 
-func (l *Client) Run(args []string, inheritIO bool) error {
-	cmd := exec.Command(l.Path, args...)
+func (c *Client) Run(args []string, inheritIO bool) error {
+	cmd := exec.Command(c.Path, args...)
 	if inheritIO {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

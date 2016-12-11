@@ -51,7 +51,7 @@ func Read(site Site, r io.Reader) (Queue, error) {
 
 func (q *Queue) Transferable() []*Item {
 	var items []*Item
-	for i, _ := range q.Items {
+	for i := range q.Items {
 		if item := &q.Items[i]; item.Transfer {
 			items = append(items, item)
 		}
@@ -136,8 +136,8 @@ func (q *Queue) weight(item *Item) int {
 }
 
 func (q *Queue) deduplicate() {
-	for i, _ := range q.Items {
-		for j, _ := range q.Items {
+	for i := range q.Items {
+		for j := range q.Items {
 			if i == j {
 				continue
 			}
@@ -163,9 +163,7 @@ func (q *Queue) deduplicate() {
 func (q *Queue) merge(readDir readDir) {
 	// Merge local duplicates into the queue so that they can included in deduplication
 	for _, i := range q.Transferable() {
-		for _, item := range i.duplicates(readDir) {
-			q.Items = append(q.Items, item)
-		}
+		q.Items = append(q.Items, i.duplicates(readDir)...)
 	}
 }
 

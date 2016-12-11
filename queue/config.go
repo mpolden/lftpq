@@ -99,14 +99,12 @@ func isExecutable(s string) error {
 		return nil
 	}
 	args := strings.Split(s, " ")
-	if _, err := exec.LookPath(args[0]); err != nil {
-		return err
-	}
-	return nil
+	_, err := exec.LookPath(args[0])
+	return err
 }
 
 func (c *Config) load() error {
-	for i, _ := range c.Sites {
+	for i := range c.Sites {
 		site := &c.Sites[i]
 		maxAge, err := time.ParseDuration(site.MaxAge)
 		if err != nil {
@@ -190,7 +188,7 @@ func readConfig(r io.Reader) (Config, error) {
 	if err := json.Unmarshal(data, &defaults); err != nil {
 		return Config{}, err
 	}
-	for i, _ := range defaults.Sites {
+	for i := range defaults.Sites {
 		defaults.Sites[i] = defaults.Default
 	}
 	// Unmarshal config again, letting individual sites override the defaults

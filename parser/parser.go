@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	movieExp   = regexp.MustCompile("(.*?)\\.(\\d{4})")
+	movieExp   = regexp.MustCompile(`(.*?)\.(\d{4})`)
 	episodeExp = regexp.MustCompile("(.*)\\.(?:(" +
 		"(?:S(\\d{2}))?E(\\d{2})" + // S01E04, E04
 		"|(\\d{1,2})x(\\d{2})" + // 1x04, 01x04
@@ -33,11 +33,11 @@ func (m *Media) ReplaceName(re *regexp.Regexp, repl string) {
 	m.Name = re.ReplaceAllString(m.Name, repl)
 }
 
-func (a *Media) Equal(b Media) bool {
-	if a.IsEmpty() {
+func (m *Media) Equal(o Media) bool {
+	if m.IsEmpty() {
 		return false
 	}
-	return a.Name == b.Name && a.Season == b.Season && a.Episode == b.Episode && a.Year == b.Year
+	return m.Name == o.Name && m.Season == o.Season && m.Episode == o.Episode && m.Year == o.Year
 }
 
 func Default(s string) (Media, error) {
