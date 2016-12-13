@@ -67,7 +67,7 @@ func (q *Queue) Script() string {
 		buf.WriteString(" ")
 		buf.WriteString(item.RemotePath)
 		buf.WriteString(" ")
-		buf.WriteString(item.LocalDir)
+		buf.WriteString(item.LocalPath)
 		buf.WriteString("\n")
 	}
 	buf.WriteString("queue start\nwait\nexit\n")

@@ -32,23 +32,23 @@ func movieItemParser() itemParser {
 
 func TestNewItemShow(t *testing.T) {
 	item := newTestItem("/foo/The.Wire.S03E01", showItemParser())
-	if expected := "/tmp/The.Wire/S3/"; item.LocalDir != expected {
-		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
+	if expected := "/tmp/The.Wire/S3/"; item.LocalPath != expected {
+		t.Fatalf("Expected %q, got %q", expected, item.LocalPath)
 	}
 }
 
 func TestNewItemMovie(t *testing.T) {
 	item := newTestItem("/foo/Apocalypse.Now.1979", movieItemParser())
-	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalDir != expected {
-		t.Fatalf("Expected %q, got %q", expected, item.LocalDir)
+	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalPath != expected {
+		t.Fatalf("Expected %q, got %q", expected, item.LocalPath)
 	}
 }
 
 func TestNewItemDefaultParser(t *testing.T) {
 	tmpl := itemParser{parser: parser.Default, template: template.Must(template.New("t").Parse("/tmp/"))}
 	item := newTestItem("/foo/The.Wire.S03E01", tmpl)
-	if expected := "/tmp/"; item.LocalDir != expected {
-		t.Fatalf("Expected %s, got %s", expected, item.LocalDir)
+	if expected := "/tmp/"; item.LocalPath != expected {
+		t.Fatalf("Expected %s, got %s", expected, item.LocalPath)
 	}
 }
 
@@ -134,8 +134,8 @@ func TestDstDir(t *testing.T) {
 		in  Item
 		out string
 	}{
-		{Item{RemotePath: "/foo/bar", LocalDir: "/tmp/"}, "/tmp/bar"},
-		{Item{RemotePath: "/foo/bar", LocalDir: "/tmp/foo/bar"}, "/tmp/foo/bar"},
+		{Item{RemotePath: "/foo/bar", LocalPath: "/tmp/"}, "/tmp/bar"},
+		{Item{RemotePath: "/foo/bar", LocalPath: "/tmp/foo/bar"}, "/tmp/foo/bar"},
 	}
 	for _, tt := range tests {
 		if got := tt.in.dstDir(); got != tt.out {
@@ -155,8 +155,8 @@ func TestIsEmpty(t *testing.T) {
 		in  Item
 		out bool
 	}{
-		{Item{LocalDir: "/tmp/foo"}, true},
-		{Item{LocalDir: "/tmp/bar"}, false},
+		{Item{LocalPath: "/tmp/foo"}, true},
+		{Item{LocalPath: "/tmp/bar"}, false},
 	}
 	for _, tt := range tests {
 		if got := tt.in.isEmpty(readDir); got != tt.out {

@@ -166,8 +166,8 @@ func TestScript(t *testing.T) {
 		Name: "siteA",
 	}
 	items := []Item{
-		Item{RemotePath: "/foo", LocalDir: "/tmp", Transfer: true},
-		Item{RemotePath: "/bar", LocalDir: "/tmp", Transfer: true},
+		Item{RemotePath: "/foo", LocalPath: "/tmp", Transfer: true},
+		Item{RemotePath: "/bar", LocalPath: "/tmp", Transfer: true},
 	}
 	q := Queue{Site: s, Items: items}
 	script := q.Script()
@@ -352,8 +352,8 @@ func TestFprintln(t *testing.T) {
 	json := `[
   {
     "RemotePath": "/tmp/The.Wire.S01E01",
+    "LocalPath": "/tmp/The.Wire/S1/",
     "ModTime": "0001-01-01T00:00:00Z",
-    "LocalDir": "/tmp/The.Wire/S1/",
     "Transfer": true,
     "Reason": "Match=.*",
     "Media": {

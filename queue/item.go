@@ -28,8 +28,8 @@ func (s Items) Swap(i, j int) {
 
 type Item struct {
 	RemotePath string
+	LocalPath  string
 	ModTime    time.Time
-	LocalDir   string
 	Transfer   bool
 	Reason     string
 	Media      parser.Media
@@ -41,10 +41,10 @@ type Item struct {
 func (i *Item) dstDir() string {
 	// When LocalDir has a trailing slash, the actual destination dir will be a directory inside LocalDir (same
 	// behaviour as rsync)
-	if strings.HasSuffix(i.LocalDir, string(os.PathSeparator)) {
-		return filepath.Join(i.LocalDir, filepath.Base(i.RemotePath))
+	if strings.HasSuffix(i.LocalPath, string(os.PathSeparator)) {
+		return filepath.Join(i.LocalPath, filepath.Base(i.RemotePath))
 	}
-	return i.LocalDir
+	return i.LocalPath
 }
 
 func (i *Item) isEmpty(readDir readDir) bool {
@@ -79,7 +79,7 @@ func (i *Item) setLocalDir(t *template.Template) error {
 	if err := t.Execute(&b, i.Media); err != nil {
 		return err
 	}
-	i.LocalDir = b.String()
+	i.LocalPath = b.String()
 	return nil
 }
 
