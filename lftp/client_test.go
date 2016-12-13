@@ -12,9 +12,9 @@ func TestParseDirList(t *testing.T) {
 	2015-02-02 23:01:15 +0100 CET dir2/
 	2015-03-15 08:28:30 +0100 CET dir3@`
 	expected := []File{
-		File{Modified: time.Date(2014, 6, 25, 14, 15, 16, 0, time.FixedZone("CEST", 7200)), Path: "dir1"},
-		File{Modified: time.Date(2015, 2, 2, 23, 1, 15, 0, time.FixedZone("CET", 3600)), Path: "dir2"},
-		File{Modified: time.Date(2015, 3, 15, 8, 28, 30, 0, time.FixedZone("CET", 3600)), Path: "dir3"},
+		File{modTime: time.Date(2014, 6, 25, 14, 15, 16, 0, time.FixedZone("CEST", 7200)), path: "dir1"},
+		File{modTime: time.Date(2015, 2, 2, 23, 1, 15, 0, time.FixedZone("CET", 3600)), path: "dir2"},
+		File{modTime: time.Date(2015, 3, 15, 8, 28, 30, 0, time.FixedZone("CET", 3600)), path: "dir3"},
 	}
 	actual, err := parseDirList(strings.NewReader(ls))
 	if err != nil {
@@ -22,7 +22,7 @@ func TestParseDirList(t *testing.T) {
 	}
 	for i, e := range expected {
 		a := actual[i]
-		if !e.Modified.Equal(a.Modified) || e.Path != a.Path {
+		if !e.ModTime().Equal(a.ModTime()) || e.Name() != a.Name() {
 			t.Fatalf("Expected %+v, got %+v", e, a)
 		}
 	}

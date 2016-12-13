@@ -3,17 +3,22 @@ package lftp
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 )
 
 type File struct {
-	Modified time.Time
-	Path     string
-	os.FileMode
+	path    string
+	modTime time.Time
+	mode    os.FileMode
 }
+
+func (f File) Name() string       { return f.path }
+func (f File) Size() int64        { return 0 }
+func (f File) Mode() os.FileMode  { return f.mode }
+func (f File) ModTime() time.Time { return f.modTime }
+func (f File) IsDir() bool        { return f.Mode().IsDir() }
+func (f File) Sys() interface{}   { return nil }
 
 func ParseFile(s string) (File, error) {
 	parts := strings.SplitN(s, " ", 5)
@@ -32,39 +37,12 @@ func ParseFile(s string) (File, error) {
 		fileMode = os.ModeSymlink
 	} else if strings.HasSuffix(path, "/") {
 		fileMode = os.ModeDir
-	} else {
-		fileMode = os.FileMode(0) // Regular file
 	}
 
 	path = strings.TrimRight(path, "@/")
 	return File{
-		Path:     path,
-		Modified: modified,
-		FileMode: fileMode,
+		path:    path,
+		modTime: modified,
+		mode:    fileMode,
 	}, nil
-}
-
-func (f *File) IsSymlink() bool {
-	return f.FileMode&os.ModeSymlink != 0
-}
-
-func (f *File) Base() string {
-	return filepath.Base(f.Path)
-}
-
-func (f *File) Age(since time.Time) time.Duration {
-	return since.Round(time.Second).Sub(f.Modified)
-}
-
-func (f *File) MatchAny(patterns []*regexp.Regexp) (string, bool) {
-	for _, p := range patterns {
-		if f.Match(p) {
-			return p.String(), true
-		}
-	}
-	return "", false
-}
-
-func (f *File) Match(pattern *regexp.Regexp) bool {
-	return pattern.MatchString(f.Base())
 }

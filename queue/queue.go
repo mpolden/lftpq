@@ -9,11 +9,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/martinp/lftpq/lftp"
 )
 
 type readDir func(dirname string) ([]os.FileInfo, error)
@@ -23,7 +23,7 @@ type Queue struct {
 	Items
 }
 
-func New(site Site, files []lftp.File) Queue {
+func New(site Site, files []os.FileInfo) Queue {
 	return newQueue(site, files, ioutil.ReadDir)
 }
 
@@ -35,7 +35,7 @@ func Read(site Site, r io.Reader) (Queue, error) {
 		if len(p) == 0 {
 			continue
 		}
-		item, err := newItem(lftp.File{Path: p}, q.itemParser)
+		item, err := newItem(p, time.Time{}, q.itemParser)
 		if err != nil {
 			item.reject(err.Error())
 		} else {
@@ -65,7 +65,7 @@ func (q *Queue) Script() string {
 		buf.WriteString("queue ")
 		buf.WriteString(q.Client.GetCmd)
 		buf.WriteString(" ")
-		buf.WriteString(item.Remote.Path)
+		buf.WriteString(item.RemotePath)
 		buf.WriteString(" ")
 		buf.WriteString(item.LocalDir)
 		buf.WriteString("\n")
@@ -125,7 +125,7 @@ func (q *Queue) write() (string, error) {
 
 func (q *Queue) weight(item *Item) int {
 	for i, p := range q.priorities {
-		if item.Remote.Match(p) {
+		if p.MatchString(filepath.Base(item.RemotePath)) {
 			return len(q.priorities) - i
 		}
 	}
@@ -141,16 +141,16 @@ func (q *Queue) deduplicate() {
 			a := &q.Items[i]
 			b := &q.Items[j]
 			// Ignore self
-			if a.Remote.Path == b.Remote.Path {
+			if a.RemotePath == b.RemotePath {
 				continue
 			}
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
 				if q.weight(a) <= q.weight(b) {
 					a.Duplicate = true
-					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.Remote.Path, q.weight(a)))
+					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.RemotePath, q.weight(a)))
 				} else {
 					b.Duplicate = true
-					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.Remote.Path, q.weight(b)))
+					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.RemotePath, q.weight(b)))
 				}
 			}
 		}
@@ -164,20 +164,29 @@ func (q *Queue) merge(readDir readDir) {
 	}
 }
 
-func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
+func matchAny(patterns []*regexp.Regexp, f os.FileInfo) (string, bool) {
+	for _, p := range patterns {
+		if p.MatchString(filepath.Base(f.Name())) {
+			return p.String(), true
+		}
+	}
+	return "", false
+}
+
+func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 	q := Queue{Site: site, Items: make(Items, 0, len(files))}
 	// Initial filtering
 	for _, f := range files {
-		item, err := newItem(f, q.itemParser)
+		item, err := newItem(f.Name(), f.ModTime(), q.itemParser)
 		if err != nil {
 			item.reject(err.Error())
-		} else if q.SkipSymlinks && f.IsSymlink() {
-			item.reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", f.IsSymlink(), q.SkipSymlinks))
-		} else if q.SkipFiles && f.IsRegular() {
-			item.reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.IsRegular(), q.SkipFiles))
-		} else if p, match := f.MatchAny(q.filters); match {
+		} else if isSymlink := f.Mode()&os.ModeSymlink != 0; q.SkipSymlinks && isSymlink {
+			item.reject(fmt.Sprintf("IsSymlink=%t SkipSymlinks=%t", isSymlink, q.SkipSymlinks))
+		} else if q.SkipFiles && f.Mode().IsRegular() {
+			item.reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.Mode().IsRegular(), q.SkipFiles))
+		} else if p, match := matchAny(q.filters, f); match {
 			item.reject(fmt.Sprintf("Filter=%s", p))
-		} else if p, match := f.MatchAny(q.patterns); match {
+		} else if p, match := matchAny(q.patterns, f); match {
 			item.accept(fmt.Sprintf("Match=%s", p))
 		}
 		q.Items = append(q.Items, item)
@@ -191,9 +200,9 @@ func newQueue(site Site, files []lftp.File, readDir readDir) Queue {
 	}
 	// Deduplication must happen before MaxAge and IsDstDir checks. This is because items with a higher weight might
 	// have been transferred in past runs.
-	now := time.Now()
+	now := time.Now().Round(time.Second)
 	for _, item := range q.Transferable() {
-		if age := item.Remote.Age(now); q.maxAge != 0 && age > q.maxAge {
+		if age := now.Sub(item.ModTime); q.maxAge != 0 && age > q.maxAge {
 			item.reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
 		} else if q.SkipExisting && !item.isEmpty(readDir) {
 			item.reject(fmt.Sprintf("IsDstDirEmpty=%t", false))

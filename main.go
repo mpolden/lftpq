@@ -42,11 +42,16 @@ func (c *CLI) buildQueue(s queue.Site) error {
 		c.logf("[%s] Skipping site (Skip=%t)", s.Name, s.Skip)
 		return nil
 	}
-	dirs, err := s.Client.List(s.Name, s.Dir)
+	files, err := s.Client.List(s.Name, s.Dir)
 	if err != nil {
 		return err
 	}
-	queue := queue.New(s, dirs)
+	// Convert files to os.FileInfo
+	fileInfos := make([]os.FileInfo, len(files))
+	for i := range files {
+		fileInfos[i] = files[i]
+	}
+	queue := queue.New(s, fileInfos)
 	return c.process(queue)
 }
 

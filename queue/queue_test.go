@@ -28,20 +28,22 @@ func newTestSite() Site {
 	}
 }
 
-func newTestQueue(s Site, files []lftp.File) Queue {
-	return newQueue(s, files, readDirStub)
+func newTestQueue(s Site, files []os.FileInfo) Queue {
+	return newQueue(s, files, func(dirname string) ([]os.FileInfo, error) { return nil, nil })
 }
 
-func readDirStub(dirname string) ([]os.FileInfo, error) { return nil, nil }
+type file struct {
+	name    string
+	modTime time.Time
+	mode    os.FileMode
+}
 
-type fileInfoStub struct{ name string }
-
-func (f fileInfoStub) Name() string       { return f.name }
-func (f fileInfoStub) Size() int64        { return 0 }
-func (f fileInfoStub) Mode() os.FileMode  { return 0 }
-func (f fileInfoStub) ModTime() time.Time { return time.Time{} }
-func (f fileInfoStub) IsDir() bool        { return false }
-func (f fileInfoStub) Sys() interface{}   { return nil }
+func (f file) Name() string       { return f.name }
+func (f file) Size() int64        { return 0 }
+func (f file) Mode() os.FileMode  { return f.mode }
+func (f file) ModTime() time.Time { return f.modTime }
+func (f file) IsDir() bool        { return f.Mode().IsDir() }
+func (f file) Sys() interface{}   { return nil }
 
 func TestNewQueue(t *testing.T) {
 	now := time.Now().Round(time.Second)
@@ -59,72 +61,71 @@ func TestNewQueue(t *testing.T) {
 			parser:   parser.Default,
 		},
 	}
-	files := []lftp.File{
-		{
-			Path:     "/remote/dir1@",
-			Modified: now,
+	files := []os.FileInfo{
+		file{
+			name:    "/remote/dir1@",
+			modTime: now,
 			// Filtered because of symlink
-			FileMode: os.ModeSymlink,
+			mode: os.ModeSymlink,
 		},
-		{
-			Path: "/remote/dir2/",
+		file{
+			name: "/remote/dir2/",
 			// Filtered because of exceeded MaxAge
-			Modified: now.Add(-time.Duration(48) * time.Hour),
-			FileMode: os.ModeDir,
+			modTime: now.Add(-time.Duration(48) * time.Hour),
+			mode:    os.ModeDir,
 		},
-		{
-			Path: "/remote/dir3/",
+		file{
+			name: "/remote/dir3/",
 			// Included because of equal MaxAge
-			Modified: now.Add(-time.Duration(24) * time.Hour),
-			FileMode: os.ModeDir,
+			modTime: now.Add(-time.Duration(24) * time.Hour),
+			mode:    os.ModeDir,
 		},
-		{
-			Path: "/remote/dir4/",
+		file{
+			name: "/remote/dir4/",
 			// Included because less than MaxAge
-			Modified: now,
-			FileMode: os.ModeDir,
+			modTime: now,
+			mode:    os.ModeDir,
 		},
-		{
-			Path: "/remote/dir5/",
+		file{
+			name: "/remote/dir5/",
 			// Filtered because it already exists
-			Modified: now,
-			FileMode: os.ModeDir,
+			modTime: now,
+			mode:    os.ModeDir,
 		},
-		{
-			Path: "/remote/foo/",
+		file{
+			name: "/remote/foo/",
 			// Filtered because of not matching any Patterns
-			Modified: now,
-			FileMode: os.ModeDir,
+			modTime: now,
+			mode:    os.ModeDir,
 		},
-		{
-			Path: "/remote/incomplete-dir3/",
+		file{
+			name: "/remote/incomplete-dir3/",
 			// Filtered because of matching any Filters
-			Modified: now,
-			FileMode: os.ModeDir,
+			modTime: now,
+			mode:    os.ModeDir,
 		},
-		{
-			Path: "/remote/xfile",
+		file{
+			name: "/remote/xfile",
 			// Filtered because it is not a directory
-			Modified: now,
-			FileMode: os.FileMode(0),
+			modTime: now,
 		},
 	}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		if dirname == "/tmp/dir5" {
-			return []os.FileInfo{fileInfoStub{}}, nil
+			return []os.FileInfo{file{}}, nil
 		}
 		return nil, nil
 	}
 	q := newQueue(s, files, readDir)
 	expected := []Item{
-		Item{itemParser: q.itemParser, Remote: files[0], Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
-		Item{itemParser: q.itemParser, Remote: files[1], Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
-		Item{itemParser: q.itemParser, Remote: files[2], Transfer: true, Reason: "Match=dir\\d"},
-		Item{itemParser: q.itemParser, Remote: files[3], Transfer: true, Reason: "Match=dir\\d"},
-		Item{itemParser: q.itemParser, Remote: files[4], Transfer: false, Reason: "IsDstDirEmpty=false"},
-		Item{itemParser: q.itemParser, Remote: files[5], Transfer: false, Reason: "no match"},
-		Item{itemParser: q.itemParser, Remote: files[6], Transfer: false, Reason: "Filter=^incomplete-"},
-		Item{itemParser: q.itemParser, Remote: files[7], Transfer: false, Reason: "IsFile=true SkipFiles=true"},
+		Item{itemParser: q.itemParser, RemotePath: files[0].Name(), Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
+		Item{itemParser: q.itemParser, RemotePath: files[1].Name(), Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
+		Item{itemParser: q.itemParser, RemotePath: files[2].Name(), Transfer: true, Reason: "Match=dir\\d"},
+		Item{itemParser: q.itemParser, RemotePath: files[3].Name(), Transfer: true, Reason: "Match=dir\\d"},
+		Item{itemParser: q.itemParser, RemotePath: files[4].Name(), Transfer: false, Reason: "IsDstDirEmpty=false"},
+		Item{itemParser: q.itemParser, RemotePath: files[5].Name(), Transfer: false, Reason: "no match"},
+		Item{itemParser: q.itemParser, RemotePath: files[6].Name(), Transfer: false, Reason: "Filter=^incomplete-"},
+		Item{itemParser: q.itemParser, RemotePath: files[7].Name(), Transfer: false, Reason: "IsFile=true SkipFiles=true"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {
@@ -135,10 +136,10 @@ func TestNewQueue(t *testing.T) {
 		a := actual[i]
 		if a.Transfer != e.Transfer {
 			t.Errorf("Expected Dir=%s to have Transfer=%t, got Transfer=%t",
-				e.Remote.Path, e.Transfer, a.Transfer)
+				e.RemotePath, e.Transfer, a.Transfer)
 		}
 		if a.Reason != e.Reason {
-			t.Errorf("Expected Dir=%s to have Reason=%s, got Reason=%s", e.Remote.Path,
+			t.Errorf("Expected Dir=%s to have Reason=%s, got Reason=%s", e.RemotePath,
 				e.Reason, a.Reason)
 		}
 	}
@@ -146,7 +147,7 @@ func TestNewQueue(t *testing.T) {
 
 func TestNewQueueRejectsUnparsableItem(t *testing.T) {
 	s := newTestSite()
-	q := newTestQueue(s, []lftp.File{{Path: "/foo/bar"}})
+	q := newTestQueue(s, []os.FileInfo{file{name: "/foo/bar"}})
 	if got := q.Items[0].Transfer; got {
 		t.Errorf("Expected false, got %t", got)
 	}
@@ -165,8 +166,8 @@ func TestScript(t *testing.T) {
 		Name: "siteA",
 	}
 	items := []Item{
-		Item{Remote: lftp.File{Path: "/foo"}, LocalDir: "/tmp", Transfer: true},
-		Item{Remote: lftp.File{Path: "/bar"}, LocalDir: "/tmp", Transfer: true},
+		Item{RemotePath: "/foo", LocalDir: "/tmp", Transfer: true},
+		Item{RemotePath: "/bar", LocalDir: "/tmp", Transfer: true},
 	}
 	q := Queue{Site: s, Items: items}
 	script := q.Script()
@@ -190,14 +191,14 @@ func TestDeduplicate(t *testing.T) {
 		regexp.MustCompile(`\.PROPER\.`),
 		regexp.MustCompile(`\.REPACK\.`),
 	}
-	files := []lftp.File{
-		{Path: "/tmp/The.Wire.S01E01.PROPER.foo"}, /* keep */
-		{Path: "/tmp/The.Wire.S01E01.REPACK.foo"},
-		{Path: "/tmp/The.Wire.S01E01.foo"},
-		{Path: "/tmp/The.Wire.S01E02.PROPER.REPACK"}, /* keep */
-		{Path: "/tmp/The.Wire.S01E02.bar"},
-		{Path: "/tmp/The.Wire.S01E03.PROPER.REPACK"},
-		{Path: "/tmp/The.Wire.S01E03.bar"}, /* keep */
+	files := []os.FileInfo{
+		file{name: "/tmp/The.Wire.S01E01.PROPER.foo"}, /* keep */
+		file{name: "/tmp/The.Wire.S01E01.REPACK.foo"},
+		file{name: "/tmp/The.Wire.S01E01.foo"},
+		file{name: "/tmp/The.Wire.S01E02.PROPER.REPACK"}, /* keep */
+		file{name: "/tmp/The.Wire.S01E02.bar"},
+		file{name: "/tmp/The.Wire.S01E03.PROPER.REPACK"},
+		file{name: "/tmp/The.Wire.S01E03.bar"}, /* keep */
 	}
 	q := newTestQueue(s, files)
 	expected := []Item{q.Items[0], q.Items[3], q.Items[5]}
@@ -206,8 +207,8 @@ func TestDeduplicate(t *testing.T) {
 		t.Fatalf("Expected length %d, got %d", len(expected), len(actual))
 	}
 	for i := range actual {
-		if actual[i].Remote.Path != expected[i].Remote.Path {
-			t.Errorf("Expected %s, got %s", expected[i].Remote.Path, actual[i].Remote.Path)
+		if actual[i].RemotePath != expected[i].RemotePath {
+			t.Errorf("Expected %s, got %s", expected[i].RemotePath, actual[i].RemotePath)
 		}
 	}
 }
@@ -218,13 +219,13 @@ func TestDeduplicateIgnoresAge(t *testing.T) {
 	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.HDTV\.`)}
 	s.maxAge = time.Duration(24) * time.Hour
 	s.Deduplicate = true
-	files := []lftp.File{
-		{Path: "/tmp/The.Wire.S01E01.HDTV.foo", Modified: now.Add(-time.Duration(48) * time.Hour)},
-		{Path: "/tmp/The.Wire.S01E01.WEBRip.foo", Modified: now},
+	files := []os.FileInfo{
+		file{name: "/tmp/The.Wire.S01E01.HDTV.foo", modTime: now.Add(-time.Duration(48) * time.Hour)},
+		file{name: "/tmp/The.Wire.S01E01.WEBRip.foo", modTime: now},
 	}
 	q := newTestQueue(s, files)
 	for _, item := range q.Transferable() {
-		t.Errorf("Expected empty queue, got %s", item.Remote.Path)
+		t.Errorf("Expected empty queue, got %s", item.RemotePath)
 	}
 }
 
@@ -232,11 +233,11 @@ func TestDeduplicateIgnoreSelf(t *testing.T) {
 	now := time.Now().Round(time.Second)
 	s := newTestSite()
 	s.Deduplicate = true
-	files := []lftp.File{
-		{Path: "/tmp/The.Wire.S01E01", Modified: now},
-		{Path: "/tmp/The.Wire.S01E01", Modified: now},
+	files := []os.FileInfo{
+		file{name: "/tmp/The.Wire.S01E01", modTime: now},
+		file{name: "/tmp/The.Wire.S01E01", modTime: now},
 	}
-	q := newQueue(s, files, readDirStub)
+	q := newTestQueue(s, files)
 	for _, item := range q.Items {
 		if item.Duplicate {
 			t.Errorf("Expected Duplicate=false for %+v", item)
@@ -247,7 +248,7 @@ func TestDeduplicateIgnoreSelf(t *testing.T) {
 func TestPostCommand(t *testing.T) {
 	s := newTestSite()
 	s.PostCommand = "xargs echo"
-	q := newTestQueue(s, []lftp.File{{Path: "/tmp/foo"}})
+	q := newTestQueue(s, []os.FileInfo{file{name: "/tmp/foo"}})
 	cmd, err := q.PostCommand(false)
 	if err != nil {
 		t.Fatal(err)
@@ -271,20 +272,20 @@ func TestMergePreferringRemoteCopy(t *testing.T) {
 	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.foo$`)}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		return []os.FileInfo{
-			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"},
-			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.baz"},
+			file{name: "The.Wire.S01E01.720p.BluRay.bar"},
+			file{name: "The.Wire.S01E01.720p.BluRay.baz"},
 		}, nil
 	}
-	q := newQueue(s, []lftp.File{{Path: "/tmp/The.Wire.S01E01.foo"}}, readDir)
+	q := newQueue(s, []os.FileInfo{file{name: "/tmp/The.Wire.S01E01.foo"}}, readDir)
 	if l := len(q.Items); l != 3 {
 		t.Fatalf("Expected length 3, got %d", l)
 	}
 	if q.Items[0].Duplicate || q.Items[0].Merged {
-		t.Errorf("Expected Duplicate=false Merged=false for Path=%q", q.Items[0].Remote.Path)
+		t.Errorf("Expected Duplicate=false Merged=false for Path=%q", q.Items[0].RemotePath)
 	}
 	for _, i := range q.Items[1:] {
 		if !i.Duplicate || !i.Merged {
-			t.Errorf("Expected Duplicate=true Merged=true for Path=%q", i.Remote.Path)
+			t.Errorf("Expected Duplicate=true Merged=true for Path=%q", i.RemotePath)
 		}
 	}
 }
@@ -296,19 +297,19 @@ func TestMergePreferringLocalCopy(t *testing.T) {
 	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.bar\.`)}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		return []os.FileInfo{
-			fileInfoStub{name: "The.Wire.S01E01.720p.BluRay.bar"},
-			fileInfoStub{name: "The.Wire.S01E02.720p.BluRay.baz"},
+			file{name: "The.Wire.S01E01.720p.BluRay.bar"},
+			file{name: "The.Wire.S01E02.720p.BluRay.baz"},
 		}, nil
 	}
-	q := newQueue(s, []lftp.File{{Path: "/tmp/The.Wire.S01E01.foo"}}, readDir)
+	q := newQueue(s, []os.FileInfo{file{name: "/tmp/The.Wire.S01E01.foo"}}, readDir)
 	if l := len(q.Items); l != 2 {
 		t.Fatalf("Expected length 2, got %d", l)
 	}
 	if !q.Items[0].Duplicate || q.Items[0].Merged {
-		t.Errorf("Expected Duplicate=true Merged=false for Path=%q", q.Items[0].Remote.Path)
+		t.Errorf("Expected Duplicate=true Merged=false for Path=%q", q.Items[0].RemotePath)
 	}
 	if q.Items[1].Duplicate || !q.Items[1].Merged {
-		t.Errorf("Expected Duplicate=false Merged=true for Path=%q", q.Items[1].Remote.Path)
+		t.Errorf("Expected Duplicate=false Merged=true for Path=%q", q.Items[1].RemotePath)
 	}
 }
 
@@ -341,7 +342,7 @@ func TestReadQueue(t *testing.T) {
 func TestFprintln(t *testing.T) {
 	s := newTestSite()
 	s.Client = lftp.Client{GetCmd: "mirror"}
-	q := newTestQueue(s, []lftp.File{{Path: "/tmp/The.Wire.S01E01"}})
+	q := newTestQueue(s, []os.FileInfo{file{name: "/tmp/The.Wire.S01E01"}})
 
 	var buf bytes.Buffer
 	if err := q.Fprintln(&buf, true); err != nil {
@@ -350,11 +351,8 @@ func TestFprintln(t *testing.T) {
 
 	json := `[
   {
-    "Remote": {
-      "Modified": "0001-01-01T00:00:00Z",
-      "Path": "/tmp/The.Wire.S01E01",
-      "FileMode": 0
-    },
+    "RemotePath": "/tmp/The.Wire.S01E01",
+    "ModTime": "0001-01-01T00:00:00Z",
     "LocalDir": "/tmp/The.Wire/S1/",
     "Transfer": true,
     "Reason": "Match=.*",

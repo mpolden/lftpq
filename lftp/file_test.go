@@ -1,7 +1,7 @@
 package lftp
 
 import (
-	"regexp"
+	"os"
 	"testing"
 	"time"
 )
@@ -16,14 +16,14 @@ func TestParseFile(t *testing.T) {
 		IsDir     bool
 		IsRegular bool
 	}{
-		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", File{Modified: t1, Path: "/bar/foo"},
+		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", File{modTime: t1, path: "/bar/foo"},
 			false /* IsDir */, true, false},
 		{"2015-02-03 15:12:30 +0100 CET /foo/bar@",
-			File{Modified: t2, Path: "/foo/bar"} /* IsSymlink */, true, false, false},
+			File{modTime: t2, path: "/foo/bar"} /* IsSymlink */, true, false, false},
 		{"2014-12-16 00:04:30 +0100 CET /foo/bar baz/",
-			File{Modified: t1, Path: "/foo/bar baz"}, false /* IsDir */, true, false},
+			File{modTime: t1, path: "/foo/bar baz"}, false /* IsDir */, true, false},
 		{"2014-12-16 00:04:30 +0100 CET /foo/baz",
-			File{Modified: t1, Path: "/foo/baz"}, false, false /* IsRegular */, true},
+			File{modTime: t1, path: "/foo/baz"}, false, false /* IsRegular */, true},
 	}
 	for _, tt := range tests {
 		f, err := ParseFile(tt.in)
@@ -31,72 +31,20 @@ func TestParseFile(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		if f.Path != tt.out.Path {
-			t.Errorf("Expected %q, got %q", tt.out.Path, f.Path)
+		if f.Name() != tt.out.Name() {
+			t.Errorf("Expected %q, got %q", tt.out.Name(), f.Name())
 		}
-		if !f.Modified.Equal(tt.out.Modified) {
-			t.Errorf("Expected %s, got %s", tt.out.Modified, f.Modified)
+		if !f.ModTime().Equal(tt.out.ModTime()) {
+			t.Errorf("Expected %s, got %s", tt.out.ModTime(), f.ModTime())
 		}
 		if f.IsDir() != tt.IsDir {
 			t.Errorf("Expected IsDir=%t, got %t", tt.IsDir, f.IsDir())
 		}
-		if f.IsSymlink() != tt.IsSymlink {
-			t.Errorf("Expected IsSymlink=%t, got %t", tt.IsSymlink, f.IsSymlink())
+		if isSymlink := f.Mode()&os.ModeSymlink != 0; isSymlink != tt.IsSymlink {
+			t.Errorf("Expected IsSymlink=%t, got %t", tt.IsSymlink, isSymlink)
 		}
-		if f.IsRegular() != tt.IsRegular {
-			t.Errorf("Expected IsRegular=%t, got %t", tt.IsRegular, f.IsRegular())
+		if f.Mode().IsRegular() != tt.IsRegular {
+			t.Errorf("Expected IsRegular=%t, got %t", tt.IsRegular, f.Mode().IsRegular())
 		}
-	}
-}
-
-func TestBase(t *testing.T) {
-	in := File{Path: "/foo/bar"}
-	out := "bar"
-	if got := in.Base(); got != out {
-		t.Fatalf("Expected %q, got %q", out, got)
-	}
-}
-
-func TestAge(t *testing.T) {
-	now := time.Now().Round(time.Second)
-	var tests = []struct {
-		in  File
-		out time.Duration
-	}{
-		{File{Modified: now}, time.Duration(0)},
-		{File{Modified: now.Add(-time.Duration(48) * time.Hour)}, time.Duration(48) * time.Hour},
-	}
-	for _, tt := range tests {
-		if got := tt.in.Age(now); got != tt.out {
-			t.Errorf("Expected %s, got %s", tt.out, got)
-		}
-	}
-}
-
-func TestMatch(t *testing.T) {
-	f := File{Path: "/tmp/foo"}
-	if !f.Match(regexp.MustCompile("f")) {
-		t.Fatal("Expected true")
-	}
-	if f.Match(regexp.MustCompile("bar")) {
-		t.Fatal("Expected false")
-	}
-}
-
-func TestMatchAny(t *testing.T) {
-	f := File{Path: "/tmp/foo"}
-	patterns := []*regexp.Regexp{
-		regexp.MustCompile("fo"),
-		regexp.MustCompile("ba"),
-	}
-	if _, match := f.MatchAny(patterns); !match {
-		t.Fatal("Expected true")
-	}
-	patterns = []*regexp.Regexp{
-		regexp.MustCompile("x"),
-		regexp.MustCompile("z"),
-	}
-	if _, match := f.MatchAny(patterns); match {
-		t.Fatal("Expected false")
 	}
 }

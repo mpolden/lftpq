@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"text/template"
 
-	"github.com/martinp/lftpq/lftp"
 	"github.com/martinp/lftpq/parser"
 )
 
@@ -19,7 +19,7 @@ func (s Items) Len() int {
 }
 
 func (s Items) Less(i, j int) bool {
-	return s[i].Remote.Path < s[j].Remote.Path
+	return s[i].RemotePath < s[j].RemotePath
 }
 
 func (s Items) Swap(i, j int) {
@@ -27,13 +27,14 @@ func (s Items) Swap(i, j int) {
 }
 
 type Item struct {
-	Remote    lftp.File
-	LocalDir  string
-	Transfer  bool
-	Reason    string
-	Media     parser.Media
-	Duplicate bool
-	Merged    bool
+	RemotePath string
+	ModTime    time.Time
+	LocalDir   string
+	Transfer   bool
+	Reason     string
+	Media      parser.Media
+	Duplicate  bool
+	Merged     bool
 	itemParser
 }
 
@@ -41,7 +42,7 @@ func (i *Item) dstDir() string {
 	// When LocalDir has a trailing slash, the actual destination dir will be a directory inside LocalDir (same
 	// behaviour as rsync)
 	if strings.HasSuffix(i.LocalDir, string(os.PathSeparator)) {
-		return filepath.Join(i.LocalDir, i.Remote.Base())
+		return filepath.Join(i.LocalDir, filepath.Base(i.RemotePath))
 	}
 	return i.LocalDir
 }
@@ -88,11 +89,11 @@ func (i *Item) duplicates(readDir readDir) Items {
 	dirs, _ := readDir(parent)
 	for _, fi := range dirs {
 		// Ignore self
-		if i.Remote.Base() == fi.Name() {
+		if filepath.Base(i.RemotePath) == fi.Name() {
 			continue
 		}
 		path := filepath.Join(parent, fi.Name())
-		item, err := newItem(lftp.File{Path: path}, i.itemParser)
+		item, err := newItem(path, i.ModTime, i.itemParser)
 		if err != nil {
 			item.reject(err.Error())
 		} else {
@@ -108,9 +109,9 @@ func (i *Item) duplicates(readDir readDir) Items {
 	return items
 }
 
-func newItem(file lftp.File, itemParser itemParser) (Item, error) {
-	item := Item{Remote: file, Reason: "no match", itemParser: itemParser}
-	if err := item.setMedia(file.Base()); err != nil {
+func newItem(remotePath string, modTime time.Time, itemParser itemParser) (Item, error) {
+	item := Item{RemotePath: remotePath, ModTime: modTime, Reason: "no match", itemParser: itemParser}
+	if err := item.setMedia(filepath.Base(remotePath)); err != nil {
 		return item, err
 	}
 	if err := item.setLocalDir(itemParser.template); err != nil {

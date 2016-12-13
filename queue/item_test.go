@@ -6,13 +6,13 @@ import (
 	"sort"
 	"testing"
 	"text/template"
+	"time"
 
-	"github.com/martinp/lftpq/lftp"
 	"github.com/martinp/lftpq/parser"
 )
 
 func newTestItem(remotePath string, itemParser itemParser) Item {
-	item, _ := newItem(lftp.File{Path: remotePath}, itemParser)
+	item, _ := newItem(remotePath, time.Time{}, itemParser)
 	return item
 }
 
@@ -53,7 +53,7 @@ func TestNewItemDefaultParser(t *testing.T) {
 }
 
 func TestNewItemUnparsable(t *testing.T) {
-	_, err := newItem(lftp.File{Path: "/foo/bar"}, showItemParser())
+	_, err := newItem("/foo/bar", time.Time{}, showItemParser())
 	if err == nil {
 		t.Fatal("Expected error")
 	}
@@ -85,10 +85,10 @@ func TestNewItemWithReplacements(t *testing.T) {
 
 func TestItemsSort(t *testing.T) {
 	items := Items{
-		Item{Remote: lftp.File{Path: "/x/c"}},
-		Item{Remote: lftp.File{Path: "/x/b"}},
-		Item{Remote: lftp.File{Path: "/x/a"}},
-		Item{Remote: lftp.File{Path: "/y/a"}},
+		Item{RemotePath: "/x/c"},
+		Item{RemotePath: "/x/b"},
+		Item{RemotePath: "/x/a"},
+		Item{RemotePath: "/y/a"},
 	}
 	sort.Sort(items)
 	var tests = []struct {
@@ -101,7 +101,7 @@ func TestItemsSort(t *testing.T) {
 		{3, "/y/a"},
 	}
 	for _, tt := range tests {
-		if got := items[tt.in].Remote.Path; got != tt.out {
+		if got := items[tt.in].RemotePath; got != tt.out {
 			t.Errorf("Expected index %d to be %q, got %q", tt.in, tt.out, got)
 		}
 	}
@@ -134,8 +134,8 @@ func TestDstDir(t *testing.T) {
 		in  Item
 		out string
 	}{
-		{Item{Remote: lftp.File{Path: "/foo/bar"}, LocalDir: "/tmp/"}, "/tmp/bar"},
-		{Item{Remote: lftp.File{Path: "/foo/bar"}, LocalDir: "/tmp/foo/bar"}, "/tmp/foo/bar"},
+		{Item{RemotePath: "/foo/bar", LocalDir: "/tmp/"}, "/tmp/bar"},
+		{Item{RemotePath: "/foo/bar", LocalDir: "/tmp/foo/bar"}, "/tmp/foo/bar"},
 	}
 	for _, tt := range tests {
 		if got := tt.in.dstDir(); got != tt.out {
@@ -147,7 +147,7 @@ func TestDstDir(t *testing.T) {
 func TestIsEmpty(t *testing.T) {
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		if dirname == "/tmp/bar" {
-			return []os.FileInfo{fileInfoStub{}}, nil
+			return []os.FileInfo{file{}}, nil
 		}
 		return nil, nil
 	}
