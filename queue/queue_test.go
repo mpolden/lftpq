@@ -352,7 +352,7 @@ func TestFprintln(t *testing.T) {
 	json := `[
   {
     "RemotePath": "/tmp/The.Wire.S01E01",
-    "LocalPath": "/tmp/The.Wire/S1/",
+    "LocalPath": "/tmp/The.Wire/S1/The.Wire.S01E01",
     "ModTime": "0001-01-01T00:00:00Z",
     "Transfer": true,
     "Reason": "Match=.*",
@@ -378,7 +378,7 @@ func TestFprintln(t *testing.T) {
 	}
 
 	script := `open test
-queue mirror /tmp/The.Wire.S01E01 /tmp/The.Wire/S1/
+queue mirror /tmp/The.Wire.S01E01 /tmp/The.Wire/S1/The.Wire.S01E01
 queue start
 wait
 exit

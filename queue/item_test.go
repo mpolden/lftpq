@@ -32,14 +32,14 @@ func movieItemParser() itemParser {
 
 func TestNewItemShow(t *testing.T) {
 	item := newTestItem("/foo/The.Wire.S03E01", showItemParser())
-	if expected := "/tmp/The.Wire/S3/"; item.LocalPath != expected {
+	if expected := "/tmp/The.Wire/S3/The.Wire.S03E01"; item.LocalPath != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalPath)
 	}
 }
 
 func TestNewItemMovie(t *testing.T) {
 	item := newTestItem("/foo/Apocalypse.Now.1979", movieItemParser())
-	if expected := "/tmp/1979/Apocalypse.Now/"; item.LocalPath != expected {
+	if expected := "/tmp/1979/Apocalypse.Now/Apocalypse.Now.1979"; item.LocalPath != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalPath)
 	}
 }
@@ -47,7 +47,7 @@ func TestNewItemMovie(t *testing.T) {
 func TestNewItemDefaultParser(t *testing.T) {
 	tmpl := itemParser{parser: parser.Default, template: template.Must(template.New("t").Parse("/tmp/"))}
 	item := newTestItem("/foo/The.Wire.S03E01", tmpl)
-	if expected := "/tmp/"; item.LocalPath != expected {
+	if expected := "/tmp/The.Wire.S03E01"; item.LocalPath != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalPath)
 	}
 }
@@ -79,6 +79,27 @@ func TestNewItemWithReplacements(t *testing.T) {
 	for _, tt := range tests {
 		if tt.in.Media.Name != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, tt.in.Media.Name)
+		}
+	}
+}
+
+func TestLocalPath(t *testing.T) {
+	var tests = []struct {
+		remotePath string
+		template   string
+		out        string
+	}{
+		{"/remote/foo", "/local/", "/local/foo"},
+		{"/remote/bar", "/local/bar", "/local/bar"},
+	}
+	for _, tt := range tests {
+		itemParser := itemParser{
+			parser:   parser.Default,
+			template: template.Must(template.New("t").Parse(tt.template)),
+		}
+		item := newTestItem(tt.remotePath, itemParser)
+		if item.LocalPath != tt.out {
+			t.Errorf("Expected %q, got %q", tt.out, item.LocalPath)
 		}
 	}
 }
@@ -126,21 +147,6 @@ func TestReject(t *testing.T) {
 	}
 	if expected := "bar"; item.Reason != expected {
 		t.Errorf("Expected %q, got %q", expected, item.Reason)
-	}
-}
-
-func TestDstDir(t *testing.T) {
-	var tests = []struct {
-		in  Item
-		out string
-	}{
-		{Item{RemotePath: "/foo/bar", LocalPath: "/tmp/"}, "/tmp/bar"},
-		{Item{RemotePath: "/foo/bar", LocalPath: "/tmp/foo/bar"}, "/tmp/foo/bar"},
-	}
-	for _, tt := range tests {
-		if got := tt.in.dstDir(); got != tt.out {
-			t.Errorf("Expected %q, got %q", tt.out, got)
-		}
 	}
 }
 

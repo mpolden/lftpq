@@ -38,17 +38,8 @@ type Item struct {
 	itemParser
 }
 
-func (i *Item) dstDir() string {
-	// When LocalDir has a trailing slash, the actual destination dir will be a directory inside LocalDir (same
-	// behaviour as rsync)
-	if strings.HasSuffix(i.LocalPath, string(os.PathSeparator)) {
-		return filepath.Join(i.LocalPath, filepath.Base(i.RemotePath))
-	}
-	return i.LocalPath
-}
-
 func (i *Item) isEmpty(readDir readDir) bool {
-	dirs, _ := readDir(i.dstDir())
+	dirs, _ := readDir(i.LocalPath)
 	return len(dirs) == 0
 }
 
@@ -74,18 +65,24 @@ func (i *Item) setMedia(dirname string) error {
 	return nil
 }
 
-func (i *Item) setLocalDir(t *template.Template) error {
+func (i *Item) setLocalPath(t *template.Template) error {
 	var b bytes.Buffer
 	if err := t.Execute(&b, i.Media); err != nil {
 		return err
 	}
-	i.LocalPath = b.String()
+	path := b.String()
+	// When path has a trailing slash, the actual destination path will be a directory inside LocalPath (same
+	// behaviour as rsync)
+	if strings.HasSuffix(path, string(os.PathSeparator)) {
+		path = filepath.Join(path, filepath.Base(i.RemotePath))
+	}
+	i.LocalPath = path
 	return nil
 }
 
 func (i *Item) duplicates(readDir readDir) Items {
 	var items Items
-	parent := filepath.Join(i.dstDir(), "..")
+	parent := filepath.Join(i.LocalPath, "..")
 	dirs, _ := readDir(parent)
 	for _, fi := range dirs {
 		// Ignore self
@@ -114,7 +111,7 @@ func newItem(remotePath string, modTime time.Time, itemParser itemParser) (Item,
 	if err := item.setMedia(filepath.Base(remotePath)); err != nil {
 		return item, err
 	}
-	if err := item.setLocalDir(itemParser.template); err != nil {
+	if err := item.setLocalPath(itemParser.template); err != nil {
 		return item, err
 	}
 	return item, nil
