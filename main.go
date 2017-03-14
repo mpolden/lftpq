@@ -7,7 +7,7 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 
-	"github.com/martinp/lftpq/queue"
+	"github.com/mpolden/lftpq/queue"
 )
 
 type CLI struct {

@@ -9,7 +9,7 @@ import (
 
 	"text/template"
 
-	"github.com/martinp/lftpq/parser"
+	"github.com/mpolden/lftpq/parser"
 )
 
 type Items []Item

@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/martinp/lftpq/parser"
+	"github.com/mpolden/lftpq/parser"
 )
 
 func newTestItem(remotePath string, itemParser itemParser) Item {

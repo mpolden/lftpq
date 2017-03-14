@@ -11,8 +11,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/martinp/lftpq/lftp"
-	"github.com/martinp/lftpq/parser"
+	"github.com/mpolden/lftpq/lftp"
+	"github.com/mpolden/lftpq/parser"
 )
 
 func newTestSite() Site {
