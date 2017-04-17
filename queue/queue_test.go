@@ -16,7 +16,7 @@ import (
 )
 
 func newTestSite() Site {
-	localDir := template.Must(template.New("t").Parse("/tmp/{{ .Name }}/S{{ .Season }}/"))
+	localDir := template.Must(template.New("t").Parse("/local/{{ .Name }}/S{{ .Season }}/"))
 	patterns := []*regexp.Regexp{regexp.MustCompile(".*")}
 	return Site{
 		Name:     "test",
@@ -57,7 +57,7 @@ func TestNewQueue(t *testing.T) {
 		SkipExisting: true,
 		SkipFiles:    true,
 		itemParser: itemParser{
-			template: template.Must(template.New("localDir").Parse("/tmp/")),
+			template: template.Must(template.New("localDir").Parse("/local/")),
 			parser:   parser.Default,
 		},
 	}
@@ -111,7 +111,7 @@ func TestNewQueue(t *testing.T) {
 		},
 	}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
-		if dirname == "/tmp/dir5" {
+		if dirname == "/local/dir5" {
 			return []os.FileInfo{file{}}, nil
 		}
 		return nil, nil
@@ -166,14 +166,14 @@ func TestScript(t *testing.T) {
 		Name: "siteA",
 	}
 	items := []Item{
-		Item{RemotePath: "/foo", LocalPath: "/tmp", Transfer: true},
-		Item{RemotePath: "/bar", LocalPath: "/tmp", Transfer: true},
+		Item{RemotePath: "/remote/foo", LocalPath: "/local", Transfer: true},
+		Item{RemotePath: "/remote/bar", LocalPath: "/local", Transfer: true},
 	}
 	q := Queue{Site: s, Items: items}
 	script := q.Script()
 	expected := `open siteA
-queue mirror /foo /tmp
-queue mirror /bar /tmp
+queue mirror /remote/foo /local
+queue mirror /remote/bar /local
 queue start
 wait
 exit
@@ -192,13 +192,13 @@ func TestDeduplicate(t *testing.T) {
 		regexp.MustCompile(`\.REPACK\.`),
 	}
 	files := []os.FileInfo{
-		file{name: "/tmp/The.Wire.S01E01.PROPER.foo"}, /* keep */
-		file{name: "/tmp/The.Wire.S01E01.REPACK.foo"},
-		file{name: "/tmp/The.Wire.S01E01.foo"},
-		file{name: "/tmp/The.Wire.S01E02.PROPER.REPACK"}, /* keep */
-		file{name: "/tmp/The.Wire.S01E02.bar"},
-		file{name: "/tmp/The.Wire.S01E03.PROPER.REPACK"},
-		file{name: "/tmp/The.Wire.S01E03.bar"}, /* keep */
+		file{name: "/remote/The.Wire.S01E01.PROPER.foo"}, /* keep */
+		file{name: "/remote/The.Wire.S01E01.REPACK.foo"},
+		file{name: "/remote/The.Wire.S01E01.foo"},
+		file{name: "/remote/The.Wire.S01E02.PROPER.REPACK"}, /* keep */
+		file{name: "/remote/The.Wire.S01E02.bar"},
+		file{name: "/remote/The.Wire.S01E03.PROPER.REPACK"},
+		file{name: "/remote/The.Wire.S01E03.bar"}, /* keep */
 	}
 	q := newTestQueue(s, files)
 	expected := []Item{q.Items[0], q.Items[3], q.Items[5]}
@@ -220,8 +220,8 @@ func TestDeduplicateIgnoresAge(t *testing.T) {
 	s.maxAge = time.Duration(24) * time.Hour
 	s.Deduplicate = true
 	files := []os.FileInfo{
-		file{name: "/tmp/The.Wire.S01E01.HDTV.foo", modTime: now.Add(-time.Duration(48) * time.Hour)},
-		file{name: "/tmp/The.Wire.S01E01.WEBRip.foo", modTime: now},
+		file{name: "/remote/The.Wire.S01E01.HDTV.foo", modTime: now.Add(-time.Duration(48) * time.Hour)},
+		file{name: "/remote/The.Wire.S01E01.WEBRip.foo", modTime: now},
 	}
 	q := newTestQueue(s, files)
 	for _, item := range q.Transferable() {
@@ -234,8 +234,8 @@ func TestDeduplicateIgnoreSelf(t *testing.T) {
 	s := newTestSite()
 	s.Deduplicate = true
 	files := []os.FileInfo{
-		file{name: "/tmp/The.Wire.S01E01", modTime: now},
-		file{name: "/tmp/The.Wire.S01E01", modTime: now},
+		file{name: "/remote/The.Wire.S01E01", modTime: now},
+		file{name: "/remote/The.Wire.S01E01", modTime: now},
 	}
 	q := newTestQueue(s, files)
 	for _, item := range q.Items {
@@ -248,7 +248,7 @@ func TestDeduplicateIgnoreSelf(t *testing.T) {
 func TestPostCommand(t *testing.T) {
 	s := newTestSite()
 	s.PostCommand = "xargs echo"
-	q := newTestQueue(s, []os.FileInfo{file{name: "/tmp/foo"}})
+	q := newTestQueue(s, []os.FileInfo{file{name: "/remote/foo"}})
 	cmd, err := q.PostCommand(false)
 	if err != nil {
 		t.Fatal(err)
@@ -276,14 +276,14 @@ func TestMergePreferringRemoteCopy(t *testing.T) {
 			file{name: "The.Wire.S01E01.720p.BluRay.baz"},
 		}, nil
 	}
-	q := newQueue(s, []os.FileInfo{file{name: "/tmp/The.Wire.S01E01.foo"}}, readDir)
+	q := newQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01.foo"}}, readDir)
 	if l := len(q.Items); l != 3 {
 		t.Fatalf("Expected length 3, got %d", l)
 	}
-	if q.Items[0].Duplicate || q.Items[0].Merged {
-		t.Errorf("Expected Duplicate=false Merged=false for Path=%q", q.Items[0].RemotePath)
+	if q.Items[2].Duplicate || q.Items[2].Merged {
+		t.Errorf("Expected Duplicate=false Merged=false for Path=%q", q.Items[2].RemotePath)
 	}
-	for _, i := range q.Items[1:] {
+	for _, i := range q.Items[0 : len(q.Items)-1] {
 		if !i.Duplicate || !i.Merged {
 			t.Errorf("Expected Duplicate=true Merged=true for Path=%q", i.RemotePath)
 		}
@@ -294,22 +294,22 @@ func TestMergePreferringLocalCopy(t *testing.T) {
 	s := newTestSite()
 	s.Merge = true
 	s.Deduplicate = true
-	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.bar\.`)}
+	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.bar$`)}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		return []os.FileInfo{
 			file{name: "The.Wire.S01E01.720p.BluRay.bar"},
 			file{name: "The.Wire.S01E02.720p.BluRay.baz"},
 		}, nil
 	}
-	q := newQueue(s, []os.FileInfo{file{name: "/tmp/The.Wire.S01E01.foo"}}, readDir)
+	q := newQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01.foo"}}, readDir)
 	if l := len(q.Items); l != 2 {
 		t.Fatalf("Expected length 2, got %d", l)
 	}
-	if !q.Items[0].Duplicate || q.Items[0].Merged {
-		t.Errorf("Expected Duplicate=true Merged=false for Path=%q", q.Items[0].RemotePath)
+	if q.Items[0].Duplicate || !q.Items[0].Merged {
+		t.Errorf("Expected Duplicate=false Merged=true for Path=%q", q.Items[0].RemotePath)
 	}
-	if q.Items[1].Duplicate || !q.Items[1].Merged {
-		t.Errorf("Expected Duplicate=false Merged=true for Path=%q", q.Items[1].RemotePath)
+	if !q.Items[1].Duplicate || q.Items[1].Merged {
+		t.Errorf("Expected Duplicate=true Merged=false for Path=%q", q.Items[1].RemotePath)
 	}
 }
 
@@ -342,7 +342,7 @@ func TestReadQueue(t *testing.T) {
 func TestFprintln(t *testing.T) {
 	s := newTestSite()
 	s.Client = lftp.Client{GetCmd: "mirror"}
-	q := newTestQueue(s, []os.FileInfo{file{name: "/tmp/The.Wire.S01E01"}})
+	q := newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
 
 	var buf bytes.Buffer
 	if err := q.Fprintln(&buf, true); err != nil {
@@ -351,8 +351,8 @@ func TestFprintln(t *testing.T) {
 
 	json := `[
   {
-    "RemotePath": "/tmp/The.Wire.S01E01",
-    "LocalPath": "/tmp/The.Wire/S1/The.Wire.S01E01",
+    "RemotePath": "/remote/The.Wire.S01E01",
+    "LocalPath": "/local/The.Wire/S1/The.Wire.S01E01",
     "ModTime": "0001-01-01T00:00:00Z",
     "Transfer": true,
     "Reason": "Match=.*",
@@ -378,7 +378,7 @@ func TestFprintln(t *testing.T) {
 	}
 
 	script := `open test
-queue mirror /tmp/The.Wire.S01E01 /tmp/The.Wire/S1/The.Wire.S01E01
+queue mirror /remote/The.Wire.S01E01 /local/The.Wire/S1/The.Wire.S01E01
 queue start
 wait
 exit
