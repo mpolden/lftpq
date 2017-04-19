@@ -20,7 +20,7 @@ type readDir func(dirname string) ([]os.FileInfo, error)
 
 type Queue struct {
 	Site
-	Items
+	Items []Item
 }
 
 func New(site Site, files []os.FileInfo) Queue {
@@ -174,7 +174,7 @@ func matchAny(patterns []*regexp.Regexp, f os.FileInfo) (string, bool) {
 }
 
 func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
-	q := Queue{Site: site, Items: make(Items, 0, len(files))}
+	q := Queue{Site: site, Items: make([]Item, 0, len(files))}
 	// Initial filtering
 	for _, f := range files {
 		item, err := newItem(f.Name(), f.ModTime(), q.itemParser)
@@ -194,7 +194,7 @@ func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 	if q.Merge {
 		q.merge(readDir)
 	}
-	sort.Sort(q.Items)
+	sort.Slice(q.Items, func(i, j int) bool { return q.Items[i].RemotePath < q.Items[j].RemotePath })
 	if q.Deduplicate {
 		q.deduplicate()
 	}

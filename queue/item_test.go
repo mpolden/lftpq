@@ -3,7 +3,6 @@ package queue
 import (
 	"os"
 	"regexp"
-	"sort"
 	"testing"
 	"text/template"
 	"time"
@@ -100,30 +99,6 @@ func TestLocalPath(t *testing.T) {
 		item := newTestItem(tt.remotePath, itemParser)
 		if item.LocalPath != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, item.LocalPath)
-		}
-	}
-}
-
-func TestItemsSort(t *testing.T) {
-	items := Items{
-		Item{RemotePath: "/x/c"},
-		Item{RemotePath: "/x/b"},
-		Item{RemotePath: "/x/a"},
-		Item{RemotePath: "/y/a"},
-	}
-	sort.Sort(items)
-	var tests = []struct {
-		in  int
-		out string
-	}{
-		{0, "/x/a"},
-		{1, "/x/b"},
-		{2, "/x/c"},
-		{3, "/y/a"},
-	}
-	for _, tt := range tests {
-		if got := items[tt.in].RemotePath; got != tt.out {
-			t.Errorf("Expected index %d to be %q, got %q", tt.in, tt.out, got)
 		}
 	}
 }

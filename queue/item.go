@@ -12,20 +12,6 @@ import (
 	"github.com/mpolden/lftpq/parser"
 )
 
-type Items []Item
-
-func (s Items) Len() int {
-	return len(s)
-}
-
-func (s Items) Less(i, j int) bool {
-	return s[i].RemotePath < s[j].RemotePath
-}
-
-func (s Items) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
 type Item struct {
 	RemotePath string
 	LocalPath  string
@@ -80,8 +66,8 @@ func (i *Item) setLocalPath(t *template.Template) error {
 	return nil
 }
 
-func (i *Item) duplicates(readDir readDir) Items {
-	var items Items
+func (i *Item) duplicates(readDir readDir) []Item {
+	var items []Item
 	parent := filepath.Join(i.LocalPath, "..")
 	dirs, _ := readDir(parent)
 	for _, fi := range dirs {
