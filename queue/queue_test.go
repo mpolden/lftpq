@@ -313,6 +313,34 @@ func TestMergePreferringLocalCopy(t *testing.T) {
 	}
 }
 
+func TestLocalCopyDoesNotDuplicateRemoteWithEqualWeight(t *testing.T) {
+	s := newTestSite()
+	s.Merge = true
+	s.Deduplicate = true
+	s.SkipExisting = true
+	readDir := func(dirname string) ([]os.FileInfo, error) {
+		if dirname == "/local/The.Wire/S1/The.Wire.S01E01.720p.BluRay.foo" {
+			return []os.FileInfo{file{}}, nil
+		}
+		if dirname == "/local/The.Wire/S1" {
+			return []os.FileInfo{file{name: "The.Wire.S01E01.720p.BluRay.foo"}}, nil
+		}
+		return nil, nil
+	}
+	q := newQueue(s, []os.FileInfo{
+		file{name: "/remote/The.Wire.S01E01.720p.BluRay.foo"},
+		file{name: "/remote/The.Wire.S01E01.720p.BluRay.bar"},
+	}, readDir)
+	if item := q.Items[0]; item.Transfer || item.Duplicate || !item.Merged {
+		t.Errorf("Expected Transfer=false Duplicate=false Merged=true for Path=%q", item.RemotePath)
+	}
+	for _, item := range q.Items[1:] {
+		if item.Transfer {
+			t.Errorf("Expected Transfer=false for Path=%q", item.RemotePath)
+		}
+	}
+}
+
 func TestReadQueue(t *testing.T) {
 	json := `
 /tv/The.Wire.S01E01

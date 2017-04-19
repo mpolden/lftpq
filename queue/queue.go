@@ -145,6 +145,9 @@ func (q *Queue) deduplicate() {
 				continue
 			}
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
+				if (a.Merged || b.Merged) && q.weight(a) == q.weight(b) {
+					continue
+				}
 				if q.weight(a) <= q.weight(b) {
 					a.Duplicate = true
 					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.RemotePath, q.weight(a)))
