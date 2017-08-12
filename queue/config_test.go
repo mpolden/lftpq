@@ -10,7 +10,7 @@ func TestLoad(t *testing.T) {
 	cfg := Config{
 		Sites: []Site{Site{
 			Name:         "foo",
-			Dir:          "/site",
+			Dirs:         []string{"/site"},
 			MaxAge:       "24h",
 			Patterns:     []string{"^match"},
 			Filters:      []string{"^skip"},

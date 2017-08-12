@@ -28,8 +28,8 @@ func (c *Client) Run(args []string, inheritIO bool) error {
 	return nil
 }
 
-func parseDirList(r io.Reader) ([]File, error) {
-	files := []File{}
+func parseDirList(r io.Reader) ([]os.FileInfo, error) {
+	var files []os.FileInfo
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -53,7 +53,7 @@ func listArgs(name, path string) []string {
 	return []string{"-e", script, name}
 }
 
-func (c *Client) List(name, path string) ([]File, error) {
+func (c *Client) List(name, path string) ([]os.FileInfo, error) {
 	cmd := exec.Command(c.Path, listArgs(name, path)...)
 
 	cmd.Stderr = os.Stderr

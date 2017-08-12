@@ -36,7 +36,10 @@ Help Options:
   "Sites": [
     {
       "Name": "foo",
-      "Dir": "/dir",
+      "Dirs": [
+        "/dir1",
+        "/dir2"
+      ],
       "LocalDir": "/tmp/{{ .Name }}/S{{ .Season }}/",
       "SkipSymlinks": true,
       "SkipExisting": true,
@@ -86,7 +89,7 @@ alias. For example: If you have `alias m "mirror --only-missing"` in your
 
 `Name` is the bookmark or URL of the site. This is passed to the `open` command in lftp.
 
-`Dir` is the remote directory used to generate the queue.
+`Dirs` is a list of remote directories from which the queue is generated.
 
 `LocalDir` is the local directory where files should be downloaded. This can be
 a template. When the `show` parser is used, the following template variables are

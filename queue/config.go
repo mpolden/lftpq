@@ -32,7 +32,7 @@ type Replacement struct {
 type Site struct {
 	Client       lftp.Client
 	Name         string
-	Dir          string
+	Dirs         []string
 	MaxAge       string
 	maxAge       time.Duration
 	Patterns     []string

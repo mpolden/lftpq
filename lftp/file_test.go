@@ -11,19 +11,19 @@ func TestParseFile(t *testing.T) {
 	t2 := time.Date(2015, 2, 3, 15, 12, 30, 0, time.FixedZone("CET", 3600))
 	var tests = []struct {
 		in        string
-		out       File
+		out       file
 		IsSymlink bool
 		IsDir     bool
 		IsRegular bool
 	}{
-		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", File{modTime: t1, path: "/bar/foo"},
+		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", file{modTime: t1, path: "/bar/foo"},
 			false /* IsDir */, true, false},
 		{"2015-02-03 15:12:30 +0100 CET /foo/bar@",
-			File{modTime: t2, path: "/foo/bar"} /* IsSymlink */, true, false, false},
+			file{modTime: t2, path: "/foo/bar"} /* IsSymlink */, true, false, false},
 		{"2014-12-16 00:04:30 +0100 CET /foo/bar baz/",
-			File{modTime: t1, path: "/foo/bar baz"}, false /* IsDir */, true, false},
+			file{modTime: t1, path: "/foo/bar baz"}, false /* IsDir */, true, false},
 		{"2014-12-16 00:04:30 +0100 CET /foo/baz",
-			File{modTime: t1, path: "/foo/baz"}, false, false /* IsRegular */, true},
+			file{modTime: t1, path: "/foo/baz"}, false, false /* IsRegular */, true},
 	}
 	for _, tt := range tests {
 		f, err := ParseFile(tt.in)

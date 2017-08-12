@@ -49,7 +49,7 @@ func TestNewQueue(t *testing.T) {
 	now := time.Now().Round(time.Second)
 	s := Site{
 		Name:         "foo",
-		Dir:          "/remote",
+		Dirs:         []string{"/remote"},
 		maxAge:       time.Duration(24) * time.Hour,
 		patterns:     []*regexp.Regexp{regexp.MustCompile(`dir\d`)},
 		filters:      []*regexp.Regexp{regexp.MustCompile("^incomplete-")},
