@@ -1,7 +1,8 @@
 package queue
 
 import (
-	"bytes"
+	"encoding"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -367,17 +368,15 @@ func TestReadQueue(t *testing.T) {
 	}
 }
 
-func TestFprintln(t *testing.T) {
+func TestMarshalJSON(t *testing.T) {
 	s := newTestSite()
 	s.Client = lftp.Client{GetCmd: "mirror"}
-	q := newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
-
-	var buf bytes.Buffer
-	if err := q.Fprintln(&buf, true); err != nil {
+	var q json.Marshaler = newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
+	out, err := q.MarshalJSON()
+	if err != nil {
 		t.Fatal(err)
 	}
-
-	json := `[
+	want := `[
   {
     "RemotePath": "/remote/The.Wire.S01E01",
     "LocalPath": "/local/The.Wire/S1/The.Wire.S01E01",
@@ -394,24 +393,27 @@ func TestFprintln(t *testing.T) {
     "Duplicate": false,
     "Merged": false
   }
-]
-`
-	if got := buf.String(); got != json {
-		t.Errorf("Expected %q, got %q", json, got)
+]`
+	if got := string(out); got != want {
+		t.Errorf("want %q, got %q", want, got)
 	}
+}
 
-	buf.Reset()
-	if err := q.Fprintln(&buf, false); err != nil {
+func TestMarshalText(t *testing.T) {
+	s := newTestSite()
+	s.Client = lftp.Client{GetCmd: "mirror"}
+	var q encoding.TextMarshaler = newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
+	out, err := q.MarshalText()
+	if err != nil {
 		t.Fatal(err)
 	}
-
-	script := `open test
+	want := `open test
 queue mirror /remote/The.Wire.S01E01 /local/The.Wire/S1/The.Wire.S01E01
 queue start
 wait
 exit
 `
-	if got := buf.String(); got != script {
-		t.Errorf("Expected %q, got %q", script, got)
+	if got := string(out); got != want {
+		t.Errorf("want %q, got %q", want, got)
 	}
 }

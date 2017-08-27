@@ -56,7 +56,20 @@ func (c *CLI) buildQueue(s queue.Site) error {
 
 func (c *CLI) process(q queue.Queue) error {
 	if c.Dryrun {
-		return q.Fprintln(os.Stdout, c.Format == "json")
+		var (
+			out []byte
+			err error
+		)
+		if c.Format == "json" {
+			out, err = q.MarshalJSON()
+			out = append(out, 0x0a) // Add trailing newline
+		} else {
+			out, err = q.MarshalText()
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s", out)
 	}
 	if len(q.Transferable()) == 0 {
 		c.logf("[%s] Queue is empty", q.Site.Name)

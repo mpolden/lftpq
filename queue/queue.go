@@ -83,19 +83,6 @@ func (q *Queue) Start(inheritIO bool) error {
 	return q.Client.Run([]string{"-f", name}, inheritIO)
 }
 
-func (q *Queue) Fprintln(w io.Writer, printJSON bool) error {
-	if printJSON {
-		b, err := json.MarshalIndent(q.Items, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(w, "%s\n", b)
-	} else {
-		fmt.Fprint(w, q.Script())
-	}
-	return nil
-}
-
 func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {
 	json, err := json.Marshal(q.Items)
 	if err != nil {
@@ -109,6 +96,14 @@ func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {
 		cmd.Stderr = os.Stderr
 	}
 	return cmd, nil
+}
+
+func (q Queue) MarshalJSON() ([]byte, error) {
+	return json.MarshalIndent(q.Items, "", "  ")
+}
+
+func (q Queue) MarshalText() ([]byte, error) {
+	return []byte(q.Script()), nil
 }
 
 func (q *Queue) write() (string, error) {
