@@ -66,10 +66,10 @@ func (c *CLI) process(q queue.Queue) error {
 		} else {
 			out, err = q.MarshalText()
 		}
-		if err != nil {
-			return err
+		if err == nil {
+			fmt.Printf("%s", out)
 		}
-		fmt.Printf("%s", out)
+		return err
 	}
 	if len(q.Transferable()) == 0 {
 		c.logf("[%s] Queue is empty", q.Site.Name)
