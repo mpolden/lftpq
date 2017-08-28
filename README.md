@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/mpolden/lftpq.svg)](https://travis-ci.org/mpolden/lftpq)
 
-A queue generator for [lftp](http://lftp.yar.ru).
+A queue generator for [lftp](https://lftp.yar.ru).
 
 ## Usage
 
