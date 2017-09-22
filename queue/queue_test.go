@@ -12,7 +12,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/mpolden/lftpq/lftp"
 	"github.com/mpolden/lftpq/parser"
 )
 
@@ -20,6 +19,7 @@ func newTestSite() Site {
 	localDir := template.Must(template.New("t").Parse("/local/{{ .Name }}/S{{ .Season }}/"))
 	patterns := []*regexp.Regexp{regexp.MustCompile(".*")}
 	return Site{
+		GetCmd:   "mirror",
 		Name:     "test",
 		patterns: patterns,
 		itemParser: itemParser{
@@ -160,11 +160,8 @@ func TestNewQueueRejectsUnparsableItem(t *testing.T) {
 
 func TestScript(t *testing.T) {
 	s := Site{
-		Client: lftp.Client{
-			Path:   "/bin/lftp",
-			GetCmd: "mirror",
-		},
-		Name: "siteA",
+		GetCmd: "mirror",
+		Name:   "siteA",
 	}
 	items := []Item{
 		Item{RemotePath: "/remote/foo", LocalPath: "/local", Transfer: true},
@@ -370,7 +367,6 @@ func TestReadQueue(t *testing.T) {
 
 func TestMarshalJSON(t *testing.T) {
 	s := newTestSite()
-	s.Client = lftp.Client{GetCmd: "mirror"}
 	var q json.Marshaler = newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
 	out, err := q.MarshalJSON()
 	if err != nil {
@@ -401,7 +397,6 @@ func TestMarshalJSON(t *testing.T) {
 
 func TestMarshalText(t *testing.T) {
 	s := newTestSite()
-	s.Client = lftp.Client{GetCmd: "mirror"}
 	var q encoding.TextMarshaler = newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
 	out, err := q.MarshalText()
 	if err != nil {

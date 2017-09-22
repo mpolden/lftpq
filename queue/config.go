@@ -14,7 +14,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/mpolden/lftpq/lftp"
 	"github.com/mpolden/lftpq/parser"
 )
 
@@ -30,7 +29,7 @@ type Replacement struct {
 }
 
 type Site struct {
-	Client       lftp.Client
+	GetCmd       string
 	Name         string
 	Dirs         []string
 	MaxAge       string
@@ -137,9 +136,6 @@ func (c *Config) load() error {
 			return err
 		}
 
-		if err := isExecutable(site.Client.Path); err != nil {
-			return err
-		}
 		if err := isExecutable(site.PostCommand); err != nil {
 			return err
 		}

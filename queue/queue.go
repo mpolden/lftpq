@@ -18,6 +18,10 @@ import (
 
 type readDir func(dirname string) ([]os.FileInfo, error)
 
+type Consumer interface {
+	Consume(path string) error
+}
+
 type Queue struct {
 	Site
 	Items []Item
@@ -63,7 +67,7 @@ func (q *Queue) Script() string {
 	buf.WriteString("\n")
 	for _, item := range q.Transferable() {
 		buf.WriteString("queue ")
-		buf.WriteString(q.Client.GetCmd)
+		buf.WriteString(q.Site.GetCmd)
 		buf.WriteString(" ")
 		buf.WriteString(item.RemotePath)
 		buf.WriteString(" ")
@@ -74,13 +78,13 @@ func (q *Queue) Script() string {
 	return buf.String()
 }
 
-func (q *Queue) Start(inheritIO bool) error {
+func (q *Queue) Start(consumer Consumer) error {
 	name, err := q.write()
 	if err != nil {
 		return err
 	}
 	defer os.Remove(name)
-	return q.Client.Run([]string{"-f", name}, inheritIO)
+	return consumer.Consume(name)
 }
 
 func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {

@@ -18,6 +18,7 @@ Application Options:
   -t, --test                  Test and print config
   -q, --quiet                 Do not print output from lftp
   -i, --import=SITE           Read remote paths from stdin and build a queue for SITE
+  -p, --lftp=NAME             Path to lftp program (default: lftp)
 
 Help Options:
   -h, --help                  Show this help message
@@ -28,10 +29,7 @@ Help Options:
 ```json
 {
   "Default": {
-    "Client": {
-      "Path": "lftp",
-      "GetCmd": "mirror"
-    }
+    "GetCmd": "mirror"
   },
   "Sites": [
     {
@@ -76,14 +74,9 @@ Help Options:
 All options can be overridden per site. This is useful when you want to apply
 the same options to multiple sites.
 
-`Client` holds configuration related to lftp.
-
-`Path` sets the path to the lftp executable (if only the base name is given,
-`PATH` will be used for lookup).
-
 `GetCmd` sets the lftp command to use when downloading, this can also be an
 alias. For example: If you have `alias m "mirror --only-missing"` in your
-`.lftprc`, then `LftpGetCmd` can be set to `m`.
+`.lftprc`, then `GetCmd` can be set to `m`.
 
 `Sites` holds the configuration for each individual site.
 
