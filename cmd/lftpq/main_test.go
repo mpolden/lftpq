@@ -202,9 +202,18 @@ func TestRun(t *testing.T) {
     }
    ]
 }`)
+	// Empty queue
+	client := testClient{consumeQueue: true}
+	if err := cli.Run(); err != nil {
+		t.Fatal(err)
+	}
+	want := "[t1] Queue is empty\n"
+	if got := buf.String(); got != want {
+		t.Errorf("want %q, got %q", want, got)
+	}
 
 	// Queue is consumed by client
-	client := testClient{consumeQueue: true, dirList: []os.FileInfo{file{name: "/baz/foo.2017"}}}
+	client = testClient{consumeQueue: true, dirList: []os.FileInfo{file{name: "/baz/foo.2017"}}}
 	cli.consumer = &client
 	cli.lister = &client
 	if err := cli.Run(); err != nil {
@@ -212,12 +221,13 @@ func TestRun(t *testing.T) {
 	}
 
 	// Dry run with lftp output
+	buf.Reset()
 	client.consumeQueue = false
 	cli.Dryrun = true
 	if err := cli.Run(); err != nil {
 		t.Fatal(err)
 	}
-	want := `open t1
+	want = `open t1
 queue mirror /baz/foo.2017 /tmp/foo.2017
 queue start
 wait
@@ -254,5 +264,25 @@ exit
 `
 	if got := buf.String(); got != want {
 		t.Errorf("want %s, got %s", want, got)
+	}
+}
+
+func TestRunSkipSite(t *testing.T) {
+	cli, buf := newTestCLI(`
+{
+   "Sites": [
+    {
+      "MaxAge": "0",
+      "Name": "t1",
+      "Skip": true
+    }
+   ]
+}`)
+	if err := cli.Run(); err != nil {
+		t.Fatal(err)
+	}
+	want := "[t1] Skipping site (Skip=true)\n"
+	if got := buf.String(); got != want {
+		t.Errorf("want %q, got %q", want, got)
 	}
 }

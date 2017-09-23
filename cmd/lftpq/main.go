@@ -45,7 +45,7 @@ func (c *CLI) Run() error {
 	if c.Import == "" {
 		for _, s := range cfg.Sites {
 			if err := c.processQueue(s); err != nil {
-				c.printfAlways("error while processing queue for %s: %s", s.Name, err)
+				fmt.Fprintf(c.wr, "error while processing queue for %s: %s\n", s.Name, err)
 			}
 		}
 		return nil
@@ -53,14 +53,9 @@ func (c *CLI) Run() error {
 	return c.processImportedQueue(c.Import, cfg)
 }
 
-func (c *CLI) printfAlways(format string, v ...interface{}) {
-	out := fmt.Sprintf(format, v...) + "\n"
-	c.wr.Write([]byte(out))
-}
-
 func (c *CLI) printf(format string, v ...interface{}) {
 	if !c.Quiet {
-		c.printfAlways(format, v...)
+		fmt.Fprintf(c.wr, format, v...)
 	}
 }
 
@@ -78,7 +73,7 @@ func (c *CLI) processImportedQueue(name string, cfg queue.Config) error {
 
 func (c *CLI) processQueue(s queue.Site) error {
 	if s.Skip {
-		c.printf("[%s] Skipping site (Skip=%t)", s.Name, s.Skip)
+		c.printf("[%s] Skipping site (Skip=%t)\n", s.Name, s.Skip)
 		return nil
 	}
 	var files []os.FileInfo
@@ -111,7 +106,7 @@ func (c *CLI) process(q queue.Queue) error {
 		return err
 	}
 	if len(q.Transferable()) == 0 {
-		c.printf("[%s] Queue is empty", q.Site.Name)
+		c.printf("[%s] Queue is empty\n", q.Site.Name)
 		return nil
 	}
 	if err := q.Start(c.consumer); err != nil {
