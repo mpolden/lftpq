@@ -178,6 +178,7 @@ func matchAny(patterns []*regexp.Regexp, f os.FileInfo) (string, bool) {
 func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 	q := Queue{Site: site, Items: make([]Item, 0, len(files))}
 	// Initial filtering
+	now := time.Now().Round(time.Second)
 	for _, f := range files {
 		item, err := newItem(f.Name(), f.ModTime(), q.itemParser)
 		if err != nil {
@@ -188,6 +189,8 @@ func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 			item.reject(fmt.Sprintf("IsFile=%t SkipFiles=%t", f.Mode().IsRegular(), q.SkipFiles))
 		} else if p, match := matchAny(q.filters, f); match {
 			item.reject(fmt.Sprintf("Filter=%s", p))
+		} else if age := now.Sub(item.ModTime); q.maxAge != 0 && age > q.maxAge {
+			item.reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
 		} else if p, match := matchAny(q.patterns, f); match {
 			item.accept(fmt.Sprintf("Match=%s", p))
 		}
@@ -200,13 +203,10 @@ func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 	if q.Deduplicate {
 		q.deduplicate()
 	}
-	// Deduplication must happen before MaxAge and IsDstDir checks. This is because items with a higher weight might
-	// have been transferred in past runs.
-	now := time.Now().Round(time.Second)
+	// Deduplication must happen before IsDstDir check. This is because items with a higher weight might have been
+	// transferred in past runs.
 	for _, item := range q.Transferable() {
-		if age := now.Sub(item.ModTime); q.maxAge != 0 && age > q.maxAge {
-			item.reject(fmt.Sprintf("Age=%s MaxAge=%s", age, q.maxAge))
-		} else if q.SkipExisting && !item.isEmpty(readDir) {
+		if q.SkipExisting && !item.isEmpty(readDir) {
 			item.reject(fmt.Sprintf("IsDstDirEmpty=%t", false))
 		}
 	}

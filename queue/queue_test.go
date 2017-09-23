@@ -211,22 +211,6 @@ func TestDeduplicate(t *testing.T) {
 	}
 }
 
-func TestDeduplicateIgnoresAge(t *testing.T) {
-	now := time.Now().Round(time.Second)
-	s := newTestSite()
-	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.HDTV\.`)}
-	s.maxAge = time.Duration(24) * time.Hour
-	s.Deduplicate = true
-	files := []os.FileInfo{
-		file{name: "/remote/The.Wire.S01E01.HDTV.foo", modTime: now.Add(-time.Duration(48) * time.Hour)},
-		file{name: "/remote/The.Wire.S01E01.WEBRip.foo", modTime: now},
-	}
-	q := newTestQueue(s, files)
-	for _, item := range q.Transferable() {
-		t.Errorf("Expected empty queue, got %s", item.RemotePath)
-	}
-}
-
 func TestDeduplicateIgnoreSelf(t *testing.T) {
 	now := time.Now().Round(time.Second)
 	s := newTestSite()
@@ -335,6 +319,31 @@ func TestLocalCopyDoesNotDuplicateRemoteWithEqualWeight(t *testing.T) {
 	for _, item := range q.Items[1:] {
 		if item.Transfer {
 			t.Errorf("Expected Transfer=false for Path=%q", item.RemotePath)
+		}
+	}
+}
+
+func TestLocalCopyWithTooOldReplacement(t *testing.T) {
+	now := time.Now().Round(time.Second)
+	s := newTestSite()
+	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.HDTV\.`)}
+	s.maxAge = time.Duration(24) * time.Hour
+	s.SkipExisting = true
+	s.Deduplicate = true
+	readDir := func(dirname string) ([]os.FileInfo, error) {
+		return []os.FileInfo{file{name: "The.Wire.S01E01.WEBRip.foo"}}, nil
+	}
+	files := []os.FileInfo{
+		file{name: "/remote/The.Wire.S01E01.HDTV.foo", modTime: now.Add(-time.Duration(48) * time.Hour)},
+		file{name: "/remote/The.Wire.S01E01.WEBRip.foo", modTime: now},
+	}
+	q := newQueue(s, files, readDir)
+	for _, item := range q.Transferable() {
+		t.Errorf("Expected empty queue, got %s", item.RemotePath)
+	}
+	for _, item := range q.Items {
+		if item.Duplicate {
+			t.Errorf("want Duplicate=false, got Duplicate=%t for %s", item.Duplicate, item.RemotePath)
 		}
 	}
 }
