@@ -121,6 +121,7 @@ func TestRunWithImport(t *testing.T) {
     }
    ]
 }`)
+	defer os.Remove(cli.Config)
 	toImport := "/foo/bar.2017\n"
 	stdin := strings.NewReader(toImport)
 
@@ -201,6 +202,8 @@ func TestRun(t *testing.T) {
     }
    ]
 }`)
+	defer os.Remove(cli.Config)
+
 	// Empty queue
 	client := testClient{consumeQueue: true}
 	if err := cli.Run(); err != nil {
@@ -277,6 +280,7 @@ func TestRunSkipSite(t *testing.T) {
     }
    ]
 }`)
+	defer os.Remove(cli.Config)
 	if err := cli.Run(); err != nil {
 		t.Fatal(err)
 	}
