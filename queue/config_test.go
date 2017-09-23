@@ -18,7 +18,6 @@ func TestLoad(t *testing.T) {
 			Parser:       "show",
 			LocalDir:     "/tmp/{{ .Name }}",
 			Priorities:   []string{"important"},
-			Deduplicate:  true,
 			Replacements: []Replacement{
 				Replacement{
 					Pattern:     "\\.the\\.",

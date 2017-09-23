@@ -45,7 +45,6 @@ type Site struct {
 	LocalDir     string
 	Priorities   []string
 	priorities   []*regexp.Regexp
-	Deduplicate  bool
 	PostCommand  string
 	Replacements []Replacement
 	Merge        bool

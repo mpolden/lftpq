@@ -93,7 +93,6 @@ func TestConfigTest(t *testing.T) {
     "Parser": "show",
     "LocalDir": "",
     "Priorities": null,
-    "Deduplicate": false,
     "PostCommand": "",
     "Replacements": null,
     "Merge": false,

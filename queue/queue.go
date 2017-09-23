@@ -200,7 +200,7 @@ func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 		q.merge(readDir)
 	}
 	sort.Slice(q.Items, func(i, j int) bool { return q.Items[i].RemotePath < q.Items[j].RemotePath })
-	if q.Deduplicate {
+	if len(q.priorities) > 0 {
 		q.deduplicate()
 	}
 	// Deduplication must happen before IsDstDir check. This is because items with a higher rank might have been

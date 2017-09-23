@@ -183,7 +183,6 @@ exit
 
 func TestDeduplicate(t *testing.T) {
 	s := newTestSite()
-	s.Deduplicate = true
 	s.priorities = []*regexp.Regexp{
 		regexp.MustCompile(`\.PROPER\.REPACK\.`),
 		regexp.MustCompile(`\.PROPER\.`),
@@ -214,7 +213,7 @@ func TestDeduplicate(t *testing.T) {
 func TestDeduplicateIgnoreSelf(t *testing.T) {
 	now := time.Now().Round(time.Second)
 	s := newTestSite()
-	s.Deduplicate = true
+	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.PROPER\.`)}
 	files := []os.FileInfo{
 		file{name: "/remote/The.Wire.S01E01", modTime: now},
 		file{name: "/remote/The.Wire.S01E01", modTime: now},
@@ -250,7 +249,6 @@ func TestPostCommand(t *testing.T) {
 func TestMergePreferringRemoteCopy(t *testing.T) {
 	s := newTestSite()
 	s.Merge = true
-	s.Deduplicate = true
 	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.foo$`)}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		return []os.FileInfo{
@@ -275,7 +273,6 @@ func TestMergePreferringRemoteCopy(t *testing.T) {
 func TestMergePreferringLocalCopy(t *testing.T) {
 	s := newTestSite()
 	s.Merge = true
-	s.Deduplicate = true
 	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.bar$`)}
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		return []os.FileInfo{
@@ -298,7 +295,7 @@ func TestMergePreferringLocalCopy(t *testing.T) {
 func TestLocalCopyDoesNotDuplicateRemoteWithEqualRank(t *testing.T) {
 	s := newTestSite()
 	s.Merge = true
-	s.Deduplicate = true
+	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.PROPER\.`)}
 	s.SkipExisting = true
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		if dirname == "/local/The.Wire/S1/The.Wire.S01E01.720p.BluRay.foo" {
@@ -329,7 +326,6 @@ func TestLocalCopyWithTooOldReplacement(t *testing.T) {
 	s.priorities = []*regexp.Regexp{regexp.MustCompile(`\.HDTV\.`)}
 	s.maxAge = time.Duration(24) * time.Hour
 	s.SkipExisting = true
-	s.Deduplicate = true
 	readDir := func(dirname string) ([]os.FileInfo, error) {
 		return []os.FileInfo{file{name: "The.Wire.S01E01.WEBRip.foo"}}, nil
 	}
