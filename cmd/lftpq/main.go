@@ -130,7 +130,7 @@ func main() {
 	}
 	cli.wr = os.Stdout
 	cli.rd = os.Stdin
-	client := lftp.Client{Path: cli.LftpPath, InheritIO: true}
+	client := lftp.Client{Path: cli.LftpPath, InheritIO: !cli.Quiet}
 	cli.lister = &client
 	cli.consumer = &client
 	if err := cli.Run(); err != nil {
