@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	flags "github.com/jessevdk/go-flags"
@@ -28,7 +27,6 @@ type CLI struct {
 	lister   lister
 	wr       io.Writer
 	rd       io.Reader
-	log      *log.Logger
 }
 
 func (c *CLI) Run() error {
@@ -47,7 +45,7 @@ func (c *CLI) Run() error {
 	if c.Import == "" {
 		for _, s := range cfg.Sites {
 			if err := c.processQueue(s); err != nil {
-				c.log.Printf("error while processing queue for %s: %s", s.Name, err)
+				c.printfAlways("error while processing queue for %s: %s", s.Name, err)
 			}
 		}
 		return nil
@@ -55,9 +53,14 @@ func (c *CLI) Run() error {
 	return c.processImportedQueue(c.Import, cfg)
 }
 
-func (c *CLI) logf(format string, v ...interface{}) {
+func (c *CLI) printfAlways(format string, v ...interface{}) {
+	out := fmt.Sprintf(format, v...) + "\n"
+	c.wr.Write([]byte(out))
+}
+
+func (c *CLI) printf(format string, v ...interface{}) {
 	if !c.Quiet {
-		c.log.Printf(format, v...)
+		c.printfAlways(format, v...)
 	}
 }
 
@@ -75,7 +78,7 @@ func (c *CLI) processImportedQueue(name string, cfg queue.Config) error {
 
 func (c *CLI) processQueue(s queue.Site) error {
 	if s.Skip {
-		c.logf("[%s] Skipping site (Skip=%t)", s.Name, s.Skip)
+		c.printf("[%s] Skipping site (Skip=%t)", s.Name, s.Skip)
 		return nil
 	}
 	var files []os.FileInfo
@@ -108,7 +111,7 @@ func (c *CLI) process(q queue.Queue) error {
 		return err
 	}
 	if len(q.Transferable()) == 0 {
-		c.logf("[%s] Queue is empty", q.Site.Name)
+		c.printf("[%s] Queue is empty", q.Site.Name)
 		return nil
 	}
 	if err := q.Start(c.consumer); err != nil {
@@ -130,13 +133,13 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	logger := log.New(os.Stderr, "", log.LstdFlags)
 	cli.wr = os.Stdout
 	cli.rd = os.Stdin
 	client := lftp.Client{Path: cli.LftpPath, InheritIO: true}
 	cli.lister = &client
 	cli.consumer = &client
 	if err := cli.Run(); err != nil {
-		logger.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

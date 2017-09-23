@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 	"testing"
@@ -56,12 +55,10 @@ func newTestCLI(config string) (*CLI, *bytes.Buffer) {
 		panic(err)
 	}
 	var buf bytes.Buffer
-	logger := log.New(&buf, "", log.LstdFlags)
 	client := testClient{consumeQueue: false}
 	return &CLI{
 		Config:   name,
 		wr:       &buf,
-		log:      logger,
 		consumer: &client,
 		lister:   &client,
 	}, &buf
