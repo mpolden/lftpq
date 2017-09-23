@@ -122,7 +122,7 @@ func (q *Queue) write() (string, error) {
 	return f.Name(), nil
 }
 
-func (q *Queue) weight(item *Item) int {
+func (q *Queue) rank(item *Item) int {
 	for i, p := range q.priorities {
 		if p.MatchString(filepath.Base(item.RemotePath)) {
 			return len(q.priorities) - i
@@ -144,15 +144,15 @@ func (q *Queue) deduplicate() {
 				continue
 			}
 			if a.Transfer && b.Transfer && a.Media.Equal(b.Media) {
-				if (a.Merged || b.Merged) && q.weight(a) == q.weight(b) {
+				if (a.Merged || b.Merged) && q.rank(a) == q.rank(b) {
 					continue
 				}
-				if q.weight(a) <= q.weight(b) {
+				if q.rank(a) <= q.rank(b) {
 					a.Duplicate = true
-					a.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", b.RemotePath, q.weight(a)))
+					a.reject(fmt.Sprintf("DuplicateOf=%s Rank=%d", b.RemotePath, q.rank(a)))
 				} else {
 					b.Duplicate = true
-					b.reject(fmt.Sprintf("DuplicateOf=%s Weight=%d", a.RemotePath, q.weight(b)))
+					b.reject(fmt.Sprintf("DuplicateOf=%s Rank=%d", a.RemotePath, q.rank(b)))
 				}
 			}
 		}
@@ -203,7 +203,7 @@ func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 	if q.Deduplicate {
 		q.deduplicate()
 	}
-	// Deduplication must happen before IsDstDir check. This is because items with a higher weight might have been
+	// Deduplication must happen before IsDstDir check. This is because items with a higher rank might have been
 	// transferred in past runs.
 	for _, item := range q.Transferable() {
 		if q.SkipExisting && !item.isEmpty(readDir) {

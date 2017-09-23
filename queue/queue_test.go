@@ -295,7 +295,7 @@ func TestMergePreferringLocalCopy(t *testing.T) {
 	}
 }
 
-func TestLocalCopyDoesNotDuplicateRemoteWithEqualWeight(t *testing.T) {
+func TestLocalCopyDoesNotDuplicateRemoteWithEqualRank(t *testing.T) {
 	s := newTestSite()
 	s.Merge = true
 	s.Deduplicate = true

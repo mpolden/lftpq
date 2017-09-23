@@ -131,7 +131,7 @@ candidate `A` along with its duplication status (the fields `Merged` and
 `Priorities` is a list of patterns used to deduplicate directories which contain
 the same media (e.g. same show, season and episode, but different release).
 Directories are deduplicated based on the order of matching patterns, where the
-earliest match is given the highest weight. For example, if the items
+earliest match is given the highest rank. For example, if the items
 `Foo.1.important` and `Foo.1.less.important` are determined to be the same
 media, then given the priorities in the example above, `Foo.1.important` would
 be kept and `Foo.2.less.important` would be removed from the queue.
