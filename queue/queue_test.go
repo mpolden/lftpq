@@ -348,13 +348,15 @@ func TestReadQueue(t *testing.T) {
 	lines := `
 t1 /tv/The.Wire.S01E01
 
-t2 /tv/The.Wire.S01E04
+t2 /tv/The.Wire.S01E04 ignored
+
+ignored
 
   t1 /tv/The.Wire.S01E02
 
 t1  /tv/The.Wire.S01E03
 
-t2 /tv/The.Wire.S01E05
+t2	/tv/The.Wire.S01E05
 `
 	s1, s2 := newTestSite(), newTestSite()
 	s1.Name = "t1"
@@ -378,11 +380,11 @@ t2 /tv/The.Wire.S01E05
 			}
 		}
 		for i := range q.Items {
-			if want := "The.Wire"; q.Items[i].Media.Name != want {
-				t.Errorf("Expected Items[%d].Media.Name=%q, want %q", i, q.Items[0].Media.Name, want)
+			if want, got := "The.Wire", q.Items[i].Media.Name; got != want {
+				t.Errorf("got Items[%d].Media.Name=%q, want %q", i, got, want)
 			}
 			if !q.Items[i].Transfer {
-				t.Errorf("Expected Items[%d].Transfer=true", i)
+				t.Errorf("got Items[%d].Transfer=true, want %t", i, false)
 			}
 		}
 	}

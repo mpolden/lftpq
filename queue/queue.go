@@ -44,14 +44,11 @@ func Read(sites []Site, r io.Reader) ([]Queue, error) {
 	scanner := bufio.NewScanner(r)
 	queues := make(map[string]*Queue)
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		parts := strings.SplitN(line, " ", 2)
-		if len(parts) != 2 {
+		fields := strings.Fields(scanner.Text())
+		if len(fields) < 2 {
 			continue
 		}
-		name := strings.TrimSpace(parts[0])
-		path := strings.TrimSpace(parts[1])
-		site, err := lookupSite(name, sites)
+		site, err := lookupSite(fields[0], sites)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +57,7 @@ func Read(sites []Site, r io.Reader) ([]Queue, error) {
 			q = &Queue{Site: site}
 			queues[site.Name] = q
 		}
-		item, err := newItem(path, time.Time{}, q.itemParser)
+		item, err := newItem(fields[1], time.Time{}, q.itemParser)
 		if err != nil {
 			item.reject(err.Error())
 		} else {
