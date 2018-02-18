@@ -69,6 +69,7 @@ func Read(sites []Site, r io.Reader) ([]Queue, error) {
 	for _, q := range queues {
 		qs = append(qs, *q)
 	}
+	sort.Slice(qs, func(i, j int) bool { return qs[i].Site.Name < qs[j].Site.Name })
 	return qs, scanner.Err()
 }
 
