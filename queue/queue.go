@@ -42,7 +42,9 @@ func New(site Site, files []os.FileInfo) Queue {
 
 func Read(sites []Site, r io.Reader) ([]Queue, error) {
 	scanner := bufio.NewScanner(r)
-	queues := make(map[string]*Queue)
+	var qs []Queue
+	// Store mapping from site name to queue index in qs, as we only want to return a single queue per site
+	indices := map[string]int{}
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 		if len(fields) < 2 {
@@ -52,11 +54,13 @@ func Read(sites []Site, r io.Reader) ([]Queue, error) {
 		if err != nil {
 			return nil, err
 		}
-		q := queues[site.Name]
-		if q == nil {
-			q = &Queue{Site: site}
-			queues[site.Name] = q
+		i, ok := indices[site.Name]
+		if !ok {
+			qs = append(qs, Queue{Site: site})
+			i = len(qs) - 1
+			indices[site.Name] = i
 		}
+		q := &qs[i]
 		item, err := newItem(fields[1], time.Time{}, q.itemParser)
 		if err != nil {
 			item.reject(err.Error())
@@ -65,11 +69,6 @@ func Read(sites []Site, r io.Reader) ([]Queue, error) {
 		}
 		q.Items = append(q.Items, item)
 	}
-	var qs []Queue
-	for _, q := range queues {
-		qs = append(qs, *q)
-	}
-	sort.Slice(qs, func(i, j int) bool { return qs[i].Site.Name < qs[j].Site.Name })
 	return qs, scanner.Err()
 }
 
