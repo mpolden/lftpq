@@ -345,28 +345,54 @@ func TestLocalCopyWithTooOldReplacement(t *testing.T) {
 }
 
 func TestReadQueue(t *testing.T) {
-	json := `
-/tv/The.Wire.S01E01
+	lines := `
+t1 /tv/The.Wire.S01E01
 
-/tv/The.Wire.S01E02
+t2 /tv/The.Wire.S01E04
 
-  /tv/The.Wire.S01E03
+  t1 /tv/The.Wire.S01E02
+
+t1  /tv/The.Wire.S01E03
+
+t2 /tv/The.Wire.S01E05
 `
-	s := newTestSite()
-	q, err := Read(s, strings.NewReader(json))
+	s1, s2 := newTestSite(), newTestSite()
+	s1.Name = "t1"
+	s2.Name = "t2"
+	queues, err := Read([]Site{s1, s2}, strings.NewReader(lines))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(q.Items) != 3 {
-		t.Fatal("Expected 3 items")
+	if len(queues) != 2 {
+		t.Fatal("Expected 2 sites")
 	}
-	for i := range q.Items {
-		if want := "The.Wire"; q.Items[i].Media.Name != want {
-			t.Errorf("Expected Items[%d].Media.Name=%q, want %q", i, q.Items[0].Media.Name, want)
+	for _, q := range queues {
+		if q.Site.Name == s1.Name {
+			if len(q.Items) != 3 {
+				t.Fatalf("Expected 3 items for site %s", q.Site.Name)
+			}
 		}
-		if !q.Items[i].Transfer {
-			t.Errorf("Expected Items[%d].Transfer=true", i)
+		if q.Site.Name == s2.Name {
+			if len(q.Items) != 2 {
+				t.Fatalf("Expected 2 items for site %s", q.Site.Name)
+			}
 		}
+		for i := range q.Items {
+			if want := "The.Wire"; q.Items[i].Media.Name != want {
+				t.Errorf("Expected Items[%d].Media.Name=%q, want %q", i, q.Items[0].Media.Name, want)
+			}
+			if !q.Items[i].Transfer {
+				t.Errorf("Expected Items[%d].Transfer=true", i)
+			}
+		}
+	}
+}
+
+func TestReadQueueInvalidSite(t *testing.T) {
+	lines := `t1 /tv/The.Wire.S01E01`
+	_, err := Read([]Site{}, strings.NewReader(lines))
+	if err == nil {
+		t.Fatal("Expected error")
 	}
 }
 

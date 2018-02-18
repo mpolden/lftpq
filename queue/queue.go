@@ -27,19 +27,40 @@ type Queue struct {
 	Items []Item
 }
 
+func lookupSite(name string, sites []Site) (Site, error) {
+	for _, site := range sites {
+		if site.Name == name {
+			return site, nil
+		}
+	}
+	return Site{}, fmt.Errorf("no such site: %s", name)
+}
+
 func New(site Site, files []os.FileInfo) Queue {
 	return newQueue(site, files, ioutil.ReadDir)
 }
 
-func Read(site Site, r io.Reader) (Queue, error) {
-	q := Queue{Site: site}
+func Read(sites []Site, r io.Reader) ([]Queue, error) {
 	scanner := bufio.NewScanner(r)
+	queues := make(map[string]*Queue)
 	for scanner.Scan() {
-		p := strings.TrimSpace(scanner.Text())
-		if len(p) == 0 {
+		line := strings.TrimSpace(scanner.Text())
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) != 2 {
 			continue
 		}
-		item, err := newItem(p, time.Time{}, q.itemParser)
+		name := strings.TrimSpace(parts[0])
+		path := strings.TrimSpace(parts[1])
+		site, err := lookupSite(name, sites)
+		if err != nil {
+			return nil, err
+		}
+		q := queues[site.Name]
+		if q == nil {
+			q = &Queue{Site: site}
+			queues[site.Name] = q
+		}
+		item, err := newItem(path, time.Time{}, q.itemParser)
 		if err != nil {
 			item.reject(err.Error())
 		} else {
@@ -47,7 +68,11 @@ func Read(site Site, r io.Reader) (Queue, error) {
 		}
 		q.Items = append(q.Items, item)
 	}
-	return q, scanner.Err()
+	var qs []Queue
+	for _, q := range queues {
+		qs = append(qs, *q)
+	}
+	return qs, scanner.Err()
 }
 
 func (q *Queue) Transferable() []*Item {

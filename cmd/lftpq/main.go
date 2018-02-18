@@ -21,7 +21,7 @@ type CLI struct {
 	Format   string `short:"F" long:"format" description:"Format to use in dryrun mode" choice:"lftp" choice:"json" default:"lftp"`
 	Test     bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet    bool   `short:"q" long:"quiet" description:"Do not print output from lftp"`
-	Import   string `short:"i" long:"import" description:"Read remote paths from stdin and build a queue for SITE" value-name:"SITE"`
+	Import   bool   `short:"i" long:"import" description:"Build queues from stdin"`
 	LftpPath string `short:"p" long:"lftp" description:"Path to lftp program" value-name:"NAME" default:"lftp"`
 	consumer queue.Consumer
 	lister   lister
@@ -42,15 +42,16 @@ func (c *CLI) Run() error {
 		fmt.Fprintf(c.wr, "%s\n", json)
 		return nil
 	}
-	if c.Import == "" {
-		for _, s := range cfg.Sites {
-			if err := c.processQueue(s); err != nil {
-				fmt.Fprintf(c.wr, "error while processing queue for %s: %s\n", s.Name, err)
-			}
-		}
-		return nil
+	if c.Import {
+		return c.processImportedQueue(cfg)
+
 	}
-	return c.processImportedQueue(c.Import, cfg)
+	for _, s := range cfg.Sites {
+		if err := c.processQueue(s); err != nil {
+			fmt.Fprintf(c.wr, "error while processing queue for %s: %s\n", s.Name, err)
+		}
+	}
+	return nil
 }
 
 func (c *CLI) printf(format string, v ...interface{}) {
@@ -59,16 +60,17 @@ func (c *CLI) printf(format string, v ...interface{}) {
 	}
 }
 
-func (c *CLI) processImportedQueue(name string, cfg queue.Config) error {
-	s, err := cfg.LookupSite(name)
+func (c *CLI) processImportedQueue(cfg queue.Config) error {
+	queues, err := queue.Read(cfg.Sites, c.rd)
 	if err != nil {
 		return err
 	}
-	queue, err := queue.Read(s, c.rd)
-	if err != nil {
-		return err
+	for _, q := range queues {
+		if err := c.process(q); err != nil {
+			return err
+		}
 	}
-	return c.process(queue)
+	return nil
 }
 
 func (c *CLI) processQueue(s queue.Site) error {

@@ -164,15 +164,6 @@ func (c *Config) JSON() ([]byte, error) {
 	return json.MarshalIndent(c, "", "  ")
 }
 
-func (c *Config) LookupSite(name string) (Site, error) {
-	for _, site := range c.Sites {
-		if site.Name == name {
-			return site, nil
-		}
-	}
-	return Site{}, fmt.Errorf("site not found in config: %s", name)
-}
-
 func readConfig(r io.Reader) (Config, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {

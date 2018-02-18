@@ -106,7 +106,7 @@ func TestConfigTest(t *testing.T) {
 	}
 }
 
-func TestRunWithImport(t *testing.T) {
+func TestRunImport(t *testing.T) {
 	cli, buf := newTestCLI(`
 {
   "Default": {
@@ -118,15 +118,23 @@ func TestRunWithImport(t *testing.T) {
       "MaxAge": "0",
       "Name": "t1",
       "LocalDir": "/tmp/"
+    },
+    {
+      "MaxAge": "0",
+      "Name": "t2",
+      "LocalDir": "/tmp/"
     }
    ]
 }`)
 	defer os.Remove(cli.Config)
-	toImport := "/foo/bar.2017\n"
+	toImport := `
+t1 /foo/bar.2017
+t2 /baz/foo.2018
+`
 	stdin := strings.NewReader(toImport)
 
 	// Queue is consumed by client
-	cli.Import = "t1"
+	cli.Import = true
 	cli.rd = stdin
 	client := testClient{consumeQueue: true}
 	cli.consumer = &client
@@ -144,6 +152,11 @@ func TestRunWithImport(t *testing.T) {
 	}
 	want := `open t1
 queue mirror /foo/bar.2017 /tmp/bar.2017
+queue start
+wait
+exit
+open t2
+queue mirror /baz/foo.2018 /tmp/foo.2018
 queue start
 wait
 exit
@@ -170,6 +183,24 @@ exit
       "Release": "bar.2017",
       "Name": "bar",
       "Year": 2017,
+      "Season": 0,
+      "Episode": 0
+    },
+    "Duplicate": false,
+    "Merged": false
+  }
+]
+[
+  {
+    "RemotePath": "/baz/foo.2018",
+    "LocalPath": "/tmp/foo.2018",
+    "ModTime": "0001-01-01T00:00:00Z",
+    "Transfer": true,
+    "Reason": "Import=true",
+    "Media": {
+      "Release": "foo.2018",
+      "Name": "foo",
+      "Year": 2018,
       "Season": 0,
       "Episode": 0
     },
