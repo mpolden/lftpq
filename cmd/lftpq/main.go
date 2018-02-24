@@ -45,17 +45,15 @@ func (c *CLI) Run() error {
 	}
 	var queues []queue.Queue
 	if c.Import {
-		queues, err = queue.Read(cfg.Sites, c.rd)
-
+		if queues, err = queue.Read(cfg.Sites, c.rd); err != nil {
+			return err
+		}
 	} else {
-		queues, err = c.queueFor(cfg.Sites)
-	}
-	if err != nil {
-		return err
+		queues = c.queuesFor(cfg.Sites)
 	}
 	for _, q := range queues {
 		if err := c.transfer(q); err != nil {
-			c.printf("error while processing queue for %s: %s\n", q.Site.Name, err)
+			c.printf("error while transferring queue for %s: %s\n", q.Site.Name, err)
 			continue
 		}
 	}
@@ -76,7 +74,7 @@ func (c *CLI) printf(format string, vs ...interface{}) {
 	}
 }
 
-func (c *CLI) queueFor(sites []queue.Site) ([]queue.Queue, error) {
+func (c *CLI) queuesFor(sites []queue.Site) []queue.Queue {
 	var queues []queue.Queue
 	for _, s := range sites {
 		if s.Skip {
@@ -95,7 +93,7 @@ func (c *CLI) queueFor(sites []queue.Site) ([]queue.Queue, error) {
 		queue := queue.New(s, files)
 		queues = append(queues, queue)
 	}
-	return queues, nil
+	return queues
 }
 
 func (c *CLI) transfer(q queue.Queue) error {
