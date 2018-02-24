@@ -66,7 +66,8 @@ func newTestCLI(config string) (*CLI, *bytes.Buffer) {
 	client := testClient{consumeQueue: false}
 	return &CLI{
 		Config:   name,
-		wr:       &buf,
+		stderr:   &buf,
+		stdout:   &buf,
 		consumer: &client,
 		lister:   &client,
 	}, &buf

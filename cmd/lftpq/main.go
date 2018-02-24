@@ -25,7 +25,8 @@ type CLI struct {
 	LftpPath string `short:"p" long:"lftp" description:"Path to lftp program" value-name:"NAME" default:"lftp"`
 	consumer queue.Consumer
 	lister   lister
-	wr       io.Writer
+	stderr   io.Writer
+	stdout   io.Writer
 	rd       io.Reader
 }
 
@@ -39,7 +40,7 @@ func (c *CLI) Run() error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(c.wr, "%s\n", json)
+		fmt.Fprintf(c.stdout, "%s\n", json)
 		return nil
 	}
 	var queues []queue.Queue
@@ -70,8 +71,8 @@ func (c *CLI) printf(format string, vs ...interface{}) {
 		}
 	}
 	if !c.Quiet || alwaysPrint {
-		fmt.Fprint(c.wr, "lftpq: ")
-		fmt.Fprintf(c.wr, format, vs...)
+		fmt.Fprint(c.stderr, "lftpq: ")
+		fmt.Fprintf(c.stderr, format, vs...)
 	}
 }
 
@@ -110,7 +111,7 @@ func (c *CLI) transfer(q queue.Queue) error {
 			out, err = q.MarshalText()
 		}
 		if err == nil {
-			fmt.Fprintf(c.wr, "%s", out)
+			fmt.Fprintf(c.stdout, "%s", out)
 		}
 		return err
 	}
@@ -137,7 +138,8 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	cli.wr = os.Stdout
+	cli.stderr = os.Stderr
+	cli.stdout = os.Stdout
 	cli.rd = os.Stdin
 	client := lftp.Client{Path: cli.LftpPath, InheritIO: !cli.Quiet}
 	cli.lister = &client
