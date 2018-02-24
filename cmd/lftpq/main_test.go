@@ -25,6 +25,7 @@ func (f file) Sys() interface{}   { return nil }
 
 type testClient struct {
 	consumeQueue bool
+	failDirs     []string
 	dirList      []os.FileInfo
 }
 
@@ -35,7 +36,14 @@ func (c *testClient) Consume(path string) error {
 	return nil
 }
 
-func (c *testClient) List(name, path string) ([]os.FileInfo, error) { return c.dirList, nil }
+func (c *testClient) List(name, path string) ([]os.FileInfo, error) {
+	for _, d := range c.failDirs {
+		if d == path {
+			return nil, fmt.Errorf("read error")
+		}
+	}
+	return c.dirList, nil
+}
 
 func writeTestConfig(config string) (string, error) {
 	f, err := ioutil.TempFile("", "lftpq")
@@ -236,17 +244,16 @@ func TestRun(t *testing.T) {
 	defer os.Remove(cli.Config)
 
 	// Empty queue
-	client := testClient{consumeQueue: true}
 	if err := cli.Run(); err != nil {
 		t.Fatal(err)
 	}
-	want := "[t1] Queue is empty\n"
+	want := "lftpq: t1 queue is empty\n"
 	if got := buf.String(); got != want {
 		t.Errorf("want %q, got %q", want, got)
 	}
 
 	// Queue is consumed by client
-	client = testClient{consumeQueue: true, dirList: []os.FileInfo{file{name: "/baz/foo.2017"}}}
+	client := testClient{consumeQueue: true, dirList: []os.FileInfo{file{name: "/baz/foo.2017"}}}
 	cli.consumer = &client
 	cli.lister = &client
 	if err := cli.Run(); err != nil {
@@ -315,7 +322,45 @@ func TestRunSkipSite(t *testing.T) {
 	if err := cli.Run(); err != nil {
 		t.Fatal(err)
 	}
-	want := "[t1] Skipping site (Skip=true)\n"
+	want := "lftpq: skipping site t1\n"
+	if got := buf.String(); got != want {
+		t.Errorf("want %q, got %q", want, got)
+	}
+}
+
+func TestRunListError(t *testing.T) {
+	cli, buf := newTestCLI(`
+{
+   "Sites": [
+    {
+      "MaxAge": "0",
+      "Name": "t1",
+      "Dirs": [
+        "/foo"
+      ]
+    }
+   ]
+}`)
+	defer os.Remove(cli.Config)
+
+	client := testClient{failDirs: []string{"/foo"}}
+	cli.consumer = &client
+	cli.lister = &client
+	if err := cli.Run(); err != nil {
+		t.Fatal(err)
+	}
+	want := "lftpq: error while listing /foo on t1: read error\nlftpq: t1 queue is empty\n"
+	if got := buf.String(); got != want {
+		t.Errorf("want %q, got %q", want, got)
+	}
+
+	// Prints only error when quiet
+	buf.Reset()
+	cli.Quiet = true
+	if err := cli.Run(); err != nil {
+		t.Fatal(err)
+	}
+	want = "lftpq: error while listing /foo on t1: read error\n"
 	if got := buf.String(); got != want {
 		t.Errorf("want %q, got %q", want, got)
 	}
