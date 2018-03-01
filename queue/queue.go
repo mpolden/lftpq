@@ -82,26 +82,8 @@ func (q *Queue) Transferable() []*Item {
 	return items
 }
 
-func (q *Queue) Script() string {
-	var buf bytes.Buffer
-	buf.WriteString("open ")
-	buf.WriteString(q.Site.Name)
-	buf.WriteString("\n")
-	for _, item := range q.Transferable() {
-		buf.WriteString("queue ")
-		buf.WriteString(q.Site.GetCmd)
-		buf.WriteString(" ")
-		buf.WriteString(item.RemotePath)
-		buf.WriteString(" ")
-		buf.WriteString(item.LocalPath)
-		buf.WriteString("\n")
-	}
-	buf.WriteString("queue start\nwait\nexit\n")
-	return buf.String()
-}
-
-func (q *Queue) Start(consumer Consumer) error {
-	name, err := q.write()
+func (q *Queue) Transfer(consumer Consumer) error {
+	name, err := q.tempFile()
 	if err != nil {
 		return err
 	}
@@ -124,21 +106,39 @@ func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
+func (q Queue) MarshalText() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteString("open ")
+	buf.WriteString(q.Site.Name)
+	buf.WriteString("\n")
+	for _, item := range q.Transferable() {
+		buf.WriteString("queue ")
+		buf.WriteString(q.Site.GetCmd)
+		buf.WriteString(" ")
+		buf.WriteString(item.RemotePath)
+		buf.WriteString(" ")
+		buf.WriteString(item.LocalPath)
+		buf.WriteString("\n")
+	}
+	buf.WriteString("queue start\nwait\nexit\n")
+	return buf.Bytes(), nil
+}
+
 func (q Queue) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(q.Items, "", "  ")
 }
 
-func (q Queue) MarshalText() ([]byte, error) {
-	return []byte(q.Script()), nil
-}
-
-func (q *Queue) write() (string, error) {
+func (q *Queue) tempFile() (string, error) {
 	f, err := ioutil.TempFile("", "lftpq")
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
-	if _, err := f.WriteString(q.Script()); err != nil {
+	b, err := q.MarshalText()
+	if err != nil {
+		return "", err
+	}
+	if _, err := f.Write(b); err != nil {
 		return "", err
 	}
 	return f.Name(), nil

@@ -27,7 +27,7 @@ type CLI struct {
 	lister   lister
 	stderr   io.Writer
 	stdout   io.Writer
-	rd       io.Reader
+	stdin    io.Reader
 }
 
 func (c *CLI) Run() error {
@@ -45,7 +45,7 @@ func (c *CLI) Run() error {
 	}
 	var queues []queue.Queue
 	if c.Import {
-		if queues, err = queue.Read(cfg.Sites, c.rd); err != nil {
+		if queues, err = queue.Read(cfg.Sites, c.stdin); err != nil {
 			return err
 		}
 	} else {
@@ -109,7 +109,7 @@ func (c *CLI) transfer(q queue.Queue) error {
 			out, err = q.MarshalText()
 		}
 		if err == nil {
-			fmt.Fprintf(c.stdout, "%s", out)
+			fmt.Fprint(c.stdout, string(out))
 		}
 		return err
 	}
@@ -117,7 +117,7 @@ func (c *CLI) transfer(q queue.Queue) error {
 		c.printf("%s queue is empty\n", q.Site.Name)
 		return nil
 	}
-	if err := q.Start(c.consumer); err != nil {
+	if err := q.Transfer(c.consumer); err != nil {
 		return err
 	}
 	if q.Site.PostCommand == "" {
@@ -138,7 +138,7 @@ func main() {
 	}
 	cli.stderr = os.Stderr
 	cli.stdout = os.Stdout
-	cli.rd = os.Stdin
+	cli.stdin = os.Stdin
 	client := lftp.Client{Path: cli.LftpPath, InheritIO: !cli.Quiet}
 	cli.lister = &client
 	cli.consumer = &client

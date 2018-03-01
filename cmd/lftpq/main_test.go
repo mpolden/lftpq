@@ -144,7 +144,7 @@ t2 /baz/foo.2018
 
 	// Queue is consumed by client
 	cli.Import = true
-	cli.rd = stdin
+	cli.stdin = stdin
 	client := testClient{consumeQueue: true}
 	cli.consumer = &client
 	cli.lister = &client

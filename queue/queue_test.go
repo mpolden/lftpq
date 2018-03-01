@@ -158,29 +158,6 @@ func TestNewQueueRejectsUnparsableItem(t *testing.T) {
 	}
 }
 
-func TestScript(t *testing.T) {
-	s := Site{
-		GetCmd: "mirror",
-		Name:   "siteA",
-	}
-	items := []Item{
-		Item{RemotePath: "/remote/foo", LocalPath: "/local", Transfer: true},
-		Item{RemotePath: "/remote/bar", LocalPath: "/local", Transfer: true},
-	}
-	q := Queue{Site: s, Items: items}
-	script := q.Script()
-	expected := `open siteA
-queue mirror /remote/foo /local
-queue mirror /remote/bar /local
-queue start
-wait
-exit
-`
-	if script != expected {
-		t.Fatalf("Expected %q, got %q", expected, script)
-	}
-}
-
 func TestDeduplicate(t *testing.T) {
 	s := newTestSite()
 	s.priorities = []*regexp.Regexp{
@@ -398,6 +375,33 @@ func TestReadQueueInvalidSite(t *testing.T) {
 	}
 }
 
+func TestMarshalText(t *testing.T) {
+	s := Site{
+		GetCmd: "mirror",
+		Name:   "siteA",
+	}
+	items := []Item{
+		Item{RemotePath: "/remote/foo", LocalPath: "/local", Transfer: true},
+		Item{RemotePath: "/remote/bar", LocalPath: "/local", Transfer: true},
+	}
+	var q encoding.TextMarshaler = Queue{Site: s, Items: items}
+	out, err := q.MarshalText()
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := `open siteA
+queue mirror /remote/foo /local
+queue mirror /remote/bar /local
+queue start
+wait
+exit
+`
+	script := string(out)
+	if script != expected {
+		t.Fatalf("Expected %q, got %q", expected, script)
+	}
+}
+
 func TestMarshalJSON(t *testing.T) {
 	s := newTestSite()
 	var q json.Marshaler = newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
@@ -423,24 +427,6 @@ func TestMarshalJSON(t *testing.T) {
     "Merged": false
   }
 ]`
-	if got := string(out); got != want {
-		t.Errorf("want %q, got %q", want, got)
-	}
-}
-
-func TestMarshalText(t *testing.T) {
-	s := newTestSite()
-	var q encoding.TextMarshaler = newTestQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01"}})
-	out, err := q.MarshalText()
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := `open test
-queue mirror /remote/The.Wire.S01E01 /local/The.Wire/S1/The.Wire.S01E01
-queue start
-wait
-exit
-`
 	if got := string(out); got != want {
 		t.Errorf("want %q, got %q", want, got)
 	}
