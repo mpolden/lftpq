@@ -126,6 +126,20 @@ func TestShow(t *testing.T) {
 				Season:  1,
 				Episode: 4,
 			}},
+		{"Adventure.Time.With.Finn.And.Jake.S01.SUBPACK.720p.BluRay.x264-DEiMOS",
+			Media{
+				Release: "Adventure.Time.With.Finn.And.Jake.S01.SUBPACK.720p.BluRay.x264-DEiMOS",
+				Name:    "Adventure.Time.With.Finn.And.Jake",
+				Season:  1,
+				Episode: 0,
+			}},
+		{"Orange.Is.The.New.Black.S02.NORDiC.SUBPACK.BluRay-REQ",
+			Media{
+				Release: "Orange.Is.The.New.Black.S02.NORDiC.SUBPACK.BluRay-REQ",
+				Name:    "Orange.Is.The.New.Black",
+				Season:  2,
+				Episode: 0,
+			}},
 	}
 	for _, tt := range tests {
 		got, err := Show(tt.in)

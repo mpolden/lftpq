@@ -8,11 +8,12 @@ import (
 
 var (
 	movieExp   = regexp.MustCompile(`(.*?)\.(\d{4})`)
-	episodeExp = regexp.MustCompile("(.*)\\.(?:(" +
-		"(?:S(\\d{2}))?E(\\d{2})" + // S01E04, E04
-		"|(\\d{1,2})x(\\d{2})" + // 1x04, 01x04
-		"|Part\\.?(\\d{1,2})" + // Part4, Part11, Part.4, Part.11
-		"))")
+	episodeExp = regexp.MustCompile(`(.*)\.(?:(` +
+		`(?:S(\d{2}))(?:E(\d{2}))?` + // S01, S01E04
+		`|(?:E(\d{2}))` + // E04
+		`|(\d{1,2})x(\d{2})` + // 1x04, 01x04
+		`|Part\.?(\d{1,2})` + // Part4, Part11, Part.4, Part.11
+		`))`)
 )
 
 type Parser func(s string) (Media, error)
@@ -67,21 +68,20 @@ func Show(s string) (Media, error) {
 		return Media{}, fmt.Errorf("failed to parse: %s", s)
 	}
 	name := m[0][1]
-	var season string
-	var episode string
-	if m[0][4] != "" {
-		if m[0][3] != "" {
-			season = m[0][3]
-		} else {
-			season = "1"
+	season := "1"
+	episode := "0"
+	if m[0][3] != "" { // S01, S01E04
+		season = m[0][3]
+		if m[0][4] != "" {
+			episode = m[0][4]
 		}
-		episode = m[0][4]
-	} else if m[0][5] != "" && m[0][6] != "" {
-		season = m[0][5]
-		episode = m[0][6]
-	} else if m[0][7] != "" {
-		season = "1"
+	} else if m[0][5] != "" { // E04
+		episode = m[0][5]
+	} else if m[0][6] != "" && m[0][7] != "" { // 1x04, 01x04
+		season = m[0][6]
 		episode = m[0][7]
+	} else if m[0][8] != "" { // Part4, Part11, Part.4, Part.11
+		episode = m[0][8]
 	}
 	ss, err := strconv.Atoi(season)
 	if err != nil {
