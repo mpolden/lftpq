@@ -64,7 +64,7 @@ func Movie(s string) (Media, error) {
 
 func Show(s string) (Media, error) {
 	m := episodeExp.FindAllStringSubmatch(s, -1)
-	if len(m) == 0 || len(m[0]) < 8 {
+	if len(m) == 0 || len(m[0]) < 9 {
 		return Media{}, fmt.Errorf("failed to parse: %s", s)
 	}
 	name := m[0][1]
