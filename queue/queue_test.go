@@ -325,15 +325,15 @@ func TestReadQueue(t *testing.T) {
 	lines := `
 t1 /tv/The.Wire.S01E01
 
-t2 /tv/The.Wire.S01E04 ignored
+     t1      /tv/The.Wire.S01 E04 
 
 ignored
 
-  t1 /tv/The.Wire.S01E02
+t2 /tv/The.Wire.S01E02
 
-t1  /tv/The.Wire.S01E03
+t1 /tv/The.Wire.S01E03
 
-t2	/tv/The.Wire.S01E05
+	t2	/tv/The.Wire.S01E05
 `
 	s1, s2 := newTestSite(), newTestSite()
 	s1.Name = "t1"
@@ -345,23 +345,25 @@ t2	/tv/The.Wire.S01E05
 	if len(queues) != 2 {
 		t.Fatal("Expected 2 sites")
 	}
-	for _, q := range queues {
-		if q.Site.Name == s1.Name {
-			if len(q.Items) != 3 {
-				t.Fatalf("Expected 3 items for site %s", q.Site.Name)
-			}
+	var tests = []struct {
+		site        string
+		remotePaths []string
+	}{
+		{"t1", []string{"/tv/The.Wire.S01E01", "/tv/The.Wire.S01 E04", "/tv/The.Wire.S01E03"}},
+		{"t2", []string{"/tv/The.Wire.S01E02", "/tv/The.Wire.S01E05"}},
+	}
+	for i, tt := range tests {
+		q := queues[i]
+		if q.Site.Name != tt.site {
+			t.Errorf("want Site.Name=%s, got %s for queue #%d", tt.site, q.Site.Name, i)
 		}
-		if q.Site.Name == s2.Name {
-			if len(q.Items) != 2 {
-				t.Fatalf("Expected 2 items for site %s", q.Site.Name)
+		for j, rpath := range tt.remotePaths {
+			item := q.Items[j]
+			if item.RemotePath != rpath {
+				t.Errorf("want RemotePath=%s, got %s for item #%d in queue #%d", rpath, item.RemotePath, j, i)
 			}
-		}
-		for i := range q.Items {
-			if want, got := "The.Wire", q.Items[i].Media.Name; got != want {
-				t.Errorf("got Items[%d].Media.Name=%q, want %q", i, got, want)
-			}
-			if !q.Items[i].Transfer {
-				t.Errorf("got Items[%d].Transfer=true, want %t", i, false)
+			if !item.Transfer {
+				t.Errorf("want Transfer=true, got %t for item #%d in queue #%d", item.Transfer, j, i)
 			}
 		}
 	}

@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+var fieldSplitter = regexp.MustCompile(`\s+`)
+
 type readDir func(dirname string) ([]os.FileInfo, error)
 
 type Consumer interface {
@@ -46,7 +48,8 @@ func Read(sites []Site, r io.Reader) ([]Queue, error) {
 	// Store mapping from site name to queue index in qs, as we only want to return a single queue per site
 	indices := map[string]int{}
 	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
+		line := strings.TrimSpace(scanner.Text())
+		fields := fieldSplitter.Split(line, 2)
 		if len(fields) < 2 {
 			continue
 		}
