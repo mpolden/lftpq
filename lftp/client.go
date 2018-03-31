@@ -22,10 +22,7 @@ func (c *Client) Consume(name string) error {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
-	if err := cmd.Wait(); err != nil {
-		return err
-	}
-	return nil
+	return cmd.Wait()
 }
 
 func (c *Client) List(name, path string) ([]os.FileInfo, error) {
