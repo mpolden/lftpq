@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -94,19 +93,21 @@ func (q *Queue) Transfer(consumer Consumer) error {
 	return consumer.Consume(name)
 }
 
-func (q *Queue) PostCommand(inheritIO bool) (*exec.Cmd, error) {
+func (q *Queue) PostProcess(inheritIO bool) error {
+	if q.postCommand == nil {
+		return nil
+	}
 	json, err := json.Marshal(q.Items)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	argv := strings.Split(q.Site.PostCommand, " ")
-	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd := q.postCommand
 	cmd.Stdin = bytes.NewReader(json)
 	if inheritIO {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
-	return cmd, nil
+	return cmd.Run()
 }
 
 func (q Queue) MarshalText() ([]byte, error) {

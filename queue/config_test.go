@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +24,7 @@ func TestLoad(t *testing.T) {
 					Pattern:     "\\.the\\.",
 					Replacement: ".The.",
 				}},
+			PostCommand: "xargs echo",
 		}},
 	}
 	if err := cfg.load(); err != nil {
@@ -50,6 +52,9 @@ func TestLoad(t *testing.T) {
 	}
 	if len(site.itemParser.replacements) == 0 {
 		t.Error("Expected non-empty replacements")
+	}
+	if want := []string{"xargs", "echo"}; !reflect.DeepEqual(want, site.postCommand.Args) {
+		t.Fatalf("Expected %+v, got %+v", want, site.postCommand.Args)
 	}
 }
 

@@ -3,9 +3,7 @@ package queue
 import (
 	"encoding"
 	"encoding/json"
-	"io/ioutil"
 	"os"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -200,26 +198,6 @@ func TestDeduplicateIgnoreSelf(t *testing.T) {
 		if item.Duplicate {
 			t.Errorf("Expected Duplicate=false for %+v", item)
 		}
-	}
-}
-
-func TestPostCommand(t *testing.T) {
-	s := newTestSite()
-	s.PostCommand = "xargs echo"
-	q := newTestQueue(s, []os.FileInfo{file{name: "/remote/foo"}})
-	cmd, err := q.PostCommand(false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if want := []string{"xargs", "echo"}; !reflect.DeepEqual(want, cmd.Args) {
-		t.Fatalf("Expected %+v, got %+v", want, cmd.Args)
-	}
-	data, err := ioutil.ReadAll(cmd.Stdin)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(data) == 0 {
-		t.Fatal("Expected stdin to contain data")
 	}
 }
 

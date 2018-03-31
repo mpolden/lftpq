@@ -120,14 +120,7 @@ func (c *CLI) transfer(q queue.Queue) error {
 	if err := q.Transfer(c.consumer); err != nil {
 		return err
 	}
-	if q.Site.PostCommand == "" {
-		return nil
-	}
-	cmd, err := q.PostCommand(!c.Quiet)
-	if err != nil {
-		return err
-	}
-	return cmd.Run()
+	return q.PostProcess(!c.Quiet)
 }
 
 func main() {

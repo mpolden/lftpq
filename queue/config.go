@@ -46,6 +46,7 @@ type Site struct {
 	Priorities   []string
 	priorities   []*regexp.Regexp
 	PostCommand  string
+	postCommand  *exec.Cmd
 	Replacements []Replacement
 	Merge        bool
 	Skip         bool
@@ -92,13 +93,15 @@ func parseTemplate(tmpl string) (*template.Template, error) {
 	return t, nil
 }
 
-func isExecutable(s string) error {
-	if s == "" {
-		return nil
+func command(cmd string) (*exec.Cmd, error) {
+	if cmd == "" {
+		return nil, nil
 	}
-	args := strings.Split(s, " ")
-	_, err := exec.LookPath(args[0])
-	return err
+	argv := strings.Split(cmd, " ")
+	if _, err := exec.LookPath(argv[0]); err != nil {
+		return nil, err
+	}
+	return exec.Command(argv[0], argv[1:]...), nil
 }
 
 func (c *Config) load() error {
@@ -135,9 +138,11 @@ func (c *Config) load() error {
 			return err
 		}
 
-		if err := isExecutable(site.PostCommand); err != nil {
+		cmd, err := command(site.PostCommand)
+		if err != nil {
 			return err
 		}
+		site.postCommand = cmd
 
 		var parserFunc parser.Parser
 		switch site.Parser {
