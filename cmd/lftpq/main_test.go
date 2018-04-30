@@ -163,12 +163,10 @@ t2 /baz/foo.2018
 queue mirror /foo/bar.2017 /tmp/bar.2017
 queue start
 wait
-exit
 open t2
 queue mirror /baz/foo.2018 /tmp/foo.2018
 queue start
 wait
-exit
 `
 	if got := buf.String(); got != want {
 		t.Errorf("want %s, got %s", want, got)
@@ -272,7 +270,6 @@ func TestRun(t *testing.T) {
 queue mirror /baz/foo.2017 /tmp/foo.2017
 queue start
 wait
-exit
 `
 	if got := buf.String(); got != want {
 		t.Errorf("want %s, got %s", want, got)

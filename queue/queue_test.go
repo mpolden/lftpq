@@ -374,7 +374,6 @@ queue mirror /remote/foo /local
 queue mirror /remote/bar /local
 queue start
 wait
-exit
 `
 	script := string(out)
 	if script != expected {

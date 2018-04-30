@@ -124,7 +124,7 @@ func (q Queue) MarshalText() ([]byte, error) {
 		buf.WriteString(item.LocalPath)
 		buf.WriteString("\n")
 	}
-	buf.WriteString("queue start\nwait\nexit\n")
+	buf.WriteString("queue start\nwait\n")
 	return buf.Bytes(), nil
 }
 
