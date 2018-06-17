@@ -3,6 +3,7 @@ package lftp
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,16 +22,16 @@ func (f file) IsDir() bool        { return f.Mode().IsDir() }
 func (f file) Sys() interface{}   { return nil }
 
 func ParseFile(s string) (file, error) {
-	parts := strings.SplitN(s, " ", 5)
-	if len(parts) != 5 {
-		return file{}, fmt.Errorf("failed to parse file: %s", s)
+	parts := strings.SplitN(s, " ", 2)
+	if len(parts) != 2 {
+		return file{}, fmt.Errorf("invalid file: %q", s)
 	}
-	t := strings.Join(parts[:4], " ")
-	modified, err := time.Parse("2006-01-02 15:04:05 -0700 MST", t)
+	secs, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
-		return file{}, err
+		return file{}, fmt.Errorf("invalid time: %q: %s", parts[0], err)
 	}
-	path := parts[4]
+	modified := time.Unix(secs, 0)
+	path := parts[1]
 
 	var fileMode os.FileMode
 	if strings.HasSuffix(path, "@") {

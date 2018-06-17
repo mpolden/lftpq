@@ -7,8 +7,8 @@ import (
 )
 
 func TestParseFile(t *testing.T) {
-	t1 := time.Date(2014, 12, 16, 0, 4, 30, 0, time.FixedZone("CET", 3600))
-	t2 := time.Date(2015, 2, 3, 15, 12, 30, 0, time.FixedZone("CET", 3600))
+	t1 := time.Date(2014, 12, 16, 0, 4, 30, 0, time.UTC)
+	t2 := time.Date(2015, 2, 3, 15, 12, 30, 0, time.UTC)
 	var tests = []struct {
 		in        string
 		out       file
@@ -16,13 +16,13 @@ func TestParseFile(t *testing.T) {
 		IsDir     bool
 		IsRegular bool
 	}{
-		{"2014-12-16 00:04:30 +0100 CET /bar/foo/", file{modTime: t1, path: "/bar/foo"},
+		{"1418688270 /bar/foo/", file{modTime: t1, path: "/bar/foo"},
 			false /* IsDir */, true, false},
-		{"2015-02-03 15:12:30 +0100 CET /foo/bar@",
+		{"1422976350 /foo/bar@",
 			file{modTime: t2, path: "/foo/bar"} /* IsSymlink */, true, false, false},
-		{"2014-12-16 00:04:30 +0100 CET /foo/bar baz/",
+		{"1418688270 /foo/bar baz/",
 			file{modTime: t1, path: "/foo/bar baz"}, false /* IsDir */, true, false},
-		{"2014-12-16 00:04:30 +0100 CET /foo/baz",
+		{"1418688270 /foo/baz",
 			file{modTime: t1, path: "/foo/baz"}, false, false /* IsRegular */, true},
 	}
 	for _, tt := range tests {

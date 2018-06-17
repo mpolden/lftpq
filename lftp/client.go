@@ -67,6 +67,6 @@ func parseDirList(r io.Reader) ([]os.FileInfo, error) {
 }
 
 func listArgs(name, path string) []string {
-	script := "cls -1 --classify --date --time-style='%F %T %z %Z' " + path + " && exit"
+	script := "cls -1 --classify --date --time-style='%s' " + path + " && exit"
 	return []string{"-e", script, name}
 }
