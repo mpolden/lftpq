@@ -110,17 +110,17 @@ func command(cmd string) (*exec.Cmd, error) {
 	return exec.Command(argv[0], argv[1:]...), nil
 }
 
-func (c *Config) itemParsers() (map[string]itemParser, error) {
+func (c *Config) load() error {
 	itemParsers := make(map[string]itemParser)
 	for _, d := range c.LocalDirs {
 		if d.Name == "" {
-			return nil, fmt.Errorf("invalid local dir name: %q", d.Name)
+			return fmt.Errorf("invalid local dir name: %q", d.Name)
 		}
 		if d.Dir == "" {
-			return nil, fmt.Errorf("invalid local dir path: %q", d.Dir)
+			return fmt.Errorf("invalid local dir path: %q", d.Dir)
 		}
 		if _, ok := itemParsers[d.Name]; ok {
-			return nil, fmt.Errorf("invalid local dir: %q: declared multiple times", d.Name)
+			return fmt.Errorf("invalid local dir: %q: declared multiple times", d.Name)
 		}
 		var parserFunc parser.Parser
 		switch d.Parser {
@@ -131,30 +131,22 @@ func (c *Config) itemParsers() (map[string]itemParser, error) {
 		case "":
 			parserFunc = parser.Default
 		default:
-			return nil, fmt.Errorf("invalid local dir %q: invalid parser: %q (must be %q, %q or %q)",
+			return fmt.Errorf("invalid local dir %q: invalid parser: %q (must be %q, %q or %q)",
 				d.Name, d.Parser, "show", "movie", "")
 		}
 		tmpl, err := parseTemplate(d.Dir)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		replacements, err := compileReplacements(d.Replacements)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		itemParsers[d.Name] = itemParser{
 			parser:       parserFunc,
 			replacements: replacements,
 			template:     tmpl,
 		}
-	}
-	return itemParsers, nil
-}
-
-func (c *Config) load() error {
-	itemParsers, err := c.itemParsers()
-	if err != nil {
-		return err
 	}
 	for i := range c.Sites {
 		site := &c.Sites[i]
@@ -195,18 +187,17 @@ func (c *Config) load() error {
 }
 
 func (c *Config) SetLocalDir(name string) error {
-	itemParsers, err := c.itemParsers()
-	if err != nil {
+	newCfg := *c
+	newCfg.Sites = make([]Site, len(c.Sites))
+	for i, s := range c.Sites {
+		s.LocalDir = name
+		newCfg.Sites[i] = s
+	}
+	if err := newCfg.load(); err != nil {
 		return err
 	}
-	_, ok := itemParsers[name]
-	if !ok {
-		return fmt.Errorf("invalid local dir: %q", name)
-	}
-	for i := range c.Sites {
-		c.Sites[i].LocalDir = name
-	}
-	return c.load()
+	*c = newCfg
+	return nil
 }
 
 func (c *Config) JSON() ([]byte, error) {

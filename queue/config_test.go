@@ -119,7 +119,7 @@ func TestReadConfig(t *testing.T) {
 	}
 }
 
-func TestOverrideLocalDir(t *testing.T) {
+func TestSetLocalDir(t *testing.T) {
 	jsonConfig := `
 {
   "LocalDirs": [
@@ -155,12 +155,21 @@ func TestOverrideLocalDir(t *testing.T) {
 	if err := cfg.load(); err != nil {
 		t.Fatal(err)
 	}
+	if err := cfg.SetLocalDir("invalid"); err == nil {
+		t.Fatal("want error")
+	}
+	// Config remains unchanged after invalid local dir
+	for _, s := range cfg.Sites {
+		if want := "d1"; s.LocalDir != want {
+			t.Errorf("got %q, want %q", s.LocalDir, want)
+		}
+	}
 	if err := cfg.SetLocalDir("d2"); err != nil {
 		t.Fatal(err)
 	}
 	for _, s := range cfg.Sites {
-		if s.LocalDir != "d2" {
-			t.Errorf("got %q, want %q for Name=%q", s.LocalDir, "d2", s.Name)
+		if want := "d2"; s.LocalDir != want {
+			t.Errorf("got %q, want %q", s.LocalDir, want)
 		}
 	}
 }
