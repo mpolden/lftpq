@@ -88,7 +88,7 @@ func TestConfigTest(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "movie",
-      "Template": "/tmp/"
+      "Dir": "/tmp/"
     }
   ],
   "Sites": []
@@ -120,7 +120,7 @@ func TestConfigTest(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "movie",
-      "Template": "/tmp/",
+      "Dir": "/tmp/",
       "Replacements": null
     }
   ],
@@ -139,7 +139,7 @@ func TestRunImport(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "movie",
-      "Template": "/tmp/"
+      "Dir": "/tmp/"
     }
   ],
   "Default": {
@@ -251,7 +251,7 @@ func TestRun(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "movie",
-      "Template": "/tmp/"
+      "Dir": "/tmp/"
     }
   ],
   "Default": {
@@ -341,7 +341,7 @@ func TestRunSkipSite(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "movie",
-      "Template": "/tmp/"
+      "Dir": "/tmp/"
     }
   ],
   "Sites": [
@@ -370,7 +370,7 @@ func TestRunListError(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "movie",
-      "Template": "/tmp/"
+      "Dir": "/tmp/"
     }
   ],
   "Sites": [

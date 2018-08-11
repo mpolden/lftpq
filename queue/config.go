@@ -32,7 +32,7 @@ type Replacement struct {
 type LocalDir struct {
 	Name         string
 	Parser       string
-	Template     string
+	Dir          string
 	Replacements []Replacement
 }
 
@@ -116,8 +116,8 @@ func (c *Config) itemParsers() (map[string]itemParser, error) {
 		if d.Name == "" {
 			return nil, fmt.Errorf("invalid local dir name: %q", d.Name)
 		}
-		if d.Template == "" {
-			return nil, fmt.Errorf("invalid local dir template: %q", d.Template)
+		if d.Dir == "" {
+			return nil, fmt.Errorf("invalid local dir path: %q", d.Dir)
 		}
 		var parserFunc parser.Parser
 		switch d.Parser {
@@ -131,7 +131,7 @@ func (c *Config) itemParsers() (map[string]itemParser, error) {
 			return nil, fmt.Errorf("invalid local dir %q: invalid parser: %q (must be %q, %q or %q)",
 				d.Name, d.Parser, "show", "movie", "")
 		}
-		tmpl, err := parseTemplate(d.Template)
+		tmpl, err := parseTemplate(d.Dir)
 		if err != nil {
 			return nil, err
 		}

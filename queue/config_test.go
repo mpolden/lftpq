@@ -11,9 +11,9 @@ func TestLoad(t *testing.T) {
 	cfg := Config{
 		LocalDirs: []LocalDir{
 			{
-				Name:     "d1",
-				Parser:   "show",
-				Template: "/tmp/{{ .Name }}",
+				Name:   "d1",
+				Parser: "show",
+				Dir:    "/tmp/{{ .Name }}",
 				Replacements: []Replacement{
 					{
 						Pattern:     "\\.the\\.",
@@ -72,12 +72,12 @@ func TestReadConfig(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "show",
-      "Template": "/tmp/d1/"
+      "Dir": "/tmp/d1/"
     },
     {
       "Name": "d2",
       "Parser": "movie",
-      "Template": "/tmp/d2/"
+      "Dir": "/tmp/d2/"
     }
   ],
   "Default": {
@@ -126,12 +126,12 @@ func TestOverrideLocalDir(t *testing.T) {
     {
       "Name": "d1",
       "Parser": "show",
-      "Template": "/tmp/d1/"
+      "Dir": "/tmp/d1/"
     },
     {
       "Name": "d2",
       "Parser": "movie",
-      "Template": "/tmp/d2/"
+      "Dir": "/tmp/d2/"
     }
   ],
   "Default": {
