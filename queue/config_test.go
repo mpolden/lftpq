@@ -9,21 +9,28 @@ import (
 
 func TestLoad(t *testing.T) {
 	cfg := Config{
-		Sites: []Site{Site{
+		LocalDirs: []LocalDir{
+			{
+				Name:     "d1",
+				Parser:   "show",
+				Template: "/tmp/{{ .Name }}",
+				Replacements: []Replacement{
+					{
+						Pattern:     "\\.the\\.",
+						Replacement: ".The.",
+					}},
+			},
+		},
+		Sites: []Site{{
 			Name:         "foo",
 			Dirs:         []string{"/site"},
 			MaxAge:       "24h",
 			Patterns:     []string{"^match"},
 			Filters:      []string{"^skip"},
 			SkipSymlinks: true,
-			Parser:       "show",
-			LocalDir:     "/tmp/{{ .Name }}",
+			LocalDir:     "d1",
 			Priorities:   []string{"important"},
-			Replacements: []Replacement{
-				Replacement{
-					Pattern:     "\\.the\\.",
-					Replacement: ".The.",
-				}},
+
 			PostCommand: "xargs echo",
 		}},
 	}
@@ -61,8 +68,20 @@ func TestLoad(t *testing.T) {
 func TestReadConfig(t *testing.T) {
 	jsonConfig := `
 {
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "show",
+      "Template": "/tmp/d1/"
+    },
+    {
+      "Name": "d2",
+      "Parser": "movie",
+      "Template": "/tmp/d2/"
+    }
+  ],
   "Default": {
-    "Parser": "show"
+    "LocalDir": "d1"
   },
   "Sites": [
     {
@@ -70,11 +89,11 @@ func TestReadConfig(t *testing.T) {
     },
     {
       "Name": "bar",
-      "Parser": "movie"
+      "LocalDir": "d2"
     },
     {
       "Name": "baz",
-      "Parser": ""
+      "LocalDir": ""
     }
   ]
 }
@@ -88,14 +107,60 @@ func TestReadConfig(t *testing.T) {
 		i   int
 		out string
 	}{
-		{0, "show"},
-		{1, "movie"},
+		{0, "d1"},
+		{1, "d2"},
 		{2, ""},
 	}
 	for _, tt := range tests {
 		site := cfg.Sites[tt.i]
-		if got := site.Parser; got != tt.out {
-			t.Errorf("Expected Parser=%q, got Parser=%q for Name=%q", tt.out, got, site.Name)
+		if got := site.LocalDir; got != tt.out {
+			t.Errorf("got LocalDir=%q, want %q for Name=%q", got, tt.out, site.Name)
+		}
+	}
+}
+
+func TestOverrideLocalDir(t *testing.T) {
+	jsonConfig := `
+{
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "show",
+      "Template": "/tmp/d1/"
+    },
+    {
+      "Name": "d2",
+      "Parser": "movie",
+      "Template": "/tmp/d2/"
+    }
+  ],
+  "Default": {
+    "LocalDir": "d1",
+    "MaxAge": "24h"
+  },
+  "Sites": [
+    {
+      "Name": "foo"
+    },
+    {
+      "Name": "bar"
+    }
+  ]
+}
+`
+	cfg, err := readConfig(strings.NewReader(jsonConfig))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.load(); err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.SetLocalDir("d2"); err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range cfg.Sites {
+		if s.LocalDir != "d2" {
+			t.Errorf("got %q, want %q for Name=%q", s.LocalDir, "d2", s.Name)
 		}
 	}
 }

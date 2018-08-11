@@ -82,7 +82,18 @@ func TestInvalidConfig(t *testing.T) {
 }
 
 func TestConfigTest(t *testing.T) {
-	cli, buf := newTestCLI(`{"Default": {"Parser": "show"}, "Sites": []}`)
+	cli, buf := newTestCLI(`
+{
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "movie",
+      "Template": "/tmp/"
+    }
+  ],
+  "Sites": []
+}
+`)
 	defer os.Remove(cli.Config)
 	cli.Test = true
 	if err := cli.Run(); err != nil {
@@ -99,14 +110,20 @@ func TestConfigTest(t *testing.T) {
     "SkipSymlinks": false,
     "SkipExisting": false,
     "SkipFiles": false,
-    "Parser": "show",
     "LocalDir": "",
     "Priorities": null,
     "PostCommand": "",
-    "Replacements": null,
     "Merge": false,
     "Skip": false
   },
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "movie",
+      "Template": "/tmp/",
+      "Replacements": null
+    }
+  ],
   "Sites": []
 }
 `
@@ -118,23 +135,29 @@ func TestConfigTest(t *testing.T) {
 func TestRunImport(t *testing.T) {
 	cli, buf := newTestCLI(`
 {
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "movie",
+      "Template": "/tmp/"
+    }
+  ],
   "Default": {
-    "Parser": "movie",
+    "LocalDir": "d1",
     "GetCmd": "mirror"
-   },
-   "Sites": [
+  },
+  "Sites": [
     {
       "MaxAge": "0",
-      "Name": "t1",
-      "LocalDir": "/tmp/"
+      "Name": "t1"
     },
     {
       "MaxAge": "0",
-      "Name": "t2",
-      "LocalDir": "/tmp/"
+      "Name": "t2"
     }
-   ]
-}`)
+  ]
+}
+`)
 	defer os.Remove(cli.Config)
 	toImport := `
 t1 /foo/bar.2017
@@ -224,19 +247,25 @@ wait
 func TestRun(t *testing.T) {
 	cli, buf := newTestCLI(`
 {
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "movie",
+      "Template": "/tmp/"
+    }
+  ],
   "Default": {
-    "Parser": "movie",
+    "LocalDir": "d1",
     "GetCmd": "mirror",
     "Patterns": [".*"]
    },
-   "Sites": [
+  "Sites": [
     {
       "MaxAge": "0",
       "Name": "t1",
       "Dirs": [
         "/baz"
-      ],
-      "LocalDir": "/tmp/"
+      ]
     }
    ]
 }`)
@@ -308,10 +337,18 @@ wait
 func TestRunSkipSite(t *testing.T) {
 	cli, buf := newTestCLI(`
 {
-   "Sites": [
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "movie",
+      "Template": "/tmp/"
+    }
+  ],
+  "Sites": [
     {
       "MaxAge": "0",
       "Name": "t1",
+      "LocalDir": "d1",
       "Skip": true
     }
    ]
@@ -329,13 +366,21 @@ func TestRunSkipSite(t *testing.T) {
 func TestRunListError(t *testing.T) {
 	cli, buf := newTestCLI(`
 {
-   "Sites": [
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "movie",
+      "Template": "/tmp/"
+    }
+  ],
+  "Sites": [
     {
       "MaxAge": "0",
       "Name": "t1",
       "Dirs": [
         "/foo"
-      ]
+      ],
+      "LocalDir": "d1"
     }
    ]
 }`)

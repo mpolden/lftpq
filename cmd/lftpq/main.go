@@ -22,6 +22,7 @@ type CLI struct {
 	Test     bool   `short:"t" long:"test" description:"Test and print config"`
 	Quiet    bool   `short:"q" long:"quiet" description:"Do not print output from lftp"`
 	Import   bool   `short:"i" long:"import" description:"Build queues from stdin"`
+	LocalDir string `short:"l" long:"local-dir" description:"Override local dir for this run" value-name:"NAME"`
 	LftpPath string `short:"p" long:"lftp" description:"Path to lftp program" value-name:"NAME" default:"lftp"`
 	consumer queue.Consumer
 	lister   lister
@@ -34,6 +35,11 @@ func (c *CLI) Run() error {
 	cfg, err := queue.ReadConfig(c.Config)
 	if err != nil {
 		return err
+	}
+	if c.LocalDir != "" {
+		if err := cfg.SetLocalDir(c.LocalDir); err != nil {
+			return err
+		}
 	}
 	if c.Test {
 		json, err := cfg.JSON()

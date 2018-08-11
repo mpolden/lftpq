@@ -18,14 +18,22 @@ import (
 )
 
 type Config struct {
-	Default Site
-	Sites   []Site
+	Default   Site
+	LocalDirs []LocalDir
+	Sites     []Site
 }
 
 type Replacement struct {
 	Pattern     string
 	pattern     *regexp.Regexp
 	Replacement string
+}
+
+type LocalDir struct {
+	Name         string
+	Parser       string
+	Template     string
+	Replacements []Replacement
 }
 
 type Site struct {
@@ -41,13 +49,11 @@ type Site struct {
 	SkipSymlinks bool
 	SkipExisting bool
 	SkipFiles    bool
-	Parser       string
 	LocalDir     string
 	Priorities   []string
 	priorities   []*regexp.Regexp
 	PostCommand  string
 	postCommand  *exec.Cmd
-	Replacements []Replacement
 	Merge        bool
 	Skip         bool
 	itemParser
@@ -104,7 +110,49 @@ func command(cmd string) (*exec.Cmd, error) {
 	return exec.Command(argv[0], argv[1:]...), nil
 }
 
+func (c *Config) itemParsers() (map[string]itemParser, error) {
+	itemParsers := make(map[string]itemParser)
+	for _, d := range c.LocalDirs {
+		if d.Name == "" {
+			return nil, fmt.Errorf("invalid local dir name: %q", d.Name)
+		}
+		if d.Template == "" {
+			return nil, fmt.Errorf("invalid local dir template: %q", d.Template)
+		}
+		var parserFunc parser.Parser
+		switch d.Parser {
+		case "show":
+			parserFunc = parser.Show
+		case "movie":
+			parserFunc = parser.Movie
+		case "":
+			parserFunc = parser.Default
+		default:
+			return nil, fmt.Errorf("invalid local dir %q: invalid parser: %q (must be %q, %q or %q)",
+				d.Name, d.Parser, "show", "movie", "")
+		}
+		tmpl, err := parseTemplate(d.Template)
+		if err != nil {
+			return nil, err
+		}
+		replacements, err := compileReplacements(d.Replacements)
+		if err != nil {
+			return nil, err
+		}
+		itemParsers[d.Name] = itemParser{
+			parser:       parserFunc,
+			replacements: replacements,
+			template:     tmpl,
+		}
+	}
+	return itemParsers, nil
+}
+
 func (c *Config) load() error {
+	itemParsers, err := c.itemParsers()
+	if err != nil {
+		return err
+	}
 	for i := range c.Sites {
 		site := &c.Sites[i]
 		maxAge, err := time.ParseDuration(site.MaxAge)
@@ -127,16 +175,6 @@ func (c *Config) load() error {
 			return err
 		}
 		site.priorities = priorities
-		replacements, err := compileReplacements(site.Replacements)
-		if err != nil {
-			return err
-		}
-		site.Replacements = replacements
-
-		tmpl, err := parseTemplate(site.LocalDir)
-		if err != nil {
-			return err
-		}
 
 		cmd, err := command(site.PostCommand)
 		if err != nil {
@@ -144,25 +182,28 @@ func (c *Config) load() error {
 		}
 		site.postCommand = cmd
 
-		var parserFunc parser.Parser
-		switch site.Parser {
-		case "show":
-			parserFunc = parser.Show
-		case "movie":
-			parserFunc = parser.Movie
-		case "":
-			parserFunc = parser.Default
-		default:
-			return fmt.Errorf("invalid parser: %q (must be %q, %q or %q)",
-				site.Parser, "show", "movie", "")
+		itemParser, ok := itemParsers[site.LocalDir]
+		if !ok {
+			return fmt.Errorf("site: %q: invalid local dir: %q", site.Name, site.LocalDir)
 		}
-		site.itemParser = itemParser{
-			parser:       parserFunc,
-			replacements: site.Replacements,
-			template:     tmpl,
-		}
+		site.itemParser = itemParser
 	}
 	return nil
+}
+
+func (c *Config) SetLocalDir(name string) error {
+	itemParsers, err := c.itemParsers()
+	if err != nil {
+		return err
+	}
+	_, ok := itemParsers[name]
+	if !ok {
+		return fmt.Errorf("invalid local dir: %q", name)
+	}
+	for i := range c.Sites {
+		c.Sites[i].LocalDir = name
+	}
+	return c.load()
 }
 
 func (c *Config) JSON() ([]byte, error) {
