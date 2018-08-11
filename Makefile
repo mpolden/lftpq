@@ -14,7 +14,8 @@ ifdef TRAVIS
 	megacheck 2> /dev/null; if [ $$? -eq 127 ]; then \
 		go get -v honnef.co/go/tools/cmd/megacheck; \
 	fi
-	megacheck ./...
+# Ignore SA6004 in test code
+	megacheck -ignore 'github.com/mpolden/lftpq/**/*_test.go:SA6004' ./...
 endif
 
 check-fmt:
