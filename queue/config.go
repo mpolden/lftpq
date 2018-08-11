@@ -119,6 +119,9 @@ func (c *Config) itemParsers() (map[string]itemParser, error) {
 		if d.Dir == "" {
 			return nil, fmt.Errorf("invalid local dir path: %q", d.Dir)
 		}
+		if _, ok := itemParsers[d.Name]; ok {
+			return nil, fmt.Errorf("invalid local dir: %q: declared multiple times", d.Name)
+		}
 		var parserFunc parser.Parser
 		switch d.Parser {
 		case "show":
