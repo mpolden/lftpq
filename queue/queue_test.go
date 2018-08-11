@@ -117,14 +117,14 @@ func TestNewQueue(t *testing.T) {
 	}
 	q := newQueue(s, files, readDir)
 	expected := []Item{
-		Item{itemParser: q.itemParser, RemotePath: files[0].Name(), Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
-		Item{itemParser: q.itemParser, RemotePath: files[1].Name(), Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
-		Item{itemParser: q.itemParser, RemotePath: files[2].Name(), Transfer: true, Reason: "Match=dir\\d"},
-		Item{itemParser: q.itemParser, RemotePath: files[3].Name(), Transfer: true, Reason: "Match=dir\\d"},
-		Item{itemParser: q.itemParser, RemotePath: files[4].Name(), Transfer: false, Reason: "IsDstDirEmpty=false"},
-		Item{itemParser: q.itemParser, RemotePath: files[5].Name(), Transfer: false, Reason: "no match"},
-		Item{itemParser: q.itemParser, RemotePath: files[6].Name(), Transfer: false, Reason: "Filter=^incomplete-"},
-		Item{itemParser: q.itemParser, RemotePath: files[7].Name(), Transfer: false, Reason: "IsFile=true SkipFiles=true"},
+		{itemParser: q.itemParser, RemotePath: files[0].Name(), Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
+		{itemParser: q.itemParser, RemotePath: files[1].Name(), Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
+		{itemParser: q.itemParser, RemotePath: files[2].Name(), Transfer: true, Reason: "Match=dir\\d"},
+		{itemParser: q.itemParser, RemotePath: files[3].Name(), Transfer: true, Reason: "Match=dir\\d"},
+		{itemParser: q.itemParser, RemotePath: files[4].Name(), Transfer: false, Reason: "IsDstDirEmpty=false"},
+		{itemParser: q.itemParser, RemotePath: files[5].Name(), Transfer: false, Reason: "no match"},
+		{itemParser: q.itemParser, RemotePath: files[6].Name(), Transfer: false, Reason: "Filter=^incomplete-"},
+		{itemParser: q.itemParser, RemotePath: files[7].Name(), Transfer: false, Reason: "IsFile=true SkipFiles=true"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {
@@ -361,8 +361,8 @@ func TestMarshalText(t *testing.T) {
 		Name:   "siteA",
 	}
 	items := []Item{
-		Item{RemotePath: "/remote/foo", LocalPath: "/local", Transfer: true},
-		Item{RemotePath: "/remote/bar", LocalPath: "/local", Transfer: true},
+		{RemotePath: "/remote/foo", LocalPath: "/local", Transfer: true},
+		{RemotePath: "/remote/bar", LocalPath: "/local", Transfer: true},
 	}
 	var q encoding.TextMarshaler = Queue{Site: s, Items: items}
 	out, err := q.MarshalText()

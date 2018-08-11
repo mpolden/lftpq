@@ -12,9 +12,9 @@ func TestParseDirList(t *testing.T) {
 	1422918075 dir2/
 	1426408110 dir3@`
 	want := []file{
-		file{modTime: time.Date(2014, 6, 25, 14, 15, 16, 0, time.UTC), path: "dir1"},
-		file{modTime: time.Date(2015, 2, 2, 23, 1, 15, 0, time.UTC), path: "dir2"},
-		file{modTime: time.Date(2015, 3, 15, 8, 28, 30, 0, time.UTC), path: "dir3"},
+		{modTime: time.Date(2014, 6, 25, 14, 15, 16, 0, time.UTC), path: "dir1"},
+		{modTime: time.Date(2015, 2, 2, 23, 1, 15, 0, time.UTC), path: "dir2"},
+		{modTime: time.Date(2015, 3, 15, 8, 28, 30, 0, time.UTC), path: "dir3"},
 	}
 	got, err := parseDirList(strings.NewReader(ls))
 	if err != nil {
