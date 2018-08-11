@@ -12,7 +12,7 @@ import (
 )
 
 type lister interface {
-	List(name, path string) ([]os.FileInfo, error)
+	List(site, path string) ([]os.FileInfo, error)
 }
 
 type CLI struct {

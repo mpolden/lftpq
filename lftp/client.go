@@ -25,8 +25,8 @@ func (c *Client) Consume(name string) error {
 	return cmd.Wait()
 }
 
-func (c *Client) List(name, path string) ([]os.FileInfo, error) {
-	cmd := exec.Command(c.Path, listArgs(name, path)...)
+func (c *Client) List(site, path string) ([]os.FileInfo, error) {
+	cmd := exec.Command(c.Path, listArgs(site, path)...)
 
 	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
