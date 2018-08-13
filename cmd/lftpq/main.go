@@ -131,18 +131,19 @@ func (c *CLI) transfer(q queue.Queue) error {
 
 func main() {
 	var cli CLI
-	_, err := flags.ParseArgs(&cli, os.Args)
-	if err != nil {
-		os.Exit(1)
-	}
 	cli.stderr = os.Stderr
 	cli.stdout = os.Stdout
 	cli.stdin = os.Stdin
+	_, err := flags.ParseArgs(cli, os.Args)
+	if err != nil {
+		cli.printf("%s\n", err)
+		os.Exit(1)
+	}
 	client := lftp.Client{Path: cli.LftpPath, InheritIO: !cli.Quiet}
 	cli.lister = &client
 	cli.consumer = &client
 	if err := cli.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		cli.printf("%s\n", err)
 		os.Exit(1)
 	}
 }
