@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
 
 	flags "github.com/jessevdk/go-flags"
 
@@ -31,6 +34,18 @@ type CLI struct {
 	stdin    io.Reader
 }
 
+func New() *CLI {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+	cli := CLI{}
+	go func() {
+		<-sig
+		cli.unlock()
+		os.Exit(1)
+	}()
+	return &cli
+}
+
 func (c *CLI) Run() error {
 	cfg, err := queue.ReadConfig(c.Config)
 	if err != nil {
@@ -55,6 +70,10 @@ func (c *CLI) Run() error {
 			return err
 		}
 	} else {
+		if err := c.lock(); err != nil {
+			return fmt.Errorf("already running: %s", err)
+		}
+		defer c.unlock()
 		queues = c.queuesFor(cfg.Sites)
 	}
 	for _, q := range queues {
@@ -65,6 +84,15 @@ func (c *CLI) Run() error {
 	}
 	return nil
 }
+
+func (c *CLI) lockfile() string { return filepath.Join(os.TempDir(), ".lftpqlock") }
+
+func (c *CLI) lock() error {
+	_, err := os.OpenFile(c.lockfile(), os.O_CREATE|os.O_EXCL, 0644)
+	return err
+}
+
+func (c *CLI) unlock() { os.Remove(c.lockfile()) }
 
 func (c *CLI) printf(format string, vs ...interface{}) {
 	alwaysPrint := false
@@ -130,7 +158,7 @@ func (c *CLI) transfer(q queue.Queue) error {
 }
 
 func main() {
-	var cli CLI
+	cli := New()
 	cli.stderr = os.Stderr
 	cli.stdout = os.Stdout
 	cli.stdin = os.Stdin
