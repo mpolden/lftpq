@@ -162,8 +162,8 @@ func main() {
 	cli.stderr = os.Stderr
 	cli.stdout = os.Stdout
 	cli.stdin = os.Stdin
-	_, err := flags.ParseArgs(cli, os.Args)
-	if err != nil {
+	p := flags.NewParser(cli, flags.HelpFlag|flags.PassDoubleDash)
+	if _, err := p.Parse(); err != nil {
 		cli.printf("%s\n", err)
 		os.Exit(1)
 	}
