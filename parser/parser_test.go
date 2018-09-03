@@ -46,13 +46,12 @@ func TestEqual(t *testing.T) {
 }
 
 func TestDefault(t *testing.T) {
-	m, err := Default("")
+	m, err := Default("foo")
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := Media{}
-	if m != expected {
-		t.Errorf("Expected %+v, got %+v", expected, m)
+	if got, want := m.Release, "foo"; got != want {
+		t.Errorf("want %q, got %q", want, got)
 	}
 }
 

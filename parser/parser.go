@@ -42,7 +42,7 @@ func (m *Media) Equal(o Media) bool {
 }
 
 func Default(s string) (Media, error) {
-	return Media{}, nil
+	return Media{Release: s}, nil
 }
 
 func Movie(s string) (Media, error) {
