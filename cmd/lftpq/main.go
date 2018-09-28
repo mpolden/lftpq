@@ -36,7 +36,7 @@ type CLI struct {
 
 func New() *CLI {
 	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT, syscall.SIGPIPE)
 	cli := CLI{}
 	go func() {
 		<-sig
