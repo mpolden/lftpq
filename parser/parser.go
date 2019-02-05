@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	movieExp    = regexp.MustCompile(`(.*?)\.(\d{4})`)
-	episodeExps = [4]*regexp.Regexp{
+	moviePattern    = regexp.MustCompile(`(.*?)\.(\d{4})`)
+	episodePatterns = [4]*regexp.Regexp{
 		regexp.MustCompile(`^(?P<name>.+)\.S(?P<season>\d{2})(?:E(?P<episode>\d{2}))?`), // S01, S01E04
 		regexp.MustCompile(`^(?P<name>.+)\.E(?P<episode>\d{2})`),                        // E04
 		regexp.MustCompile(`^(?P<name>.+)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),     // 1x04, 01x04
@@ -46,14 +46,14 @@ func Default(s string) (Media, error) {
 }
 
 func Movie(s string) (Media, error) {
-	m := movieExp.FindAllStringSubmatch(s, -1)
-	if len(m) == 0 || len(m[0]) < 3 {
-		return Media{}, fmt.Errorf("failed to parse: %s", s)
+	matches := moviePattern.FindStringSubmatch(s)
+	if len(matches) < 3 {
+		return Media{}, fmt.Errorf("invalid input: %q", s)
 	}
-	name := m[0][1]
-	year, err := strconv.Atoi(m[0][2])
+	name := matches[1]
+	year, err := strconv.Atoi(matches[2])
 	if err != nil {
-		return Media{}, err
+		return Media{}, fmt.Errorf("invalid input: %q: %s", s, err)
 	}
 	return Media{
 		Release: s,
@@ -63,20 +63,19 @@ func Movie(s string) (Media, error) {
 }
 
 func Show(s string) (Media, error) {
-	for _, p := range episodeExps {
-		groupNames := p.SubexpNames()
-		matches := p.FindAllStringSubmatch(s, -1)
+	for _, p := range episodePatterns {
+		matches := p.FindStringSubmatch(s)
 		if len(matches) == 0 {
 			continue
 		}
-		match := matches[0]
+		groupNames := p.SubexpNames()
 		var (
 			name    string
-			season  = 0
+			season  = 1
 			episode = 0
 			err     error
 		)
-		for i, group := range match {
+		for i, group := range matches {
 			if group == "" {
 				continue
 			}
@@ -95,17 +94,12 @@ func Show(s string) (Media, error) {
 				}
 			}
 		}
-		if season == 0 {
-			season = 1
-		}
-		if season > 0 || episode > 0 {
-			return Media{
-				Release: s,
-				Name:    name,
-				Season:  season,
-				Episode: episode,
-			}, nil
-		}
+		return Media{
+			Release: s,
+			Name:    name,
+			Season:  season,
+			Episode: episode,
+		}, nil
 	}
 	return Media{}, fmt.Errorf("invalid input: %q", s)
 }
