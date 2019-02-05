@@ -7,13 +7,13 @@ import (
 )
 
 var (
-	movieExp   = regexp.MustCompile(`(.*?)\.(\d{4})`)
-	episodeExp = regexp.MustCompile(`(.*)\.(?:(` +
-		`(?:S(\d{2}))(?:E(\d{2}))?` + // S01, S01E04
-		`|(?:E(\d{2}))` + // E04
-		`|(\d{1,2})x(\d{2})` + // 1x04, 01x04
-		`|Part\.?(\d{1,2})` + // Part4, Part11, Part.4, Part.11
-		`))`)
+	movieExp    = regexp.MustCompile(`(.*?)\.(\d{4})`)
+	episodeExps = [4]*regexp.Regexp{
+		regexp.MustCompile(`^(?P<name>.+)\.S(?P<season>\d{2})(?:E(?P<episode>\d{2}))?`), // S01, S01E04
+		regexp.MustCompile(`^(?P<name>.+)\.E(?P<episode>\d{2})`),                        // E04
+		regexp.MustCompile(`^(?P<name>.+)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),     // 1x04, 01x04
+		regexp.MustCompile(`^(?P<name>.+)\.Part\.?(?P<episode>\d{1,2})`),                // Part4, Part11, Part.4, Part.11
+	}
 )
 
 type Parser func(s string) (Media, error)
@@ -63,38 +63,49 @@ func Movie(s string) (Media, error) {
 }
 
 func Show(s string) (Media, error) {
-	m := episodeExp.FindAllStringSubmatch(s, -1)
-	if len(m) == 0 || len(m[0]) < 9 {
-		return Media{}, fmt.Errorf("failed to parse: %s", s)
-	}
-	name := m[0][1]
-	season := "1"
-	episode := "0"
-	if m[0][3] != "" { // S01, S01E04
-		season = m[0][3]
-		if m[0][4] != "" {
-			episode = m[0][4]
+	for _, p := range episodeExps {
+		groupNames := p.SubexpNames()
+		matches := p.FindAllStringSubmatch(s, -1)
+		if len(matches) == 0 {
+			continue
 		}
-	} else if m[0][5] != "" { // E04
-		episode = m[0][5]
-	} else if m[0][6] != "" && m[0][7] != "" { // 1x04, 01x04
-		season = m[0][6]
-		episode = m[0][7]
-	} else if m[0][8] != "" { // Part4, Part11, Part.4, Part.11
-		episode = m[0][8]
+		match := matches[0]
+		var (
+			name    string
+			season  = 0
+			episode = 0
+			err     error
+		)
+		for i, group := range match {
+			if group == "" {
+				continue
+			}
+			switch groupNames[i] {
+			case "name":
+				name = group
+			case "season":
+				season, err = strconv.Atoi(group)
+				if err != nil {
+					return Media{}, fmt.Errorf("invalid input: %q: %s", s, err)
+				}
+			case "episode":
+				episode, err = strconv.Atoi(group)
+				if err != nil {
+					return Media{}, fmt.Errorf("invalid input: %q: %s", s, err)
+				}
+			}
+		}
+		if season == 0 {
+			season = 1
+		}
+		if season > 0 || episode > 0 {
+			return Media{
+				Release: s,
+				Name:    name,
+				Season:  season,
+				Episode: episode,
+			}, nil
+		}
 	}
-	ss, err := strconv.Atoi(season)
-	if err != nil {
-		return Media{}, err
-	}
-	ep, err := strconv.Atoi(episode)
-	if err != nil {
-		return Media{}, err
-	}
-	return Media{
-		Release: s,
-		Name:    name,
-		Season:  ss,
-		Episode: ep,
-	}, nil
+	return Media{}, fmt.Errorf("invalid input: %q", s)
 }

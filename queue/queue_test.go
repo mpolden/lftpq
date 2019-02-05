@@ -150,7 +150,7 @@ func TestNewQueueRejectsUnparsableItem(t *testing.T) {
 	if got := q.Items[0].Transfer; got {
 		t.Errorf("Expected false, got %t", got)
 	}
-	want := "failed to parse: bar"
+	want := `invalid input: "bar"`
 	if got := q.Items[0].Reason; got != want {
 		t.Errorf("Expected %q, got %q", want, got)
 	}

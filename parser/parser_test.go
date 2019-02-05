@@ -139,6 +139,13 @@ func TestShow(t *testing.T) {
 				Season:  2,
 				Episode: 0,
 			}},
+		{"Lost.S01E24.Exodus.Part.2.720p.BluRay.x264-SiNNERS",
+			Media{
+				Release: "Lost.S01E24.Exodus.Part.2.720p.BluRay.x264-SiNNERS",
+				Name:    "Lost",
+				Season:  1,
+				Episode: 24,
+			}},
 	}
 	for _, tt := range tests {
 		got, err := Show(tt.in)
