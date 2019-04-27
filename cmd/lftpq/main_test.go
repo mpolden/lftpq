@@ -183,11 +183,11 @@ t2 /baz/foo.2018
 		t.Fatal(err)
 	}
 	want := `open t1
-queue mirror /foo/bar.2017 /tmp/bar.2017
+queue mirror '/foo/bar.2017' '/tmp/bar.2017'
 queue start
 wait
 open t2
-queue mirror /baz/foo.2018 /tmp/foo.2018
+queue mirror '/baz/foo.2018' '/tmp/foo.2018'
 queue start
 wait
 `
@@ -296,7 +296,7 @@ func TestRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	want = `open t1
-queue mirror /baz/foo.2017 /tmp/foo.2017
+queue mirror '/baz/foo.2017' '/tmp/foo.2017'
 queue start
 wait
 `

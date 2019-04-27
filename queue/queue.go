@@ -118,11 +118,11 @@ func (q Queue) MarshalText() ([]byte, error) {
 	for _, item := range q.Transferable() {
 		buf.WriteString("queue ")
 		buf.WriteString(q.Site.GetCmd)
-		buf.WriteString(" ")
+		buf.WriteString(" '")
 		buf.WriteString(item.RemotePath)
-		buf.WriteString(" ")
+		buf.WriteString("' '")
 		buf.WriteString(item.LocalPath)
-		buf.WriteString("\n")
+		buf.WriteString("'\n")
 	}
 	buf.WriteString("queue start\nwait\n")
 	return buf.Bytes(), nil

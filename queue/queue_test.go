@@ -370,8 +370,8 @@ func TestMarshalText(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := `open siteA
-queue mirror /remote/foo /local
-queue mirror /remote/bar /local
+queue mirror '/remote/foo' '/local'
+queue mirror '/remote/bar' '/local'
 queue start
 wait
 `
