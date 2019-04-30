@@ -112,6 +112,16 @@ func (q *Queue) PostProcess(inheritIO bool) error {
 
 func (q Queue) MarshalText() ([]byte, error) {
 	var buf bytes.Buffer
+	escapeQuotes := func(s string) {
+		var prev rune
+		for _, c := range s {
+			if c == '\'' && prev != '\\' {
+				buf.WriteRune('\\')
+			}
+			buf.WriteRune(c)
+			prev = c
+		}
+	}
 	buf.WriteString("open ")
 	buf.WriteString(q.Site.Name)
 	buf.WriteString("\n")
@@ -119,9 +129,9 @@ func (q Queue) MarshalText() ([]byte, error) {
 		buf.WriteString("queue ")
 		buf.WriteString(q.Site.GetCmd)
 		buf.WriteString(" '")
-		buf.WriteString(item.RemotePath)
+		escapeQuotes(item.RemotePath)
 		buf.WriteString("' '")
-		buf.WriteString(item.LocalPath)
+		escapeQuotes(item.LocalPath)
 		buf.WriteString("'\n")
 	}
 	buf.WriteString("queue start\nwait\n")

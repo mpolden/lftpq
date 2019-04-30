@@ -363,6 +363,7 @@ func TestMarshalText(t *testing.T) {
 	items := []Item{
 		{RemotePath: "/remote/foo", LocalPath: "/local", Transfer: true},
 		{RemotePath: "/remote/bar", LocalPath: "/local", Transfer: true},
+		{RemotePath: "/remote/bar with ' and \\'", LocalPath: "/local with ' and \\'", Transfer: true},
 	}
 	var q encoding.TextMarshaler = Queue{Site: s, Items: items}
 	out, err := q.MarshalText()
@@ -372,6 +373,7 @@ func TestMarshalText(t *testing.T) {
 	expected := `open siteA
 queue mirror '/remote/foo' '/local'
 queue mirror '/remote/bar' '/local'
+queue mirror '/remote/bar with \' and \'' '/local with \' and \''
 queue start
 wait
 `
