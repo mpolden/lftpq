@@ -9,10 +9,10 @@ import (
 var (
 	moviePattern    = regexp.MustCompile(`(.*?)\.(\d{4})`)
 	episodePatterns = [4]*regexp.Regexp{
-		regexp.MustCompile(`^(?P<name>.+)\.S(?P<season>\d{2})(?:E(?P<episode>\d{2}))?`), // S01, S01E04
-		regexp.MustCompile(`^(?P<name>.+)\.E(?P<episode>\d{2})`),                        // E04
-		regexp.MustCompile(`^(?P<name>.+)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),     // 1x04, 01x04
-		regexp.MustCompile(`^(?P<name>.+)\.Part\.?(?P<episode>\d{1,2})`),                // Part4, Part11, Part.4, Part.11
+		regexp.MustCompile(`^(?P<name>.+?)\.S(?P<season>\d{2})(?:E(?P<episode>\d{2}))?`), // S01, S01E04
+		regexp.MustCompile(`^(?P<name>.+?)\.E(?P<episode>\d{2})`),                        // E04
+		regexp.MustCompile(`^(?P<name>.+?)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),     // 1x04, 01x04
+		regexp.MustCompile(`^(?P<name>.+?)\.Part\.?(?P<episode>\d{1,2})`),                // Part4, Part11, Part.4, Part.11
 	}
 )
 

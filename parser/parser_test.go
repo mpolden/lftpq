@@ -146,6 +146,13 @@ func TestShow(t *testing.T) {
 				Season:  1,
 				Episode: 24,
 			}},
+		{"Friends.S01E16.S01E17.UNCUT.DVDrip.XviD-SAiNTS",
+			Media{
+				Release: "Friends.S01E16.S01E17.UNCUT.DVDrip.XviD-SAiNTS",
+				Name:    "Friends",
+				Season:  1,
+				Episode: 16,
+			}},
 	}
 	for _, tt := range tests {
 		got, err := Show(tt.in)
