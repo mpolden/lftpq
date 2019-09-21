@@ -1,12 +1,12 @@
-all: deps lint test install
+all: lint test install
 
 deps:
 	go get ./...
 
-test: deps
+test:
 	go test ./...
 
-vet: deps
+vet:
 	go vet ./...
 
 check-fmt:
@@ -14,5 +14,5 @@ check-fmt:
 
 lint: check-fmt vet
 
-install: deps
+install:
 	go install ./...
