@@ -4,9 +4,6 @@ XBIN := $(XGOOS)_$(XGOARCH)/lftpq
 
 all: lint test install
 
-deps:
-	go get ./...
-
 test:
 	go test ./...
 
