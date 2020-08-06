@@ -1,14 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
-
-	flags "github.com/jessevdk/go-flags"
 
 	"github.com/mpolden/lftpq/lftp"
 	"github.com/mpolden/lftpq/queue"
@@ -19,14 +18,14 @@ type lister interface {
 }
 
 type CLI struct {
-	Config   string `short:"f" long:"config" description:"Path to config" value-name:"FILE" default:"~/.lftpqrc"`
-	Dryrun   bool   `short:"n" long:"dryrun" description:"Print queue and exit"`
-	Format   string `short:"F" long:"format" description:"Format to use in dryrun mode" choice:"lftp" choice:"json" default:"lftp"`
-	Test     bool   `short:"t" long:"test" description:"Test and print config"`
-	Quiet    bool   `short:"q" long:"quiet" description:"Do not print output from lftp"`
-	Import   bool   `short:"i" long:"import" description:"Build queues from stdin"`
-	LocalDir string `short:"l" long:"local-dir" description:"Override local dir for this run" value-name:"NAME"`
-	LftpPath string `short:"p" long:"lftp" description:"Path to lftp program" value-name:"NAME" default:"lftp"`
+	Config   string
+	Dryrun   bool
+	Format   string
+	Test     bool
+	Quiet    bool
+	Import   bool
+	LocalDir string
+	LftpPath string
 	consumer queue.Consumer
 	lister   lister
 	stderr   io.Writer
@@ -162,11 +161,15 @@ func main() {
 	cli.stderr = os.Stderr
 	cli.stdout = os.Stdout
 	cli.stdin = os.Stdin
-	p := flags.NewParser(cli, flags.HelpFlag|flags.PassDoubleDash)
-	if _, err := p.Parse(); err != nil {
-		cli.printf("%s\n", err)
-		os.Exit(1)
-	}
+	flag.StringVar(&cli.Config, "f", "~/.lftpqrc", "Path to config")
+	flag.BoolVar(&cli.Dryrun, "n", false, "Print queue and exit")
+	flag.StringVar(&cli.Format, "F", "lftp", "Format to use in dry-run mode")
+	flag.BoolVar(&cli.Test, "t", false, "Test and print config")
+	flag.BoolVar(&cli.Quiet, "q", false, "Do not print output from lftp")
+	flag.BoolVar(&cli.Import, "i", false, "Build queues from stdin")
+	flag.StringVar(&cli.LocalDir, "l", "", "Override local dir for this run")
+	flag.StringVar(&cli.LftpPath, "p", "lftp", "Path to lftp program")
+	flag.Parse()
 	client := lftp.Client{Path: cli.LftpPath, InheritIO: !cli.Quiet}
 	cli.lister = &client
 	cli.consumer = &client
