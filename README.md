@@ -1,6 +1,6 @@
 # lftpq
 
-[![Build Status](https://travis-ci.org/mpolden/lftpq.svg)](https://travis-ci.org/mpolden/lftpq)
+![Build Status](https://github.com/mpolden/lftpq/workflows/ci/badge.svg)
 
 A queue generator for [lftp](https://lftp.yar.ru).
 
