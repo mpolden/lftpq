@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -170,6 +171,30 @@ func TestSetLocalDir(t *testing.T) {
 	for _, s := range cfg.Sites {
 		if want := "d2"; s.LocalDir != want {
 			t.Errorf("got %q, want %q", s.LocalDir, want)
+		}
+	}
+}
+
+func TestExpandUser(t *testing.T) {
+	home := "/home/foo"
+	os.Setenv("HOME", home)
+	var tests = []struct {
+		in  string
+		out string
+	}{
+		{"", ""},
+		{"/d", "/d"},
+		{"~", home},
+		{"~/", home},
+		{"~bar", "/home/bar"},
+		{"~bar/baz", "/home/bar/baz"},
+		{"~/bar", home + "/bar"},
+		{"/foo/~/bar", "/foo/~/bar"},
+	}
+	for i, tt := range tests {
+		out := expandUser(tt.in)
+		if out != tt.out {
+			t.Errorf("#%d: expandUser(%q) = %q, want %q", i, tt.in, out, tt.out)
 		}
 	}
 }

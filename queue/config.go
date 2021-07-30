@@ -99,15 +99,32 @@ func parseTemplate(tmpl string) (*template.Template, error) {
 	return t, nil
 }
 
+func expandUser(path string) string {
+	tilde := strings.Index(path, "~")
+	end := strings.IndexRune(path, os.PathSeparator)
+	if tilde != 0 {
+		return path
+	}
+	if end == -1 {
+		end = len(path)
+	}
+	home := os.Getenv("HOME")
+	if end > 1 {
+		home = filepath.Join(filepath.Dir(home), path[1:end])
+	}
+	return filepath.Join(home, path[end:])
+}
+
 func command(cmd string) (*exec.Cmd, error) {
 	if cmd == "" {
 		return nil, nil
 	}
 	argv := strings.Split(cmd, " ")
-	if _, err := exec.LookPath(argv[0]); err != nil {
+	program := expandUser(argv[0])
+	if _, err := exec.LookPath(program); err != nil {
 		return nil, err
 	}
-	return exec.Command(argv[0], argv[1:]...), nil
+	return exec.Command(program, argv[1:]...), nil
 }
 
 func (c *Config) load() error {
@@ -225,16 +242,13 @@ func readConfig(r io.Reader) (Config, error) {
 	return cfg, nil
 }
 
-func ReadConfig(name string) (Config, error) {
-	if name == "~/.lftpqrc" {
-		home := os.Getenv("HOME")
-		name = filepath.Join(home, ".lftpqrc")
-	}
+func ReadConfig(path string) (Config, error) {
+	path = expandUser(path)
 	var r io.Reader
-	if name == "-" {
+	if path == "-" {
 		r = bufio.NewReader(os.Stdin)
 	} else {
-		f, err := os.Open(name)
+		f, err := os.Open(path)
 		if err != nil {
 			return Config{}, err
 		}
