@@ -10,17 +10,19 @@ A queue generator for [lftp](https://lftp.yar.ru).
 $ lftpq -h
 Usage of lftpq:
   -F string
-        Format to use in dry-run mode (default "lftp")
+    	Format to use in dry-run mode (default "lftp")
+  -c string
+    	Classify string and print its local dir
   -f string
-        Path to config (default "~/.lftpqrc")
-  -i    Build queues from stdin
+    	Path to config (default "~/.lftpqrc")
+  -i	Build queues from stdin
   -l string
-        Override local dir for this run
-  -n    Print queue and exit
+    	Override local dir for this run
+  -n	Print queue and exit
   -p string
-        Path to lftp program (default "lftp")
-  -q    Do not print output from lftp
-  -t    Test and print config
+    	Path to lftp program (default "lftp")
+  -q	Do not print output from lftp
+  -t	Test and print config
 ```
 
 ## Example config

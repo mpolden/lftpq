@@ -408,3 +408,27 @@ func TestRunListError(t *testing.T) {
 		t.Errorf("want %q, got %q", want, got)
 	}
 }
+
+func TestClassify(t *testing.T) {
+	cli, buf := newTestCLI(`
+{
+  "LocalDirs": [
+    {
+      "Name": "d1",
+      "Parser": "movie",
+      "Dir": "/media/{{ .Year}}/"
+    }
+  ]
+}`)
+	defer os.Remove(cli.Config)
+
+	cli.Name = "/download/foo.2018"
+	if err := cli.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	want := "/media/2018/foo.2018\n"
+	if got := buf.String(); got != want {
+		t.Errorf("want %q, got %q", want, got)
+	}
+}

@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/mpolden/lftpq/lftp"
+	"github.com/mpolden/lftpq/parser"
 	"github.com/mpolden/lftpq/queue"
 )
 
@@ -26,6 +27,7 @@ type CLI struct {
 	Import   bool
 	LocalDir string
 	LftpPath string
+	Name     string
 	consumer queue.Consumer
 	lister   lister
 	stderr   io.Writer
@@ -61,6 +63,30 @@ func (c *CLI) Run() error {
 			return err
 		}
 		fmt.Fprintf(c.stdout, "%s\n", json)
+		return nil
+	}
+	if c.Name != "" {
+		name := filepath.Base(c.Name)
+		media, parserName, err := parser.Guess(name)
+		if err != nil {
+			return err
+		}
+		templateFound := false
+		for _, dir := range cfg.LocalDirs {
+			if dir.Parser != parserName {
+				continue
+			}
+			path, err := media.PathIn(dir.Template)
+			if err != nil {
+				return err
+			}
+			templateFound = true
+			fmt.Fprintln(c.stdout, path)
+			break
+		}
+		if !templateFound {
+			return fmt.Errorf("no template set for parser: %s", parserName)
+		}
 		return nil
 	}
 	var queues []queue.Queue
@@ -169,6 +195,7 @@ func main() {
 	flag.BoolVar(&cli.Import, "i", false, "Build queues from stdin")
 	flag.StringVar(&cli.LocalDir, "l", "", "Override local dir for this run")
 	flag.StringVar(&cli.LftpPath, "p", "lftp", "Path to lftp program")
+	flag.StringVar(&cli.Name, "c", "", "Classify media and print its local dir")
 	flag.Parse()
 	client := lftp.Client{Path: cli.LftpPath, InheritIO: !cli.Quiet}
 	cli.lister = &client

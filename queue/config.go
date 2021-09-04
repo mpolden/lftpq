@@ -34,6 +34,7 @@ type LocalDir struct {
 	Parser       string
 	Dir          string
 	Replacements []Replacement
+	Template     *template.Template `json:"-"`
 }
 
 type Site struct {
@@ -129,7 +130,7 @@ func command(cmd string) (*exec.Cmd, error) {
 
 func (c *Config) load() error {
 	itemParsers := make(map[string]itemParser)
-	for _, d := range c.LocalDirs {
+	for i, d := range c.LocalDirs {
 		if d.Name == "" {
 			return fmt.Errorf("invalid local dir name: %q", d.Name)
 		}
@@ -164,6 +165,7 @@ func (c *Config) load() error {
 			replacements: replacements,
 			template:     tmpl,
 		}
+		c.LocalDirs[i].Template = tmpl
 	}
 	for i := range c.Sites {
 		site := &c.Sites[i]
