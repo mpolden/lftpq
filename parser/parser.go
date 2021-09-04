@@ -1,9 +1,14 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
+	"text/template"
 )
 
 var (
@@ -39,6 +44,20 @@ func (m *Media) Equal(o Media) bool {
 		return false
 	}
 	return m.Name == o.Name && m.Season == o.Season && m.Episode == o.Episode && m.Year == o.Year
+}
+
+func (m *Media) PathIn(dir *template.Template) (string, error) {
+	var b bytes.Buffer
+	if err := dir.Execute(&b, m); err != nil {
+		return "", err
+	}
+	path := b.String()
+	// When path has a trailing slash, the actual destination path will be a directory inside LocalPath (same
+	// behaviour as rsync)
+	if strings.HasSuffix(path, string(os.PathSeparator)) {
+		path = filepath.Join(path, m.Release)
+	}
+	return path, nil
 }
 
 func Default(s string) (Media, error) {

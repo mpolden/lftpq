@@ -1,13 +1,8 @@
 package queue
 
 import (
-	"bytes"
-	"os"
 	"path/filepath"
-	"strings"
 	"time"
-
-	"text/template"
 
 	"github.com/mpolden/lftpq/parser"
 )
@@ -51,21 +46,6 @@ func (i *Item) setMedia(dirname string) error {
 	return nil
 }
 
-func (i *Item) setLocalPath(t *template.Template) error {
-	var b bytes.Buffer
-	if err := t.Execute(&b, i.Media); err != nil {
-		return err
-	}
-	path := b.String()
-	// When path has a trailing slash, the actual destination path will be a directory inside LocalPath (same
-	// behaviour as rsync)
-	if strings.HasSuffix(path, string(os.PathSeparator)) {
-		path = filepath.Join(path, filepath.Base(i.RemotePath))
-	}
-	i.LocalPath = path
-	return nil
-}
-
 func (i *Item) duplicates(readDir readDir) []Item {
 	var items []Item
 	parent := filepath.Join(i.LocalPath, "..")
@@ -97,8 +77,7 @@ func newItem(remotePath string, modTime time.Time, itemParser itemParser) (Item,
 	if err := item.setMedia(filepath.Base(remotePath)); err != nil {
 		return item, err
 	}
-	if err := item.setLocalPath(itemParser.template); err != nil {
-		return item, err
-	}
-	return item, nil
+	var err error
+	item.LocalPath, err = item.Media.PathIn(itemParser.template)
+	return item, err
 }
