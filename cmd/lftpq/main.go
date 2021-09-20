@@ -7,10 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"syscall"
 
 	"github.com/mpolden/lftpq/lftp"
-	"github.com/mpolden/lftpq/parser"
 	"github.com/mpolden/lftpq/queue"
 )
 
@@ -66,28 +66,7 @@ func (c *CLI) Run() error {
 		return nil
 	}
 	if c.Name != "" {
-		name := filepath.Base(c.Name)
-		media, parserName, err := parser.Guess(name)
-		if err != nil {
-			return err
-		}
-		templateFound := false
-		for _, dir := range cfg.LocalDirs {
-			if dir.Parser != parserName {
-				continue
-			}
-			path, err := media.PathIn(dir.Template)
-			if err != nil {
-				return err
-			}
-			templateFound = true
-			fmt.Fprintln(c.stdout, path)
-			break
-		}
-		if !templateFound {
-			return fmt.Errorf("no template set for parser: %s", parserName)
-		}
-		return nil
+		return c.classify(cfg.LocalDirs)
 	}
 	var queues []queue.Queue
 	if c.Import {
@@ -106,6 +85,34 @@ func (c *CLI) Run() error {
 			c.printf("error while transferring queue for %s: %s\n", q.Site.Name, err)
 			continue
 		}
+	}
+	return nil
+}
+
+func (c *CLI) classify(dirs []queue.LocalDir) error {
+	name := filepath.Base(c.Name)
+	sortedDirs := make([]queue.LocalDir, len(dirs))
+	copy(sortedDirs, dirs)
+	// Always try show parsers first
+	sort.Slice(sortedDirs, func(i, j int) bool {
+		return sortedDirs[i].Parser == "show" && sortedDirs[j].Parser != "show"
+	})
+	parsed := false
+	for _, dir := range sortedDirs {
+		media, err := dir.Media(name)
+		if err != nil {
+			return err
+		}
+		path, err := media.PathIn(dir.Template)
+		if err != nil {
+			return err
+		}
+		parsed = true
+		fmt.Fprintln(c.stdout, path)
+		break
+	}
+	if !parsed {
+		return fmt.Errorf("parsing failed: %q", name)
 	}
 	return nil
 }

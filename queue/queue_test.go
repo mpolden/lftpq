@@ -14,14 +14,14 @@ import (
 )
 
 func newTestSite() Site {
-	localDir := template.Must(template.New("t").Parse("/local/{{ .Name }}/S{{ .Season }}/"))
+	tmpl := template.Must(template.New("t").Parse("/local/{{ .Name }}/S{{ .Season }}/"))
 	patterns := []*regexp.Regexp{regexp.MustCompile(".*")}
 	return Site{
 		GetCmd:   "mirror",
 		Name:     "test",
 		patterns: patterns,
-		itemParser: itemParser{
-			template: localDir,
+		localDir: LocalDir{
+			Template: tmpl,
 			parser:   parser.Show,
 		},
 	}
@@ -55,8 +55,8 @@ func TestNewQueue(t *testing.T) {
 		SkipSymlinks: true,
 		SkipExisting: true,
 		SkipFiles:    true,
-		itemParser: itemParser{
-			template: template.Must(template.New("localDir").Parse("/local/")),
+		localDir: LocalDir{
+			Template: template.Must(template.New("localDir").Parse("/local/")),
 			parser:   parser.Default,
 		},
 	}
@@ -117,14 +117,14 @@ func TestNewQueue(t *testing.T) {
 	}
 	q := newQueue(s, files, readDir)
 	expected := []Item{
-		{itemParser: q.itemParser, RemotePath: files[0].Name(), Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
-		{itemParser: q.itemParser, RemotePath: files[1].Name(), Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
-		{itemParser: q.itemParser, RemotePath: files[2].Name(), Transfer: true, Reason: "Match=dir\\d"},
-		{itemParser: q.itemParser, RemotePath: files[3].Name(), Transfer: true, Reason: "Match=dir\\d"},
-		{itemParser: q.itemParser, RemotePath: files[4].Name(), Transfer: false, Reason: "IsDstDirEmpty=false"},
-		{itemParser: q.itemParser, RemotePath: files[5].Name(), Transfer: false, Reason: "no match"},
-		{itemParser: q.itemParser, RemotePath: files[6].Name(), Transfer: false, Reason: "Filter=^incomplete-"},
-		{itemParser: q.itemParser, RemotePath: files[7].Name(), Transfer: false, Reason: "IsFile=true SkipFiles=true"},
+		{localDir: q.localDir, RemotePath: files[0].Name(), Transfer: false, Reason: "IsSymlink=true SkipSymlinks=true"},
+		{localDir: q.localDir, RemotePath: files[1].Name(), Transfer: false, Reason: "Age=48h0m0s MaxAge=24h0m0s"},
+		{localDir: q.localDir, RemotePath: files[2].Name(), Transfer: true, Reason: "Match=dir\\d"},
+		{localDir: q.localDir, RemotePath: files[3].Name(), Transfer: true, Reason: "Match=dir\\d"},
+		{localDir: q.localDir, RemotePath: files[4].Name(), Transfer: false, Reason: "IsDstDirEmpty=false"},
+		{localDir: q.localDir, RemotePath: files[5].Name(), Transfer: false, Reason: "no match"},
+		{localDir: q.localDir, RemotePath: files[6].Name(), Transfer: false, Reason: "Filter=^incomplete-"},
+		{localDir: q.localDir, RemotePath: files[7].Name(), Transfer: false, Reason: "IsFile=true SkipFiles=true"},
 	}
 	actual := q.Items
 	if len(expected) != len(actual) {

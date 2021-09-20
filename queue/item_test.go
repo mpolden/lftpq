@@ -10,41 +10,41 @@ import (
 	"github.com/mpolden/lftpq/parser"
 )
 
-func newTestItem(remotePath string, itemParser itemParser) Item {
-	item, _ := newItem(remotePath, time.Time{}, itemParser)
+func newTestItem(remotePath string, localDir LocalDir) Item {
+	item, _ := newItem(remotePath, time.Time{}, localDir)
 	return item
 }
 
-func showItemParser() itemParser {
-	return itemParser{
+func showDir() LocalDir {
+	return LocalDir{
 		parser:   parser.Show,
-		template: template.Must(template.New("t").Parse("/tmp/{{ .Name }}/S{{ .Season }}/")),
+		Template: template.Must(template.New("t").Parse("/tmp/{{ .Name }}/S{{ .Season }}/")),
 	}
 }
 
-func movieItemParser() itemParser {
-	return itemParser{
+func movieDir() LocalDir {
+	return LocalDir{
 		parser:   parser.Movie,
-		template: template.Must(template.New("t").Parse("/tmp/{{ .Year }}/{{ .Name }}/")),
+		Template: template.Must(template.New("t").Parse("/tmp/{{ .Year }}/{{ .Name }}/")),
 	}
 }
 
 func TestNewItemShow(t *testing.T) {
-	item := newTestItem("/foo/The.Wire.S03E01", showItemParser())
+	item := newTestItem("/foo/The.Wire.S03E01", showDir())
 	if expected := "/tmp/The.Wire/S3/The.Wire.S03E01"; item.LocalPath != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalPath)
 	}
 }
 
 func TestNewItemMovie(t *testing.T) {
-	item := newTestItem("/foo/Apocalypse.Now.1979", movieItemParser())
+	item := newTestItem("/foo/Apocalypse.Now.1979", movieDir())
 	if expected := "/tmp/1979/Apocalypse.Now/Apocalypse.Now.1979"; item.LocalPath != expected {
 		t.Fatalf("Expected %q, got %q", expected, item.LocalPath)
 	}
 }
 
 func TestNewItemDefaultParser(t *testing.T) {
-	tmpl := itemParser{parser: parser.Default, template: template.Must(template.New("t").Parse("/tmp/"))}
+	tmpl := LocalDir{parser: parser.Default, Template: template.Must(template.New("t").Parse("/tmp/"))}
 	item := newTestItem("/foo/The.Wire.S03E01", tmpl)
 	if expected := "/tmp/The.Wire.S03E01"; item.LocalPath != expected {
 		t.Fatalf("Expected %s, got %s", expected, item.LocalPath)
@@ -52,15 +52,15 @@ func TestNewItemDefaultParser(t *testing.T) {
 }
 
 func TestNewItemUnparsable(t *testing.T) {
-	_, err := newItem("/foo/bar", time.Time{}, showItemParser())
+	_, err := newItem("/foo/bar", time.Time{}, showDir())
 	if err == nil {
 		t.Fatal("Expected error")
 	}
 }
 
 func TestNewItemWithReplacements(t *testing.T) {
-	tmpl := showItemParser()
-	tmpl.replacements = []Replacement{
+	tmpl := showDir()
+	tmpl.Replacements = []Replacement{
 		{pattern: regexp.MustCompile("_"), Replacement: "."},
 		{pattern: regexp.MustCompile(`\.Of\.`), Replacement: ".of."},
 		{pattern: regexp.MustCompile(`\.the\.`), Replacement: ".The."},
@@ -92,11 +92,11 @@ func TestLocalPath(t *testing.T) {
 		{"/remote/bar", "/local/bar", "/local/bar"},
 	}
 	for _, tt := range tests {
-		itemParser := itemParser{
+		localDir := LocalDir{
 			parser:   parser.Default,
-			template: template.Must(template.New("t").Parse(tt.template)),
+			Template: template.Must(template.New("t").Parse(tt.template)),
 		}
-		item := newTestItem(tt.remotePath, itemParser)
+		item := newTestItem(tt.remotePath, localDir)
 		if item.LocalPath != tt.out {
 			t.Errorf("Expected %q, got %q", tt.out, item.LocalPath)
 		}

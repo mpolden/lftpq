@@ -60,18 +60,6 @@ func (m *Media) PathIn(dir *template.Template) (string, error) {
 	return path, nil
 }
 
-func Guess(s string) (Media, string, error) {
-	show, err := Show(s)
-	if err != nil {
-		movie, err := Movie(s)
-		if err != nil {
-			return Media{}, "", fmt.Errorf("could not guess media: %q", s)
-		}
-		return movie, "movie", err
-	}
-	return show, "show", nil
-}
-
 func Default(s string) (Media, error) {
 	return Media{Release: s}, nil
 }

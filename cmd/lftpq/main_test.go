@@ -121,7 +121,7 @@ func TestConfigTest(t *testing.T) {
       "Name": "d1",
       "Parser": "movie",
       "Dir": "/tmp/",
-      "Replacements": null
+      "Replacements": []
     }
   ],
   "Sites": []
@@ -417,17 +417,28 @@ func TestClassify(t *testing.T) {
       "Name": "d1",
       "Parser": "movie",
       "Dir": "/media/{{ .Year}}/"
+    },
+    {
+      "Name": "d2",
+      "Parser": "show",
+      "Dir": "/media/{{ .Name }}/S{{ .Season | Sprintf \"%02d\" }}/",
+      "Replacements": [
+        {
+          "Pattern": "foo",
+          "Replacement": "Foo"
+        }
+      ]
     }
   ]
 }`)
 	defer os.Remove(cli.Config)
 
-	cli.Name = "/download/foo.2018"
+	cli.Name = "/download/foo.S01E01"
 	if err := cli.Run(); err != nil {
 		t.Fatal(err)
 	}
 
-	want := "/media/2018/foo.2018\n"
+	want := "/media/Foo/S01/foo.S01E01\n"
 	if got := buf.String(); got != want {
 		t.Errorf("want %q, got %q", want, got)
 	}

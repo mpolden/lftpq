@@ -16,7 +16,7 @@ type Item struct {
 	Media      parser.Media
 	Duplicate  bool
 	Merged     bool
-	itemParser
+	localDir   LocalDir
 }
 
 func (i *Item) isEmpty(readDir readDir) bool {
@@ -34,18 +34,6 @@ func (i *Item) reject(reason string) {
 	i.Reason = reason
 }
 
-func (i *Item) setMedia(dirname string) error {
-	m, err := i.itemParser.parser(dirname)
-	if err != nil {
-		return err
-	}
-	for _, r := range i.itemParser.replacements {
-		m.ReplaceName(r.pattern, r.Replacement)
-	}
-	i.Media = m
-	return nil
-}
-
 func (i *Item) duplicates(readDir readDir) []Item {
 	var items []Item
 	parent := filepath.Join(i.LocalPath, "..")
@@ -56,7 +44,7 @@ func (i *Item) duplicates(readDir readDir) []Item {
 			continue
 		}
 		path := filepath.Join(parent, fi.Name())
-		item, err := newItem(path, i.ModTime, i.itemParser)
+		item, err := newItem(path, i.ModTime, i.localDir)
 		if err != nil {
 			item.reject(err.Error())
 		} else {
@@ -72,12 +60,16 @@ func (i *Item) duplicates(readDir readDir) []Item {
 	return items
 }
 
-func newItem(remotePath string, modTime time.Time, itemParser itemParser) (Item, error) {
-	item := Item{RemotePath: remotePath, ModTime: modTime, Reason: "no match", itemParser: itemParser}
-	if err := item.setMedia(filepath.Base(remotePath)); err != nil {
-		return item, err
+func newItem(remotePath string, modTime time.Time, localDir LocalDir) (Item, error) {
+	item := Item{RemotePath: remotePath, ModTime: modTime, Reason: "no match", localDir: localDir}
+	media, err := localDir.Media(remotePath)
+	if err != nil {
+		return Item{}, err
 	}
-	var err error
-	item.LocalPath, err = item.Media.PathIn(itemParser.template)
-	return item, err
+	item.Media = media
+	item.LocalPath, err = media.PathIn(localDir.Template)
+	if err != nil {
+		return Item{}, err
+	}
+	return item, nil
 }

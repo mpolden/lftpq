@@ -52,13 +52,13 @@ func TestLoad(t *testing.T) {
 	if len(site.priorities) == 0 {
 		t.Error("Expected non-empty priorities")
 	}
-	if site.itemParser.template == nil {
+	if site.localDir.Template == nil {
 		t.Error("Expected template to be compiled")
 	}
-	if site.itemParser.parser == nil {
+	if site.localDir.parser == nil {
 		t.Error("Expected parser to be set")
 	}
-	if len(site.itemParser.replacements) == 0 {
+	if len(site.localDir.Replacements) == 0 {
 		t.Error("Expected non-empty replacements")
 	}
 	if want := []string{"xargs", "echo"}; !reflect.DeepEqual(want, site.postCommand.Args) {

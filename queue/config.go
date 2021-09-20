@@ -35,6 +35,7 @@ type LocalDir struct {
 	Dir          string
 	Replacements []Replacement
 	Template     *template.Template `json:"-"`
+	parser       parser.Parser
 }
 
 type Site struct {
@@ -51,19 +52,24 @@ type Site struct {
 	SkipExisting bool
 	SkipFiles    bool
 	LocalDir     string
+	localDir     LocalDir
 	Priorities   []string
 	priorities   []*regexp.Regexp
 	PostCommand  string
 	postCommand  *exec.Cmd
 	Merge        bool
 	Skip         bool
-	itemParser
 }
 
-type itemParser struct {
-	parser       parser.Parser
-	template     *template.Template
-	replacements []Replacement
+func (d *LocalDir) Media(name string) (parser.Media, error) {
+	m, err := d.parser(filepath.Base(name))
+	if err != nil {
+		return parser.Media{}, err
+	}
+	for _, r := range d.Replacements {
+		m.ReplaceName(r.pattern, r.Replacement)
+	}
+	return m, nil
 }
 
 func compilePatterns(patterns []string) ([]*regexp.Regexp, error) {
@@ -129,7 +135,7 @@ func command(cmd string) (*exec.Cmd, error) {
 }
 
 func (c *Config) load() error {
-	itemParsers := make(map[string]itemParser)
+	localDirs := make(map[string]LocalDir)
 	for i, d := range c.LocalDirs {
 		if d.Name == "" {
 			return fmt.Errorf("invalid local dir name: %q", d.Name)
@@ -137,7 +143,7 @@ func (c *Config) load() error {
 		if d.Dir == "" {
 			return fmt.Errorf("invalid local dir path: %q", d.Dir)
 		}
-		if _, ok := itemParsers[d.Name]; ok {
+		if _, ok := localDirs[d.Name]; ok {
 			return fmt.Errorf("invalid local dir: %q: declared multiple times", d.Name)
 		}
 		var parserFunc parser.Parser
@@ -160,12 +166,10 @@ func (c *Config) load() error {
 		if err != nil {
 			return err
 		}
-		itemParsers[d.Name] = itemParser{
-			parser:       parserFunc,
-			replacements: replacements,
-			template:     tmpl,
-		}
+		c.LocalDirs[i].parser = parserFunc
+		c.LocalDirs[i].Replacements = replacements
 		c.LocalDirs[i].Template = tmpl
+		localDirs[d.Name] = c.LocalDirs[i]
 	}
 	for i := range c.Sites {
 		site := &c.Sites[i]
@@ -196,11 +200,11 @@ func (c *Config) load() error {
 		}
 		site.postCommand = cmd
 
-		itemParser, ok := itemParsers[site.LocalDir]
+		localDir, ok := localDirs[site.LocalDir]
 		if !ok {
 			return fmt.Errorf("site: %q: invalid local dir: %q", site.Name, site.LocalDir)
 		}
-		site.itemParser = itemParser
+		site.localDir = localDir
 	}
 	return nil
 }

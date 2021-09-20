@@ -63,7 +63,7 @@ func Read(sites []Site, r io.Reader) ([]Queue, error) {
 			indices[site.Name] = i
 		}
 		q := &qs[i]
-		item, err := newItem(fields[1], time.Time{}, q.itemParser)
+		item, err := newItem(fields[1], time.Time{}, q.localDir)
 		if err != nil {
 			item.reject(err.Error())
 		} else {
@@ -216,7 +216,7 @@ func newQueue(site Site, files []os.FileInfo, readDir readDir) Queue {
 	// Initial filtering
 	now := time.Now().Round(time.Second)
 	for _, f := range files {
-		item, err := newItem(f.Name(), f.ModTime(), q.itemParser)
+		item, err := newItem(f.Name(), f.ModTime(), q.localDir)
 		if err != nil {
 			item.reject(err.Error())
 		} else if isSymlink := f.Mode()&os.ModeSymlink != 0; q.SkipSymlinks && isSymlink {
