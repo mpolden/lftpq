@@ -172,6 +172,15 @@ func TestShow(t *testing.T) {
 				Episode: 16,
 				Codec:   "xvid",
 			}},
+		{"Generation.Kill.Pt.VII.Bomb.in.the.Garden.720p.Bluray.X264-DIMENSION",
+			Media{
+				Release:    "Generation.Kill.Pt.VII.Bomb.in.the.Garden.720p.Bluray.X264-DIMENSION",
+				Name:       "Generation.Kill",
+				Season:     1,
+				Episode:    7,
+				Resolution: "720p",
+				Codec:      "x264",
+			}},
 	}
 	for _, tt := range tests {
 		got, err := Show(tt.in)
@@ -198,5 +207,44 @@ func TestReplaceName(t *testing.T) {
 	m.ReplaceName(re, ".the.")
 	if want := "Youre.the.Worst"; m.Name != want {
 		t.Errorf("Expected %q, got %q", want, m.Name)
+	}
+}
+
+func TestRtoi(t *testing.T) {
+	assertRtoiErr(t, "foo")
+	assertRtoiErr(t, "VIM")
+	assertRtoiErr(t, "DMVI")
+
+	assertRtoi(t, "XXXIX", 39)
+	assertRtoi(t, "CCXLVI", 246)
+	assertRtoi(t, "DCCLXXXIX", 789)
+	assertRtoi(t, "MMCDXXI", 2421)
+
+	assertRtoi(t, "CLX", 160)
+	assertRtoi(t, "CCVII", 207)
+	assertRtoi(t, "MIX", 1009)
+	assertRtoi(t, "MLXVI", 1066)
+
+	assertRtoi(t, "MDCCLXXVI", 1776)
+	assertRtoi(t, "MCMXVIII", 1918)
+	assertRtoi(t, "MCMLIV", 1954)
+	assertRtoi(t, "MMXIV", 2014)
+
+	assertRtoi(t, "MMMCMXCIX", 3999)
+}
+
+func assertRtoiErr(t *testing.T, rnum string) {
+	if n, err := rtoi(rnum); err == nil {
+		t.Fatalf("rtoi(%q) = (%d, %v), want error", rnum, n, err)
+	}
+}
+
+func assertRtoi(t *testing.T, rnum string, expected int) {
+	n, err := rtoi(rnum)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != expected {
+		t.Errorf("rtoi(%q) = %d, want %d", rnum, n, expected)
 	}
 }

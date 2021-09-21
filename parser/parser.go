@@ -17,7 +17,7 @@ var (
 		regexp.MustCompile(`^(?P<name>.+?)\.S(?P<season>\d{2})(?:E(?P<episode>\d{2}))?`), // S01, S01E04
 		regexp.MustCompile(`^(?P<name>.+?)\.E(?P<episode>\d{2})`),                        // E04
 		regexp.MustCompile(`^(?P<name>.+?)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),     // 1x04, 01x04
-		regexp.MustCompile(`^(?P<name>.+?)\.Part\.?(?P<episode>\d{1,2})`),                // Part4, Part11, Part.4, Part.11
+		regexp.MustCompile(`^(?P<name>.+?)\.P(?:ar)?t\.?(?P<episode>([^.]+))`),           // P(ar)t(.)11, Pt(.)XI
 	}
 	splitPattern = regexp.MustCompile(`[-_.]`)
 )
@@ -114,12 +114,15 @@ func Show(s string) (Media, error) {
 			case "season":
 				season, err = strconv.Atoi(group)
 				if err != nil {
-					return Media{}, fmt.Errorf("invalid input: %q: %s", s, err)
+					return Media{}, fmt.Errorf("invalid input: %q: %w", s, err)
 				}
 			case "episode":
 				episode, err = strconv.Atoi(group)
 				if err != nil {
-					return Media{}, fmt.Errorf("invalid input: %q: %s", s, err)
+					episode, err = rtoi(group)
+					if err != nil {
+						return Media{}, fmt.Errorf("invalid input: %q: %w", s, err)
+					}
 				}
 			}
 		}
@@ -164,4 +167,73 @@ func codec(s string) string {
 		}
 		return false
 	})
+}
+
+var numerals = []numeral{
+	// units
+	{"IX", 9},
+	{"VIII", 8},
+	{"VII", 7},
+	{"VI", 6},
+	{"IV", 4},
+	{"III", 3},
+	{"II", 2},
+	{"V", 5},
+	{"I", 1},
+	// tens
+	{"XC", 90},
+	{"LXXX", 80},
+	{"LXX", 70},
+	{"LX", 60},
+	{"XL", 40},
+	{"XXX", 30},
+	{"XX", 20},
+	{"L", 50},
+	{"X", 10},
+	// hundreds
+	{"CM", 900},
+	{"DCCC", 800},
+	{"DCC", 700},
+	{"DC", 600},
+	{"CD", 400},
+	{"CCC", 300},
+	{"CC", 200},
+	{"D", 500},
+	{"C", 100},
+	// thousands
+	{"MMM", 3000},
+	{"MM", 2000},
+	{"M", 1000},
+}
+
+type numeral struct {
+	s string
+	n int
+}
+
+func (n numeral) parse(s string, lastIndex int) (string, int, int) {
+	i := strings.LastIndex(s, n.s)
+	if i > -1 && i < lastIndex {
+		rest := s[:i] + s[i+len(n.s):]
+		return rest, i, n.n
+	}
+	return s, lastIndex, 0
+}
+
+func rtoi(s string) (int, error) {
+	// needlessly complete parsing of roman numerals
+	sum := 0
+	lastIndex := len(s)
+	for _, num := range numerals {
+		var n int
+		s, lastIndex, n = num.parse(s, lastIndex)
+		sum += n
+		if s == "" {
+			break
+		}
+	}
+	if s != "" {
+		return 0, fmt.Errorf("invalid roman numeral: %q", s)
+	}
+	return sum, nil
 }
