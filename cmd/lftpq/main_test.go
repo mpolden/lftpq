@@ -414,12 +414,16 @@ func TestClassify(t *testing.T) {
 {
   "LocalDirs": [
     {
-      "Name": "d1",
+      "Name": "d0",
+      "Dir": "/media/"
+    },
+    {
+      "Name": "d2",
       "Parser": "movie",
       "Dir": "/media/{{ .Year}}/"
     },
     {
-      "Name": "d2",
+      "Name": "d3",
       "Parser": "show",
       "Dir": "/media/{{ .Name }}/S{{ .Season | Sprintf \"%02d\" }}/",
       "Replacements": [
@@ -433,13 +437,22 @@ func TestClassify(t *testing.T) {
 }`)
 	defer os.Remove(cli.Config)
 
-	cli.Name = "/download/foo.S01E01"
-	if err := cli.Run(); err != nil {
-		t.Fatal(err)
+	var tests = []struct {
+		in  string
+		out string
+	}{
+		{"/download/foo.S01E01", "/media/Foo/S01/foo.S01E01\n"},
+		{"/download/foo.2018", "/media/2018/foo.2018\n"},
 	}
 
-	want := "/media/Foo/S01/foo.S01E01\n"
-	if got := buf.String(); got != want {
-		t.Errorf("want %q, got %q", want, got)
+	for _, tt := range tests {
+		buf.Reset()
+		cli.Name = tt.in
+		if err := cli.Run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := buf.String(); got != tt.out {
+			t.Errorf("want %q, got %q", tt.out, got)
+		}
 	}
 }

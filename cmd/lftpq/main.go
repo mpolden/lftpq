@@ -93,15 +93,16 @@ func (c *CLI) classify(dirs []queue.LocalDir) error {
 	name := filepath.Base(c.Name)
 	sortedDirs := make([]queue.LocalDir, len(dirs))
 	copy(sortedDirs, dirs)
-	// Always try show parsers first
+	// Sort parsers in this order: show, movie, default
 	sort.Slice(sortedDirs, func(i, j int) bool {
-		return sortedDirs[i].Parser == "show" && sortedDirs[j].Parser != "show"
+		return (sortedDirs[i].Parser == "show" && sortedDirs[j].Parser != "show") ||
+			(sortedDirs[i].Parser != "" && sortedDirs[j].Parser == "")
 	})
 	parsed := false
 	for _, dir := range sortedDirs {
 		media, err := dir.Media(name)
 		if err != nil {
-			return err
+			continue // Try next parser
 		}
 		path, err := media.PathIn(dir.Template)
 		if err != nil {
