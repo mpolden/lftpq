@@ -211,7 +211,7 @@ func TestMergePreferringRemoteCopy(t *testing.T) {
 			file{name: "The.Wire.S01E01.720p.BluRay.baz"},
 		}, nil
 	}
-	q := newQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01.foo"}}, readDir)
+	q := newQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01.720p.BluRay.foo"}}, readDir)
 	if l := len(q.Items); l != 3 {
 		t.Fatalf("Expected length 3, got %d", l)
 	}
@@ -235,7 +235,7 @@ func TestMergePreferringLocalCopy(t *testing.T) {
 			file{name: "The.Wire.S01E02.720p.BluRay.baz"},
 		}, nil
 	}
-	q := newQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01.foo"}}, readDir)
+	q := newQueue(s, []os.FileInfo{file{name: "/remote/The.Wire.S01E01.720p.BluRay.foo"}}, readDir)
 	if l := len(q.Items); l != 2 {
 		t.Fatalf("Expected length 2, got %d", l)
 	}
@@ -402,7 +402,9 @@ func TestMarshalJSON(t *testing.T) {
       "Name": "The.Wire",
       "Year": 0,
       "Season": 1,
-      "Episode": 1
+      "Episode": 1,
+      "Resolution": "",
+      "Codec": ""
     },
     "Duplicate": false,
     "Merged": false

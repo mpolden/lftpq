@@ -19,16 +19,19 @@ var (
 		regexp.MustCompile(`^(?P<name>.+?)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),     // 1x04, 01x04
 		regexp.MustCompile(`^(?P<name>.+?)\.Part\.?(?P<episode>\d{1,2})`),                // Part4, Part11, Part.4, Part.11
 	}
+	splitPattern = regexp.MustCompile(`[-_.]`)
 )
 
 type Parser func(s string) (Media, error)
 
 type Media struct {
-	Release string
-	Name    string
-	Year    int
-	Season  int
-	Episode int
+	Release    string
+	Name       string
+	Year       int
+	Season     int
+	Episode    int
+	Resolution string
+	Codec      string
 }
 
 func (m *Media) IsEmpty() bool {
@@ -43,7 +46,12 @@ func (m *Media) Equal(o Media) bool {
 	if m.IsEmpty() {
 		return false
 	}
-	return m.Name == o.Name && m.Season == o.Season && m.Episode == o.Episode && m.Year == o.Year
+	return m.Name == o.Name &&
+		m.Season == o.Season &&
+		m.Episode == o.Episode &&
+		m.Year == o.Year &&
+		m.Resolution == o.Resolution &&
+		m.Codec == o.Codec
 }
 
 func (m *Media) PathIn(dir *template.Template) (string, error) {
@@ -75,9 +83,11 @@ func Movie(s string) (Media, error) {
 		return Media{}, fmt.Errorf("invalid input: %q: %s", s, err)
 	}
 	return Media{
-		Release: s,
-		Name:    name,
-		Year:    year,
+		Release:    s,
+		Name:       name,
+		Year:       year,
+		Resolution: resolution(s),
+		Codec:      codec(s),
 	}, nil
 }
 
@@ -114,11 +124,44 @@ func Show(s string) (Media, error) {
 			}
 		}
 		return Media{
-			Release: s,
-			Name:    name,
-			Season:  season,
-			Episode: episode,
+			Release:    s,
+			Name:       name,
+			Season:     season,
+			Episode:    episode,
+			Resolution: resolution(s),
+			Codec:      codec(s),
 		}, nil
 	}
 	return Media{}, fmt.Errorf("invalid input: %q", s)
+}
+
+func findPart(s string, partFunc func(part string) bool) string {
+	s = strings.ToLower(s)
+	parts := splitPattern.Split(s, -1)
+	for _, part := range parts {
+		if partFunc(part) {
+			return part
+		}
+	}
+	return ""
+}
+
+func resolution(s string) string {
+	return findPart(s, func(part string) bool {
+		switch part {
+		case "720p", "1080p", "2160p":
+			return true
+		}
+		return false
+	})
+}
+
+func codec(s string) string {
+	return findPart(s, func(part string) bool {
+		switch part {
+		case "xvid", "x264", "x265":
+			return true
+		}
+		return false
+	})
 }

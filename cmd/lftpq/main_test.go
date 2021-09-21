@@ -214,7 +214,9 @@ wait
       "Name": "bar",
       "Year": 2017,
       "Season": 0,
-      "Episode": 0
+      "Episode": 0,
+      "Resolution": "",
+      "Codec": ""
     },
     "Duplicate": false,
     "Merged": false
@@ -232,7 +234,9 @@ wait
       "Name": "foo",
       "Year": 2018,
       "Season": 0,
-      "Episode": 0
+      "Episode": 0,
+      "Resolution": "",
+      "Codec": ""
     },
     "Duplicate": false,
     "Merged": false
@@ -322,7 +326,9 @@ wait
       "Name": "foo",
       "Year": 2017,
       "Season": 0,
-      "Episode": 0
+      "Episode": 0,
+      "Resolution": "",
+      "Codec": ""
     },
     "Duplicate": false,
     "Merged": false

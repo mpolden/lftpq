@@ -56,15 +56,17 @@ func TestDefault(t *testing.T) {
 }
 
 func TestMovie(t *testing.T) {
-	s := "Apocalypse.Now.1979.1080p.BluRay-GRP"
+	s := "Apocalypse.Now.1979.1080p.x264.BluRay-GRP"
 	movie, err := Movie(s)
 	if err != nil {
 		t.Fatal(err)
 	}
 	expected := Media{
-		Release: s,
-		Name:    "Apocalypse.Now",
-		Year:    1979,
+		Release:    s,
+		Name:       "Apocalypse.Now",
+		Year:       1979,
+		Resolution: "1080p",
+		Codec:      "x264",
 	}
 	if !reflect.DeepEqual(movie, expected) {
 		t.Fatalf("Expected %+v, got %+v", expected, movie)
@@ -85,52 +87,66 @@ func TestShow(t *testing.T) {
 	}{
 		{"Gotham.S01E01.720p.HDTV.X264-DIMENSION",
 			Media{
-				Release: "Gotham.S01E01.720p.HDTV.X264-DIMENSION",
-				Name:    "Gotham",
-				Season:  1,
-				Episode: 1,
+				Release:    "Gotham.S01E01.720p.HDTV.X264-DIMENSION",
+				Name:       "Gotham",
+				Season:     1,
+				Episode:    1,
+				Resolution: "720p",
+				Codec:      "x264",
 			}},
 		{"Top_Gear.21x02.720p_HDTV_x264-FoV",
 			Media{
-				Release: "Top_Gear.21x02.720p_HDTV_x264-FoV",
-				Name:    "Top_Gear",
-				Season:  21,
-				Episode: 2,
+				Release:    "Top_Gear.21x02.720p_HDTV_x264-FoV",
+				Name:       "Top_Gear",
+				Season:     21,
+				Episode:    2,
+				Resolution: "720p",
+				Codec:      "x264",
 			}},
 		{"Eastbound.and.Down.S02E05.720p.BluRay.X264-REWARD",
 			Media{
-				Release: "Eastbound.and.Down.S02E05.720p.BluRay.X264-REWARD",
-				Name:    "Eastbound.and.Down",
-				Season:  2,
-				Episode: 5,
+				Release:    "Eastbound.and.Down.S02E05.720p.BluRay.X264-REWARD",
+				Name:       "Eastbound.and.Down",
+				Season:     2,
+				Episode:    5,
+				Resolution: "720p",
+				Codec:      "x264",
 			}},
 		{"Olive.Kitteridge.Part.4.720p.HDTV.x264-KILLERS",
 			Media{
-				Release: "Olive.Kitteridge.Part.4.720p.HDTV.x264-KILLERS",
-				Name:    "Olive.Kitteridge",
-				Season:  1,
-				Episode: 4,
+				Release:    "Olive.Kitteridge.Part.4.720p.HDTV.x264-KILLERS",
+				Name:       "Olive.Kitteridge",
+				Season:     1,
+				Episode:    4,
+				Resolution: "720p",
+				Codec:      "x264",
 			}},
 		{"Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015.Part1.720p.HDTV.x264-W4F",
 			Media{
-				Release: "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015.Part1.720p.HDTV.x264-W4F",
-				Name:    "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015",
-				Season:  1,
-				Episode: 1,
+				Release:    "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015.Part1.720p.HDTV.x264-W4F",
+				Name:       "Marilyn.The.Secret.Life.of.Marilyn.Monroe.2015",
+				Season:     1,
+				Episode:    1,
+				Resolution: "720p",
+				Codec:      "x264",
 			}},
 		{"The.Jinx-The.Life.and.Deaths.of.Robert.Durst.E04.1080p.BluRay.x264-ROVERS",
 			Media{
-				Release: "The.Jinx-The.Life.and.Deaths.of.Robert.Durst.E04.1080p.BluRay.x264-ROVERS",
-				Name:    "The.Jinx-The.Life.and.Deaths.of.Robert.Durst",
-				Season:  1,
-				Episode: 4,
+				Release:    "The.Jinx-The.Life.and.Deaths.of.Robert.Durst.E04.1080p.BluRay.x264-ROVERS",
+				Name:       "The.Jinx-The.Life.and.Deaths.of.Robert.Durst",
+				Season:     1,
+				Episode:    4,
+				Resolution: "1080p",
+				Codec:      "x264",
 			}},
 		{"Adventure.Time.With.Finn.And.Jake.S01.SUBPACK.720p.BluRay.x264-DEiMOS",
 			Media{
-				Release: "Adventure.Time.With.Finn.And.Jake.S01.SUBPACK.720p.BluRay.x264-DEiMOS",
-				Name:    "Adventure.Time.With.Finn.And.Jake",
-				Season:  1,
-				Episode: 0,
+				Release:    "Adventure.Time.With.Finn.And.Jake.S01.SUBPACK.720p.BluRay.x264-DEiMOS",
+				Name:       "Adventure.Time.With.Finn.And.Jake",
+				Season:     1,
+				Episode:    0,
+				Resolution: "720p",
+				Codec:      "x264",
 			}},
 		{"Orange.Is.The.New.Black.S02.NORDiC.SUBPACK.BluRay-REQ",
 			Media{
@@ -141,10 +157,12 @@ func TestShow(t *testing.T) {
 			}},
 		{"Lost.S01E24.Exodus.Part.2.720p.BluRay.x264-SiNNERS",
 			Media{
-				Release: "Lost.S01E24.Exodus.Part.2.720p.BluRay.x264-SiNNERS",
-				Name:    "Lost",
-				Season:  1,
-				Episode: 24,
+				Release:    "Lost.S01E24.Exodus.Part.2.720p.BluRay.x264-SiNNERS",
+				Name:       "Lost",
+				Season:     1,
+				Episode:    24,
+				Resolution: "720p",
+				Codec:      "x264",
 			}},
 		{"Friends.S01E16.S01E17.UNCUT.DVDrip.XviD-SAiNTS",
 			Media{
@@ -152,6 +170,7 @@ func TestShow(t *testing.T) {
 				Name:    "Friends",
 				Season:  1,
 				Episode: 16,
+				Codec:   "xvid",
 			}},
 	}
 	for _, tt := range tests {
