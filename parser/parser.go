@@ -162,7 +162,7 @@ func resolution(s string) string {
 func codec(s string) string {
 	return findPart(s, func(part string) bool {
 		switch part {
-		case "xvid", "x264", "x265":
+		case "h264", "h265", "xvid", "x264", "x265":
 			return true
 		}
 		return false
