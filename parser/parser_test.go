@@ -94,6 +94,15 @@ func TestShow(t *testing.T) {
 				Resolution: "720p",
 				Codec:      "x264",
 			}},
+		{"gotham.s01e01.720p.hdtv.x264-dimension",
+			Media{
+				Release:    "gotham.s01e01.720p.hdtv.x264-dimension",
+				Name:       "Gotham",
+				Season:     1,
+				Episode:    1,
+				Resolution: "720p",
+				Codec:      "x264",
+			}},
 		{"Top_Gear.21x02.720p_HDTV_x264-FoV",
 			Media{
 				Release:    "Top_Gear.21x02.720p_HDTV_x264-FoV",

@@ -14,10 +14,10 @@ import (
 var (
 	moviePattern    = regexp.MustCompile(`(.*?)\.(\d{4})`)
 	episodePatterns = [4]*regexp.Regexp{
-		regexp.MustCompile(`^(?P<name>.+?)\.S(?P<season>\d{2})(?:E(?P<episode>\d{2}))?`), // S01, S01E04
-		regexp.MustCompile(`^(?P<name>.+?)\.E(?P<episode>\d{2})`),                        // E04
-		regexp.MustCompile(`^(?P<name>.+?)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),     // 1x04, 01x04
-		regexp.MustCompile(`^(?P<name>.+?)\.P(?:ar)?t\.?(?P<episode>([^.]+))`),           // P(ar)t(.)11, Pt(.)XI
+		regexp.MustCompile(`^(?P<name>.+?)\.[Ss](?P<season>\d{2})(?:[Ee](?P<episode>\d{2}))?`), // S01, S01E04
+		regexp.MustCompile(`^(?P<name>.+?)\.[Ee](?P<episode>\d{2})`),                           // E04
+		regexp.MustCompile(`^(?P<name>.+?)\.(?P<season>\d{1,2})x(?P<episode>\d{2})`),           // 1x04, 01x04
+		regexp.MustCompile(`^(?P<name>.+?)\.P(?:ar)?t\.?(?P<episode>([^.]+))`),                 // P(ar)t(.)11, Pt(.)XI
 	}
 	splitPattern = regexp.MustCompile(`[-_.]`)
 )
@@ -125,6 +125,10 @@ func Show(s string) (Media, error) {
 					}
 				}
 			}
+		}
+		if strings.ToLower(name) == name {
+			// Capitalize
+			name = strings.ToUpper(string(name[0])) + strings.ToLower(string(name[1:]))
 		}
 		return Media{
 			Release:    s,
