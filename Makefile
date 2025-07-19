@@ -10,10 +10,10 @@ test:
 vet:
 	go vet ./...
 
-check-fmt:
-	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
+checkfmt:
+	@sh -c "test -z $$(gofmt -l .)" || { echo "one or more files need to be formatted: try make fmt to fix this automatically"; exit 1; }
 
-lint: check-fmt vet
+lint: checkfmt vet
 
 install:
 	go install ./...
